@@ -19,7 +19,7 @@ let chatContext = [];
 
 // 4. MIDDLEWARE
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://cafe-sync-intelligent-system.vercel.app', 'https://cafe-sync-intelligent-system-rdrl.vercel.app'],
+    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://cafe-sync-intelligent-system.vercel.app', 'https://cafe-sync-intelligent-system-rdrl.vercel.app', 'https://cafe-sync-admin.vercel.app'],
     credentials: true
 }));
 app.use(express.json());
@@ -139,7 +139,7 @@ const { Server } = require("socket.io");
 
 const io = new Server(server, {
     cors: {
-        origin: ['http://localhost:3000', 'http://localhost:3001', 'https://cafe-sync-intelligent-system.vercel.app', 'https://cafe-sync-intelligent-system-rdrl.vercel.app'],
+        origin: ['http://localhost:3000', 'http://localhost:3001', 'https://cafe-sync-intelligent-system.vercel.app', 'https://cafe-sync-intelligent-system-rdrl.vercel.app', 'https://cafe-sync-admin.vercel.app'],
         credentials: true
     }
 });

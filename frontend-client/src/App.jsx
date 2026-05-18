@@ -12,7 +12,7 @@ import Login from './pages/Login.jsx';
 import Favorites from './pages/Favorites.jsx';
 import OrderHistory from './pages/OrderHistory.jsx';
 import Profile from './pages/Profile.jsx';
-import Chatbot from './components/Chatbot.jsx'; // 1. Má đã thêm dòng import này
+import Chatbot from './components/ChatBot.jsx'; // 1. Má đã thêm dòng import này
 
 function App() {
   const [cartCount, setCartCount] = useState(0);

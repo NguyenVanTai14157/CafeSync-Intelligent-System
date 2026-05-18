@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import '../assets/css/style.css';
-import Chatbot from '../components/Chatbot';
+import Chatbot from '../components/ChatBot';
 import { showToast, showConfirm } from '../utils/toast'; // Import bộ thông báo xịn
 
 const Home = ({ cartCount }) => {

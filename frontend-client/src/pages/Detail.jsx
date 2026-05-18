@@ -7,7 +7,7 @@ import { showToast } from '../utils/toast'; // Import bộ thông báo xịn
 const Detail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const API_URL = "http://localhost:5000";
+    const API_URL = "https://cafesync-intelligent-system-sntf.onrender.com";
 
     const [product, setProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);

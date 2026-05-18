@@ -129,7 +129,7 @@ const ProductPage = () => {
       dataIndex: "image",
       render: (img) => (
         <img
-          src={`http://localhost:5000/images/${img}`}
+          src={`https://cafesync-intelligent-system-sntf.onrender.com/images/${img}`}
           style={{ width: 60, height: 60, objectFit: "cover" }}
         />
       ),

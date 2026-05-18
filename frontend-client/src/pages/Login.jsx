@@ -13,7 +13,7 @@ const Login = () => {
     const [registerData, setRegisterData] = useState({ name: '', email: '', password: '' });
 
     const navigate = useNavigate();
-    const API_URL = 'http://localhost:5000/api/auth';
+    const API_URL = 'https://cafesync-intelligent-system-sntf.onrender.com/api/auth';
 
     // Hàm lấy tên gọi thân mật tự động từ chuỗi họ tên
     const getFirstName = (fullName) => {

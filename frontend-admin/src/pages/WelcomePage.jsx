@@ -34,7 +34,7 @@ ChartJS.register(
 );
 
 const { Title, Text } = Typography;
-const socket = io("http://localhost:5000");
+const socket = io("https://cafesync-intelligent-system-sntf.onrender.com");
 
 const WelcomePage = () => {
   const [stats, setStats] = useState(null);
@@ -49,9 +49,9 @@ const WelcomePage = () => {
   const fetchData = async () => {
     try {
       const [statsRes, ordersRes, chartRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/reports/stats"),
-        axios.get("http://localhost:5000/api/orders"),
-        axios.get("http://localhost:5000/api/reports/chart/week")
+        axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/stats"),
+        axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/orders"),
+        axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/chart/week")
       ]);
       setStats(statsRes.data);
       setAllOrders(ordersRes.data);

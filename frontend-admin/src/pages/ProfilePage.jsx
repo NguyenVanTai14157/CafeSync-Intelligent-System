@@ -32,7 +32,7 @@ const ProfilePage = () => {
     
     // 1. Cập nhật thông tin cơ bản
     try {
-      const res = await axios.put(`http://localhost:5000/api/users/${userId}`, {
+      const res = await axios.put(`https://cafesync-intelligent-system-sntf.onrender.com/api/users/${userId}`, {
         name: values.name,
         role: currentUser.role
       });
@@ -48,7 +48,7 @@ const ProfilePage = () => {
     // 2. Cập nhật mật khẩu nếu có nhập mật khẩu cũ/mới
     if (values.oldPassword && values.newPassword) {
       try {
-        await axios.post(`http://localhost:5000/api/users/${userId}/change-password`, {
+        await axios.post(`https://cafesync-intelligent-system-sntf.onrender.com/api/users/${userId}/change-password`, {
           oldPassword: values.oldPassword,
           newPassword: values.newPassword
         });

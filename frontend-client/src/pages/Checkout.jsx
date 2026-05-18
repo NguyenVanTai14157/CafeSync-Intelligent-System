@@ -13,7 +13,7 @@ const Checkout = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const navigate = useNavigate();
-    const API_URL = "http://localhost:5000";
+    const API_URL = "https://cafesync-intelligent-system-sntf.onrender.com";
 
     useEffect(() => {
         const savedCart = JSON.parse(localStorage.getItem('cart')) || [];

@@ -7,7 +7,7 @@ import Swal from 'sweetalert2'; // <--- Thêm dòng này để chạy được t
 const Cart = () => {
     const [cart, setCart] = useState([]);
     const navigate = useNavigate();
-    const API_URL = "http://localhost:5000";
+    const API_URL = "https://cafesync-intelligent-system-sntf.onrender.com";
 
     // 1. Tải giỏ hàng từ LocalStorage khi vào trang
     useEffect(() => {

@@ -9,7 +9,7 @@ const TrackOrder = () => {
     const [loading, setLoading] = useState(true);
     const [cartCount, setCartCount] = useState(0); // Thêm state để giữ số lượng giỏ hàng
     const navigate = useNavigate();
-    const API_URL = "http://localhost:5000";
+    const API_URL = "https://cafesync-intelligent-system-sntf.onrender.com";
 
     const savedEmail = localStorage.getItem('userEmail');
     const savedName = localStorage.getItem('userName');

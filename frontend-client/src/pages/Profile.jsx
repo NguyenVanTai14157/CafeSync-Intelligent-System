@@ -8,7 +8,7 @@ const Profile = () => {
     const navigate = useNavigate();
     const [orderCount, setOrderCount] = useState(0);
     const [cartCount, setCartCount] = useState(0);
-    const API_URL = "http://localhost:5000";
+    const API_URL = "https://cafesync-intelligent-system-sntf.onrender.com";
 
     // Lấy thông tin khách hàng từ LocalStorage
     const userName = localStorage.getItem('userName') || 'Khách hàng';

@@ -14,7 +14,7 @@ const Home = ({ cartCount }) => {
     const [isPersonalized, setIsPersonalized] = useState(false);
 
     const navigate = useNavigate();
-    const API_URL = "http://localhost:5000";
+    const API_URL = "https://cafesync-intelligent-system-sntf.onrender.com";
 
     // Danh mục tương ứng với ID trong Database của Yến
     const categoryMap = {

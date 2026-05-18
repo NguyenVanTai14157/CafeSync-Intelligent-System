@@ -151,7 +151,7 @@ const POSPage = () => {
                     cover={
                       <img
                         alt={product.name}
-                        src={product.image ? `http://localhost:5000/images/${product.image}` : "https://via.placeholder.com/150"}
+                        src={product.image ? `https://cafesync-intelligent-system-sntf.onrender.com/images/${product.image}` : "https://via.placeholder.com/150"}
                         style={{ height: 120, objectFit: "cover" }}
                       />
                     }
@@ -198,7 +198,7 @@ const POSPage = () => {
               {cart.map((item) => (
                 <div key={item.cartItemId} style={{ marginBottom: 16, display: 'flex', gap: 12 }}>
                   <img 
-                    src={item.image ? `http://localhost:5000/images/${item.image}` : "https://via.placeholder.com/50"} 
+                    src={item.image ? `https://cafesync-intelligent-system-sntf.onrender.com/images/${item.image}` : "https://via.placeholder.com/50"} 
                     style={{ width: 50, height: 50, borderRadius: 8, objectFit: 'cover' }}
                     alt={item.name}
                   />

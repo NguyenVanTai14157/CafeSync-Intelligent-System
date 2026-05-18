@@ -29,7 +29,7 @@ const IngredientManagementPage = () => {
   // Load ingredients
   const fetchIngredients = () => {
     setLoading(true);
-    axios.get("http://localhost:5000/api/ingredients")
+    axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/ingredients")
       .then(res => setIngredients(res.data))
       .catch(() => setIngredients([]))
       .finally(() => setLoading(false));
@@ -55,10 +55,10 @@ const IngredientManagementPage = () => {
     try {
       const values = await form.validateFields();
       if (editing) {
-        await axios.put(`http://localhost:5000/api/ingredients/${editing._id}`, values);
+        await axios.put(`https://cafesync-intelligent-system-sntf.onrender.com/api/ingredients/${editing._id}`, values);
         message.success("Cập nhật thành công!");
       } else {
-        await axios.post("http://localhost:5000/api/ingredients", values);
+        await axios.post("https://cafesync-intelligent-system-sntf.onrender.com/api/ingredients", values);
         message.success("Thêm mới thành công!");
       }
       setModalOpen(false);
@@ -71,7 +71,7 @@ const IngredientManagementPage = () => {
   // Delete ingredient
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/ingredients/${id}`);
+      await axios.delete(`https://cafesync-intelligent-system-sntf.onrender.com/api/ingredients/${id}`);
       message.success("Xóa thành công!");
       fetchIngredients();
     } catch {

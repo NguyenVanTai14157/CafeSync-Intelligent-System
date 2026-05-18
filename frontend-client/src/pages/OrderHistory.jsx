@@ -11,7 +11,7 @@ const OrderHistory = () => {
 
     // Đồng bộ cách lấy định danh: Email trước, Name sau
     const userIdentifier = localStorage.getItem('userEmail') || localStorage.getItem('userName');
-    const API_URL = "http://localhost:5000";
+    const API_URL = "https://cafesync-intelligent-system-sntf.onrender.com";
 
     useEffect(() => {
         // Nếu không có định danh thì cho về Home (hoặc Login tùy Yến)

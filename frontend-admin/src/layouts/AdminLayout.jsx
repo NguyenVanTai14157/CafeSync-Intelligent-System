@@ -14,7 +14,7 @@ const AdminLayout = ({ children }) => {
   useEffect(() => {
     const checkNewOrders = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/reports/stats");
+        const res = await axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/stats");
         const currentCount = res.data.pendingOrdersCount;
         
         if (currentCount > prevPendingCount) {

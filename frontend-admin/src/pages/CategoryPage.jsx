@@ -184,7 +184,7 @@ const CategoryPage = () => {
                 }}
                 cover={
                   <img
-                    src={`http://localhost:5000/images/${p.image}`}
+                    src={`https://cafesync-intelligent-system-sntf.onrender.com/images/${p.image}`}
                     alt={p.name}
                     style={{
                       height: 200,

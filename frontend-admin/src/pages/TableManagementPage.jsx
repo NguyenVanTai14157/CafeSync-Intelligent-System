@@ -20,7 +20,7 @@ const TableManagementPage = () => {
   const fetchTables = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5000/api/tables');
+      const res = await axios.get('https://cafesync-intelligent-system-sntf.onrender.com/api/tables');
       setTables(res.data);
       setLoading(false);
     } catch (err) {
@@ -31,7 +31,7 @@ const TableManagementPage = () => {
 
   const initializeTables = async () => {
     try {
-      await axios.post('http://localhost:5000/api/tables/initialize');
+      await axios.post('https://cafesync-intelligent-system-sntf.onrender.com/api/tables/initialize');
       fetchTables();
       alert('Đã khởi tạo 50 bàn thành công!');
     } catch (err) {
@@ -41,7 +41,7 @@ const TableManagementPage = () => {
 
   const updateStatus = async (tableNumber, newStatus) => {
     try {
-      await axios.put(`http://localhost:5000/api/tables/${tableNumber}/status`, { status: newStatus });
+      await axios.put(`https://cafesync-intelligent-system-sntf.onrender.com/api/tables/${tableNumber}/status`, { status: newStatus });
       fetchTables();
     } catch (err) {
       alert('Lỗi cập nhật trạng thái');

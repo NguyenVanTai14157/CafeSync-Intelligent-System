@@ -8,7 +8,7 @@ const Favorites = () => {
     const [userName, setUserName] = useState(localStorage.getItem('userName') || '');
     const [cartCount, setCartCount] = useState(0); // Khai báo để tránh lỗi undefined
     const navigate = useNavigate();
-    const API_URL = "http://localhost:5000";
+    const API_URL = "https://cafesync-intelligent-system-sntf.onrender.com";
 
     // 1. Tự động lấy tên người dùng để cá nhân hóa lời chào
     const getFriendlyName = () => {

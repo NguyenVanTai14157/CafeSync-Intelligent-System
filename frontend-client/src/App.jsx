@@ -16,6 +16,7 @@ import Chatbot from './components/Chatbot.jsx'; // 1. Má đã thêm dòng impor
 
 function App() {
   const [cartCount, setCartCount] = useState(0);
+  const [tableNumber, setTableNumber] = useState(localStorage.getItem('tableNumber'));
 
   const updateCartCount = () => {
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -24,6 +25,14 @@ function App() {
   };
 
   useEffect(() => {
+    // Lưu số bàn từ URL nếu có
+    const params = new URLSearchParams(window.location.search);
+    const tableParam = params.get('table');
+    if (tableParam) {
+      localStorage.setItem('tableNumber', tableParam);
+      setTableNumber(tableParam);
+    }
+
     updateCartCount();
     window.addEventListener('storage', updateCartCount);
     window.addEventListener('cartUpdated', updateCartCount);
@@ -50,6 +59,19 @@ function App() {
 
         {/* 2. CHATBOT NẰM Ở ĐÂY: Sẽ hiện trên tất cả các trang */}
         <Chatbot />
+        
+        {/* Banner thông báo Bàn */}
+        {tableNumber && (
+          <div style={{
+            position: 'fixed', top: '10px', left: '50%', transform: 'translateX(-50%)',
+            background: 'rgba(217, 160, 91, 0.9)', color: 'white', padding: '6px 16px',
+            borderRadius: '20px', fontWeight: 'bold', fontSize: '12px', zIndex: 9999,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap'
+          }}>
+            <i className="bi bi-geo-alt-fill"></i> Sẵn sàng phục vụ Bàn {tableNumber} !
+          </div>
+        )}
       </div>
     </Router>
   );

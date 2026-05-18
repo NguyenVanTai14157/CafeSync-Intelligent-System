@@ -3,8 +3,14 @@ const Order = require("../models/Order");
 // 📌 1. Xử lý đặt hàng
 const createOrder = async (req, res) => {
   try {
-    const { items, totalPrice, location, paymentMethod, orderID, customerEmail } = req.body;
+    const { items, totalPrice, location, tableNumber, paymentMethod, orderID, customerEmail } = req.body;
     const finalOrderID = orderID || `CFS${Math.floor(Math.random() * 900000 + 100000)}`;
+    const Table = require('../models/Table');
+
+    // Cập nhật trạng thái bàn nếu có chọn bàn
+    if (tableNumber) {
+      await Table.findOneAndUpdate({ tableNumber }, { status: 'Đang phục vụ' });
+    }
 
     // --- TRƯỜNG HỢP 1: THANH TOÁN TIỀN MẶT ---
     if (paymentMethod === "Tiền mặt") {
@@ -13,6 +19,7 @@ const createOrder = async (req, res) => {
         items,
         totalPrice,
         location,
+        tableNumber: tableNumber || null,
         paymentMethod: "Tiền mặt",
         customerEmail: customerEmail || "Guest",
         status: "Chờ xác nhận",
@@ -53,6 +60,7 @@ const createOrder = async (req, res) => {
         items,
         totalPrice,
         location,
+        tableNumber: tableNumber || null,
         paymentMethod: "Chuyển khoản/Ví điện tử",
         customerEmail: customerEmail || "Guest",
         status: "Chờ thanh toán",
@@ -155,12 +163,12 @@ const receiveWebhook = async (req, res) => {
       // Tìm đơn hàng có orderID chứa dãy số orderCode từ PayOS gửi về
       const updatedOrder = await Order.findOneAndUpdate(
         { orderID: { $regex: orderCodeStr } },
-        { status: "Chờ xác nhận" },
+        { status: "Đã thanh toán" },
         { new: true }
       );
 
       if (updatedOrder) {
-        console.log(`✅ Tuyệt vời! Đơn ${updatedOrder.orderID} đã tự động đổi sang Chờ xác nhận`);
+        console.log(`✅ Tuyệt vời! Đơn ${updatedOrder.orderID} đã tự động đổi sang Đã thanh toán`);
         // Bắn socket cho admin thấy luôn
         const io = req.app.get('io');
         if (io) io.emit('order_updated', updatedOrder);
@@ -175,6 +183,32 @@ const receiveWebhook = async (req, res) => {
   }
 };
 
+// 📌 9. Cập nhật trạng thái từ Frontend (Dự phòng cho Localhost khi không có Ngrok)
+const paymentSuccess = async (req, res) => {
+  try {
+    const { orderCode } = req.body;
+    if (orderCode) {
+      const orderCodeStr = orderCode.toString();
+      const updatedOrder = await Order.findOneAndUpdate(
+        { orderID: { $regex: orderCodeStr } },
+        { status: "Đã thanh toán" },
+        { new: true }
+      );
+
+      if (updatedOrder) {
+        console.log(`✅ Đơn ${updatedOrder.orderID} đã Đã thanh toán (qua Client SDK/ReturnURL)`);
+        const io = req.app.get('io');
+        if (io) io.emit('order_updated', updatedOrder);
+        return res.status(200).json({ message: "Thành công", order: updatedOrder });
+      }
+    }
+    return res.status(400).json({ message: "Không tìm thấy đơn hoặc thiếu mã!" });
+  } catch (error) {
+    console.error("Lỗi Return URL:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   createOrder,
   getOrders,
@@ -184,4 +218,5 @@ module.exports = {
   deleteOrder,
   cancelOrder,
   receiveWebhook,
+  paymentSuccess,
 };

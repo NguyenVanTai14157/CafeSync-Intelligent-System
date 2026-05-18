@@ -50,7 +50,24 @@ const TrackOrder = () => {
     };
 
     useEffect(() => {
-        fetchStatus();
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const orderCode = urlParams.get('orderCode');
+        
+        if (code === '00' && orderCode) {
+            axios.post(`${API_URL}/api/orders/payment-success`, { orderCode })
+                .then(() => {
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    fetchStatus();
+                })
+                .catch(err => {
+                    console.error("Lỗi xác nhận thanh toán PayOS:", err);
+                    fetchStatus();
+                });
+        } else {
+            fetchStatus();
+        }
+
         const interval = setInterval(fetchStatus, 10000);
         return () => clearInterval(interval);
     }, []);

@@ -44,6 +44,7 @@ const Sidebar = ({ collapsed }) => {
         { key: "/CategoryPage", icon: <AppstoreOutlined />, label: "Danh mục", onClick: () => navigate("/CategoryPage") },
         { key: "/products", icon: <CoffeeOutlined />, label: "Sản phẩm", onClick: () => navigate("/products") },
         { key: "/ingredients", icon: <DatabaseOutlined />, label: "Kho hàng", onClick: () => navigate("/ingredients") },
+        { key: "/tables", icon: <AppstoreOutlined />, label: "Bàn & QR", onClick: () => navigate("/tables") },
         { key: "/users", icon: <UserOutlined />, label: "Nhân sự", onClick: () => navigate("/users") },
       ]},
       { type: "divider" },

@@ -81,7 +81,14 @@ const OrderManagementPage = () => {
 
   const columns = [
     { title: "Mã đơn", dataIndex: "orderID", key: "orderID" },
-    { title: "Vị trí", dataIndex: "location", key: "location" },
+    { 
+      title: "Vị trí", 
+      dataIndex: "location", 
+      key: "location",
+      render: (text, record) => (
+        record.tableNumber ? <Tag color="gold">Bàn {record.tableNumber}</Tag> : <span>{text}</span>
+      )
+    },
     {
       title: "Sản phẩm",
       dataIndex: "items",

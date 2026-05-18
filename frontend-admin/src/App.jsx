@@ -12,6 +12,7 @@ import OrderManagementPage from "./pages/OrderManagementPage";
 import RevenueReportPage from "./pages/RevenueReportPage";
 import POSPage from "./pages/POSPage"; // 👈 Import trang POS mới của Yến
 import ProfilePage from "./pages/ProfilePage";
+import TableManagementPage from "./pages/TableManagementPage";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
                   {/* --- CHỨC NĂNG DÙNG CHUNG --- */}
                   <Route path="/" element={<WelcomePage />} />
                   <Route path="/orders" element={<OrderManagementPage />} />
+                  <Route path="/tables" element={<TableManagementPage />} />
                   <Route path="/pos" element={<POSPage />} /> {/* 👈 Route cho Nhân viên/POS */}
                   <Route path="/profile" element={<ProfilePage />} />
 

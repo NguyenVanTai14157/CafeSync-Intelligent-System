@@ -37,6 +37,7 @@ app.use("/api/categories", require("./src/routes/category.routes"));
 app.use("/api/users", require("./src/routes/userRoutes"));
 app.use("/api/ingredients", require("./src/routes/ingredientRoutes"));
 app.use("/api/reports", require("./src/routes/reportRoutes"));
+app.use("/api/tables", require("./src/routes/tableRoutes"));
 
 // --- 7. CHỨC NĂNG AUTH CUSTOM (Dành riêng cho App Khách của Yến) ---
 const User = require('./src/models/User');

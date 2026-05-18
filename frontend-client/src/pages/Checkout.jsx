@@ -5,9 +5,10 @@ import Swal from 'sweetalert2';
 import '../assets/css/style.css';
 
 const Checkout = () => {
+    const storedTable = localStorage.getItem('tableNumber');
     const [cart, setCart] = useState([]);
-    const [orderType, setOrderType] = useState("Tại bàn");
-    const [tableNo, setTableNo] = useState("1");
+    const [orderType, setOrderType] = useState(storedTable ? "Tại bàn" : "Tại bàn");
+    const [tableNo, setTableNo] = useState(storedTable || "1");
     const [paymentMethod, setPaymentMethod] = useState("Tiền mặt");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -51,6 +52,7 @@ const Checkout = () => {
             })),
             totalPrice: totalPrice,
             location: orderType === "Mang đi" ? "Mang đi" : `Bàn ${tableNo}`,
+            tableNumber: orderType === "Tại bàn" ? Number(tableNo) : null,
             paymentMethod: paymentMethod,
             customerEmail: savedEmail || savedName || "Guest",
             customerName: savedName || "Khách vãn lai"
@@ -166,16 +168,16 @@ const Checkout = () => {
                             <h5 className="fw-bold mb-4">Nhận hàng</h5>
                             <div className="mb-3">
                                 <label className="small fw-bold text-muted mb-2 text-uppercase">Hình thức</label>
-                                <select className="form-select p-3 border-0 bg-light rounded-3 shadow-none fw-bold" value={orderType} onChange={(e) => setOrderType(e.target.value)}>
+                                <select className="form-select p-3 border-0 bg-light rounded-3 shadow-none fw-bold" disabled={!!storedTable} value={orderType} onChange={(e) => setOrderType(e.target.value)}>
                                     <option value="Tại bàn">Tại bàn</option>
                                     <option value="Mang đi">Mang đi</option>
                                 </select>
                             </div>
                             {orderType === "Tại bàn" && (
                                 <div className="mb-4">
-                                    <label className="small fw-bold text-muted mb-2 text-uppercase">Số bàn</label>
-                                    <select className="form-select p-3 border-0 bg-light rounded-3 shadow-none fw-bold" value={tableNo} onChange={(e) => setTableNo(e.target.value)}>
-                                        {[1, 2, 3, 4, 5, 6, 7, 8].map(n => <option key={n} value={n}>Bàn {n}</option>)}
+                                    <label className="small fw-bold text-muted mb-2 text-uppercase">Số bàn {storedTable && '(Từ mã QR)'}</label>
+                                    <select className="form-select p-3 border-0 bg-light rounded-3 shadow-none fw-bold" disabled={!!storedTable} value={tableNo} onChange={(e) => setTableNo(e.target.value)}>
+                                        {Array.from({ length: 50 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Bàn {n}</option>)}
                                     </select>
                                 </div>
                             )}

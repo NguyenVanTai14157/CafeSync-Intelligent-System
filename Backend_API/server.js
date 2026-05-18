@@ -179,25 +179,4 @@ app.get('/api/products/:id', async (req, res) => {
         res.status(500).json({ message: "ID không hợp lệ hoặc lỗi Server." });
     }
 });
-// Endpoint nhận tín hiệu thanh toán thành công từ PayOS
-app.post("/api/payment/webhook", async (req, res) => {
-    const { data, code } = req.body;
-    if (code === "00") {
-        try {
-            const Order = require('./src/models/Order');
-            const updatedOrder = await Order.findOneAndUpdate(
-                { orderID: `CFS${data.orderCode}` },
-                { status: "Chờ xác nhận" },
-                { new: true }
-            );
-            console.log(`💰 Tiền đã về cho đơn CFS${data.orderCode}. Đang đợi nhân viên duyệt.`);
-            
-            if (updatedOrder) {
-                app.get('io').emit('new_order', updatedOrder);
-            }
-        } catch (err) {
-            console.error("Lỗi cập nhật Webhook:", err);
-        }
-    }
-    res.json({ message: "Ok" });
-});
+// Endpoint nhận tín hiệu thanh toán thành công (Đã chuyển sang orderRoutes/receiveWebhook)

@@ -45,12 +45,15 @@ const createOrder = async (req, res) => {
 
       const orderCode = Number(finalOrderID.replace(/[^0-9]/g, ""));
 
+      const FRONTEND_URL = process.env.FRONTEND_URL || "https://cafe-sync-intelligent-system.vercel.app";
+      const BACKEND_URL = process.env.BACKEND_URL || "https://cafesync-intelligent-system-sntf.onrender.com";
+
       const paymentData = {
         orderCode: orderCode,
         amount: totalPrice,
         description: `TT don ${finalOrderID.slice(-8)}`, // Viết tắt và chỉ lấy 8 số cuối của ID cho ngắn
-        returnUrl: `http://localhost:3001/track-order`,
-        cancelUrl: `http://localhost:5000/api/orders/cancel/${finalOrderID}`,
+        returnUrl: `${FRONTEND_URL}/track-order`,
+        cancelUrl: `${BACKEND_URL}/api/orders/cancel/${finalOrderID}`,
       };
 
       const paymentLinkRes = await payosInstance.createPaymentLink(paymentData);
@@ -144,10 +147,10 @@ const deleteOrder = async (req, res) => {
 // 📌 7. Hủy đơn khi khách nhấn Hủy trên PayOS
 const cancelOrder = async (req, res) => {
   try {
-    const { orderId } = req.params;
+    const FRONTEND_URL = process.env.FRONTEND_URL || "https://cafe-sync-intelligent-system.vercel.app";
     await Order.findOneAndDelete({ orderID: orderId });
     console.log(`🗑️ Đã xóa vĩnh viễn đơn hàng hủy: ${orderId}`);
-    res.redirect(`http://localhost:3001/cart?status=cancelled`);
+    res.redirect(`${FRONTEND_URL}/cart?status=cancelled`);
   } catch (error) {
     res.status(500).json({ message: "Không thể xử lý yêu cầu xóa đơn." });
   }

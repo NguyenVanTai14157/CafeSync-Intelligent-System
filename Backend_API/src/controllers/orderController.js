@@ -164,13 +164,20 @@ const cancelOrder = async (req, res) => {
 const receiveWebhook = async (req, res) => {
   try {
     console.log("🔔 Đã nhận tín hiệu từ PayOS:", req.body);
-    // Trong hàm receiveWebhook (orderController.js)
     const { data } = req.body;
     if (data) {
-      const orderCodeStr = data.orderCode.toString();
-      // Tìm đơn hàng có orderID chứa dãy số orderCode từ PayOS gửi về
+      const orderCodeNum = data.orderCode;
+      console.log(`🔎 Đang tìm đơn hàng khớp với mã PayOS: ${orderCodeNum}`);
+      
+      // Tìm bằng nhiều cách: khớp chính xác hoặc khớp dãy số trong CFS...
       const updatedOrder = await Order.findOneAndUpdate(
-        { orderID: { $regex: orderCodeStr } },
+        { 
+          $or: [
+            { orderID: String(orderCodeNum) },
+            { orderID: `CFS${orderCodeNum}` },
+            { orderID: { $regex: String(orderCodeNum) } }
+          ]
+        },
         { status: "Đã thanh toán" },
         { new: true }
       );

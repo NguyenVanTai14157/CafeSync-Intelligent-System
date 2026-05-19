@@ -166,7 +166,7 @@ const OrderManagementPage = () => {
           <Button 
             size="small" 
             onClick={() => openStatusModal(record)}
-            disabled={record.status === "Hoàn thành"}
+            disabled={(record.paymentMethod !== "Tiền mặt") && (record.status === "Hoàn thành" || record.status === "Đã thanh toán")}
           >
             Đổi trạng thái
           </Button>

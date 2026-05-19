@@ -163,7 +163,11 @@ const OrderManagementPage = () => {
       key: "actions",
       render: (_, record) => (
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <Button size="small" onClick={() => openStatusModal(record)}>
+          <Button 
+            size="small" 
+            onClick={() => openStatusModal(record)}
+            disabled={record.status === "Hoàn thành"}
+          >
             Đổi trạng thái
           </Button>
           <Popconfirm
@@ -206,11 +210,20 @@ const OrderManagementPage = () => {
         onOk={handleUpdateStatus}
         okText="Cập nhật"
       >
+        {editingOrder?.status === "Đã thanh toán" && (
+          <div style={{ marginBottom: 16, color: "#16a34a", fontWeight: "bold" }}>
+            ✓ Đơn hàng này đã được thanh toán trực tuyến.
+          </div>
+        )}
         <Select
           value={status}
           onChange={setStatus}
           style={{ width: "100%" }}
-          options={statusOptions}
+          options={
+            editingOrder?.status === "Đã thanh toán"
+              ? statusOptions.filter(opt => opt.value === "Đã thanh toán" || opt.value === "Hoàn thành")
+              : statusOptions
+          }
         />
       </Modal>
     </div>

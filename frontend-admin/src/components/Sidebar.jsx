@@ -29,36 +29,47 @@ const Sidebar = ({ collapsed }) => {
       label: "Dashboard",
       onClick: () => navigate("/"),
     },
-    {
-      key: "/orders",
-      icon: <FileTextOutlined />,
-      label: "Đơn hàng",
-      onClick: () => navigate("/orders"),
-    },
   ];
 
-  if (role === "admin") {
+  // 2. Chức năng QUẢN LÝ (Chỉ dành cho QUẢN LÝ)
+  if (role === "manager" || role === "quanly") {
     menuItems.push(
       { type: "divider" },
-      { label: "QUẢN TRỊ", type: "group", children: [
+      { label: "QUẢN LÝ VẬN HÀNH", type: "group", children: [
+        { key: "/orders", icon: <FileTextOutlined />, label: "Đơn hàng", onClick: () => navigate("/orders") },
         { key: "/CategoryPage", icon: <AppstoreOutlined />, label: "Danh mục", onClick: () => navigate("/CategoryPage") },
         { key: "/products", icon: <CoffeeOutlined />, label: "Sản phẩm", onClick: () => navigate("/products") },
         { key: "/ingredients", icon: <DatabaseOutlined />, label: "Kho hàng", onClick: () => navigate("/ingredients") },
         { key: "/tables", icon: <AppstoreOutlined />, label: "Bàn & QR", onClick: () => navigate("/tables") },
-        { key: "/users", icon: <UserOutlined />, label: "Nhân sự", onClick: () => navigate("/users") },
       ]},
       { type: "divider" },
       { label: "PHÂN TÍCH", type: "group", children: [
         { key: "/reports", icon: <LineChartOutlined />, label: "Báo cáo", onClick: () => navigate("/reports") },
       ]}
     );
-  } else if (role === "nhanvien") {
-    menuItems.push({
-      key: "/pos",
-      icon: <ShoppingCartOutlined />,
-      label: "Bán hàng (POS)",
-      onClick: () => navigate("/pos"),
-    });
+  }
+
+  // 3. Chức năng QUẢN TRỊ (Chỉ dành cho ADMIN)
+  if (role === "admin") {
+    menuItems.push(
+      { type: "divider" },
+      { label: "QUẢN TRỊ", type: "group", children: [
+        { key: "/users", icon: <UserOutlined />, label: "Nhân sự", onClick: () => navigate("/users") },
+      ]}
+    );
+  }
+
+  // 4. Chức năng NHÂN VIÊN & POS (Những role này được dùng POS)
+  if (role === "nhanvien") {
+    menuItems.push(
+      { key: "/orders", icon: <FileTextOutlined />, label: "Đơn hàng", onClick: () => navigate("/orders") },
+      {
+        key: "/pos",
+        icon: <ShoppingCartOutlined />,
+        label: "Bán hàng (POS)",
+        onClick: () => navigate("/pos"),
+      }
+    );
   }
 
   return (

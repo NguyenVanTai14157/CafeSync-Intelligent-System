@@ -83,7 +83,20 @@ const UserManagementPage = () => {
   const columns = [
     { title: "Email", dataIndex: "email", key: "email" },
     { title: "Tên", dataIndex: "name", key: "name" },
-    { title: "Vai trò", dataIndex: "role", key: "role" },
+    { 
+      title: "Vai trò", 
+      dataIndex: "role", 
+      key: "role",
+      render: (role) => {
+        const labels = {
+          'admin': 'Quản trị',
+          'manager': 'Quản lý',
+          'nhanvien': 'Nhân viên',
+          'customer': 'Khách hàng'
+        };
+        return labels[role] || role;
+      }
+    },
     { title: "Ngày tạo", dataIndex: "createdAt", key: "createdAt", render: v => new Date(v).toLocaleString() },
     {
       title: "Thao tác",
@@ -173,9 +186,10 @@ const UserManagementPage = () => {
             rules={[{ required: true, message: "Bắt buộc chọn vai trò" }]}
           >
             <Select>
-              <Select.Option value="admin">Admin</Select.Option>
+              <Select.Option value="admin">Quản trị</Select.Option>
+              <Select.Option value="manager">Quản lý</Select.Option>
               <Select.Option value="nhanvien">Nhân viên</Select.Option>
-              <Select.Option value="customer">Customer</Select.Option>
+              <Select.Option value="customer">Khách hàng</Select.Option>
             </Select>
           </Form.Item>
         </Form>

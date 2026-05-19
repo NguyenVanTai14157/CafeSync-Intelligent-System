@@ -20,7 +20,17 @@ const Header = ({ collapsed, setCollapsed }) => {
 
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
-  const userName = user?.name || "Admin";
+  const userName = user?.name || "Người dùng";
+
+  const getRoleLabel = (role) => {
+    const roles = {
+      'admin': 'Quản trị',
+      'manager': 'Quản lý',
+      'quanly': 'Quản lý',
+      'nhanvien': 'Nhân viên'
+    };
+    return roles[role?.toLowerCase()] || role;
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -89,7 +99,7 @@ const Header = ({ collapsed, setCollapsed }) => {
           style={{ fontSize: "16px", width: 64, height: 64 }}
         />
         <Breadcrumb style={{ marginLeft: 16 }}>
-          <Breadcrumb.Item>Admin</Breadcrumb.Item>
+          <Breadcrumb.Item>{getRoleLabel(user?.role)}</Breadcrumb.Item>
           <Breadcrumb.Item>{pathContent}</Breadcrumb.Item>
         </Breadcrumb>
       </div>
@@ -100,7 +110,7 @@ const Header = ({ collapsed, setCollapsed }) => {
             <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1677ff" }} />
             <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.2" }}>
               <Text strong style={{ fontSize: 13 }}>{userName}</Text>
-              <Text type="secondary" style={{ fontSize: 11 }}>{user?.role?.toUpperCase()}</Text>
+              <Text type="secondary" style={{ fontSize: 11 }}>{getRoleLabel(user?.role)}</Text>
             </div>
           </Space>
         </Dropdown>
@@ -129,7 +139,7 @@ const Header = ({ collapsed, setCollapsed }) => {
             <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
             <Descriptions.Item label="Vai trò">
               <Text type="secondary">
-                {user.role === "admin" ? "Quản trị viên" : "Nhân viên"}
+                {getRoleLabel(user?.role)}
               </Text>
             </Descriptions.Item>
           </Descriptions>

@@ -33,8 +33,11 @@ ChartJS.register(
   Filler
 );
 
+import API_URL from "../config";
+
 const { Title, Text } = Typography;
-const socket = io("https://cafesync-intelligent-system-sntf.onrender.com");
+
+const socket = io(API_URL);
 
 const WelcomePage = () => {
   const [stats, setStats] = useState(null);
@@ -49,9 +52,9 @@ const WelcomePage = () => {
   const fetchData = async () => {
     try {
       const [statsRes, ordersRes, chartRes] = await Promise.all([
-        axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/stats"),
-        axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/orders"),
-        axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/chart/week")
+        axios.get(`${API_URL}/api/reports/stats`),
+        axios.get(`${API_URL}/api/orders`),
+        axios.get(`${API_URL}/api/reports/chart/week`)
       ]);
       setStats(statsRes.data);
       setAllOrders(ordersRes.data);

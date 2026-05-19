@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import API_URL from '../config';
 import '../assets/css/style.css';
 
 const Checkout = () => {
@@ -13,7 +14,7 @@ const Checkout = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const navigate = useNavigate();
-    const API_URL = "https://cafesync-intelligent-system-sntf.onrender.com";
+    
 
     useEffect(() => {
         const savedCart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -41,6 +42,8 @@ const Checkout = () => {
         const savedName = localStorage.getItem('userName');
         const savedEmail = localStorage.getItem('userEmail');
 
+        const finalTableNumber = localStorage.getItem('tableNumber') || tableNo;
+
         const orderData = {
             orderID: finalOrderID,
             items: cart.map(item => ({
@@ -51,8 +54,8 @@ const Checkout = () => {
                 note: item.note
             })),
             totalPrice: totalPrice,
-            location: orderType === "Mang đi" ? "Mang đi" : `Bàn ${tableNo}`,
-            tableNumber: orderType === "Tại bàn" ? Number(tableNo) : null,
+            location: orderType === "Mang đi" ? "Mang đi" : `Bàn ${finalTableNumber}`,
+            tableNumber: orderType === "Tại bàn" ? Number(finalTableNumber) : null,
             paymentMethod: paymentMethod,
             customerEmail: savedEmail || savedName || "Guest",
             customerName: savedName || "Khách vãn lai"

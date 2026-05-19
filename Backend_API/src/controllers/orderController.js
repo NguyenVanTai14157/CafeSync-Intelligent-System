@@ -4,12 +4,17 @@ const Order = require("../models/Order");
 const createOrder = async (req, res) => {
   try {
     const { items, totalPrice, location, tableNumber, paymentMethod, orderID, customerEmail } = req.body;
+
     const finalOrderID = orderID || `CFS${Math.floor(Math.random() * 900000 + 100000)}`;
     const Table = require('../models/Table');
 
     // Cập nhật trạng thái bàn nếu có chọn bàn
     if (tableNumber) {
-      await Table.findOneAndUpdate({ tableNumber }, { status: 'Đang phục vụ' });
+      const updatedTable = await Table.findOneAndUpdate({ tableNumber }, { status: 'Đang phục vụ' }, { new: true });
+      const io = req.app.get('io');
+      if (io && updatedTable) {
+        io.emit('table_updated', updatedTable.toObject());
+      }
     }
 
     // --- TRƯỜNG HỢP 1: THANH TOÁN TIỀN MẶT ---
@@ -172,6 +177,19 @@ const receiveWebhook = async (req, res) => {
 
       if (updatedOrder) {
         console.log(`✅ Tuyệt vời! Đơn ${updatedOrder.orderID} đã tự động đổi sang Đã thanh toán`);
+        
+        // Cập nhật trạng thái bàn sang "Đang phục vụ" nếu chưa cập nhật
+        if (updatedOrder.tableNumber) {
+          const Table = require('../models/Table');
+          const updatedTable = await Table.findOneAndUpdate(
+            { tableNumber: updatedOrder.tableNumber }, 
+            { status: 'Đang phục vụ' },
+            { new: true }
+          );
+          const io = req.app.get('io');
+          if (io && updatedTable) io.emit('table_updated', updatedTable.toObject());
+        }
+
         // Bắn socket cho admin thấy luôn
         const io = req.app.get('io');
         if (io) io.emit('order_updated', updatedOrder);

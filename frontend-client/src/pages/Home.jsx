@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import API_URL from '../config';
 import '../assets/css/style.css';
 import Chatbot from '../components/ChatBot';
 import { showToast, showConfirm } from '../utils/toast'; // Import bộ thông báo xịn
@@ -14,7 +15,19 @@ const Home = ({ cartCount }) => {
     const [isPersonalized, setIsPersonalized] = useState(false);
 
     const navigate = useNavigate();
-    const API_URL = "https://cafesync-intelligent-system-sntf.onrender.com";
+    const location = useLocation();
+    
+    // Đọc số bàn từ URL sau khi quét QR (ví dụ: ?table=1)
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const table = queryParams.get('table');
+        if (table) {
+            localStorage.setItem('tableNumber', table);
+            console.log("📍 Đã nhận diện số bàn từ QR:", table);
+            showToast(`Chào mừng bạn tại Bàn ${table}!`);
+        }
+    }, [location]);
+    
 
     // Danh mục tương ứng với ID trong Database của Yến
     const categoryMap = {

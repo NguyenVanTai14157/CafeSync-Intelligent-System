@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Table, Typography, Tag, Button, Modal, Select, message, Popconfirm, Input } from "antd";
 import axios from "axios";
+import API_URL from "../config";
 
 const { Title } = Typography;
 
@@ -33,7 +34,7 @@ const OrderManagementPage = () => {
   // Load orders
   const fetchOrders = (silent = false) => {
     if (!silent) setLoading(true);
-    axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/orders")
+    axios.get(`${API_URL}/api/orders`)
       .then(res => setOrders(res.data))
       .catch(() => { if (!silent) setOrders([]); })
       .finally(() => { if (!silent) setLoading(false); });
@@ -59,7 +60,7 @@ const OrderManagementPage = () => {
   // Update order status
   const handleUpdateStatus = async () => {
     try {
-      await axios.put(`https://cafesync-intelligent-system-sntf.onrender.com/api/orders/${editingOrder._id}/status`, { status });
+      await axios.put(`${API_URL}/api/orders/${editingOrder._id}/status`, { status });
       message.success("Cập nhật trạng thái thành công!");
       setEditingOrder(null);
       fetchOrders();
@@ -71,7 +72,7 @@ const OrderManagementPage = () => {
   // Delete order
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`https://cafesync-intelligent-system-sntf.onrender.com/api/orders/${id}`);
+      await axios.delete(`${API_URL}/api/orders/${id}`);
       message.success("Xóa đơn hàng thành công!");
       fetchOrders();
     } catch {
@@ -88,6 +89,12 @@ const OrderManagementPage = () => {
       render: (text, record) => (
         record.tableNumber ? <Tag color="gold">Bàn {record.tableNumber}</Tag> : <span>{text}</span>
       )
+    },
+    {
+      title: "Khách hàng",
+      dataIndex: "customerName",
+      key: "customerName",
+      render: (text) => <b>{text || "Khách vãn lai"}</b>
     },
     {
       title: "Sản phẩm",

@@ -74,21 +74,21 @@ const Header = ({ collapsed, setCollapsed }) => {
 
   return (
     <AntHeader
+      className="glass-effect"
       style={{
-        background: "#ffffff",
         padding: "0 24px",
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        boxShadow: "0 1px 4px rgba(0,21,41,0.08)",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.03)",
         position: "fixed",
         top: 0,
         right: 0,
-        height: 64,
+        height: 72,
         zIndex: 1000,
         transition: "all 0.2s",
-        marginLeft: collapsed ? 80 : 240,
-        width: collapsed ? "calc(100% - 80px)" : "calc(100% - 240px)",
+        marginLeft: collapsed ? 80 : 260,
+        width: collapsed ? "calc(100% - 80px)" : "calc(100% - 260px)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>
@@ -96,24 +96,63 @@ const Header = ({ collapsed, setCollapsed }) => {
           type="text"
           icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           onClick={() => setCollapsed(!collapsed)}
-          style={{ fontSize: "16px", width: 64, height: 64 }}
+          style={{ 
+            fontSize: "18px", 
+            width: 40, 
+            height: 40, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            borderRadius: '8px'
+          }}
         />
-        <Breadcrumb style={{ marginLeft: 16 }}>
-          <Breadcrumb.Item>{getRoleLabel(user?.role)}</Breadcrumb.Item>
-          <Breadcrumb.Item>{pathContent}</Breadcrumb.Item>
-        </Breadcrumb>
+        <Breadcrumb 
+          style={{ marginLeft: 24 }}
+          items={[
+            { title: <span style={{ color: "rgba(0,0,0,0.45)", fontSize: 13 }}>{getRoleLabel(user?.role)}</span> },
+            { title: <span style={{ color: "rgba(0,0,0,0.85)", fontWeight: 600, fontSize: 13 }}>{pathContent}</span> }
+          ]}
+        />
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <Badge dot color="#1677ff" offset={[-2, 4]}>
+          <Button 
+            type="text" 
+            icon={<BellOutlined style={{ fontSize: 18, color: "rgba(0,0,0,0.65)" }} />} 
+            style={{ width: 40, height: 40, borderRadius: 8 }}
+          />
+        </Badge>
+        
         <Dropdown menu={{ items }} placement="bottomRight" arrow>
-          <Space style={{ cursor: "pointer", padding: "4px 8px", borderRadius: 4, transition: "all 0.3s" }} className="header-user-dropdown">
-            <Avatar icon={<UserOutlined />} style={{ backgroundColor: "#1677ff" }} />
+          <div style={{ 
+            display: "flex", 
+            alignItems: "center", 
+            gap: 12, 
+            cursor: "pointer", 
+            padding: "6px 12px", 
+            borderRadius: 10,
+            transition: "all 0.3s",
+            background: "rgba(0,0,0,0.02)" 
+          }} className="header-user-dropdown">
+            <Avatar 
+              icon={<UserOutlined />} 
+              style={{ 
+                backgroundColor: "#1677ff",
+                boxShadow: "0 2px 8px rgba(22, 119, 255, 0.2)"
+              }} 
+            />
             <div style={{ display: "flex", flexDirection: "column", lineHeight: "1.2" }}>
-              <Text strong style={{ fontSize: 13 }}>{userName}</Text>
-              <Text type="secondary" style={{ fontSize: 11 }}>{getRoleLabel(user?.role)}</Text>
+              <Text strong style={{ fontSize: 13, color: "rgba(0,0,0,0.85)" }}>{userName}</Text>
+              <Text style={{ fontSize: 11, color: "rgba(0,0,0,0.45)", fontWeight: 500 }}>{getRoleLabel(user?.role)}</Text>
             </div>
-          </Space>
+          </div>
         </Dropdown>
+        <style>{`
+          .header-user-dropdown:hover {
+            background: rgba(0,0,0,0.05) !important;
+          }
+        `}</style>
       </div>
 
       <Modal

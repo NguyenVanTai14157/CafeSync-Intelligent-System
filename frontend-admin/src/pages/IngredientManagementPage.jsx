@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Table, Typography, Spin, Button, Modal, Form, Input, InputNumber, message, Popconfirm, Tag } from "antd";
-import { EditOutlined, DeleteOutlined, WarningOutlined } from "@ant-design/icons";
+import { EditOutlined, DeleteOutlined, WarningOutlined, PlusOutlined } from "@ant-design/icons";
 import axios from "axios";
 
 const { Title, Text } = Typography;
@@ -85,31 +85,48 @@ const IngredientManagementPage = () => {
       title: "Số lượng", 
       dataIndex: "quantity", 
       key: "quantity",
-      render: (v, record) => (
-        <span style={{ 
-          color: v <= record.minStock ? "#cf1322" : "inherit", 
-          fontWeight: v <= record.minStock ? "bold" : "normal" 
-        }}>
-          {v} {v <= record.minStock && <WarningOutlined style={{ marginLeft: 4 }} />}
-        </span>
-      )
+      render: (v, record) => {
+        const isLow = v <= record.minStock;
+        return (
+          <Tag color={isLow ? "red" : "blue"} style={{ borderRadius: 6, padding: "2px 10px", fontWeight: 600 }}>
+            {v} {record.unit} {isLow && <WarningOutlined />}
+          </Tag>
+        );
+      }
     },
-    { title: "Đơn vị", dataIndex: "unit", key: "unit" },
-    { title: "Tồn tối thiểu", dataIndex: "minStock", key: "minStock" },
-    { title: "Giá", dataIndex: "price", key: "price", render: v => v?.toLocaleString("vi-VN") + " VND" },
+    { title: "Tồn tối thiểu", dataIndex: "minStock", key: "minStock", render: (v, record) => `${v} ${record.unit}` },
+    { 
+      title: "Giá nhập", 
+      dataIndex: "price", 
+      key: "price", 
+      render: v => <Text strong style={{ color: "#059669" }}>{v?.toLocaleString("vi-VN")} ₫</Text> 
+    },
     {
       title: "Thao tác",
       key: "actions",
+      width: 150,
       render: (_, record) => (
-        <div style={{ display: "flex", gap: 8 }}>
-          <Button size="small" icon={<EditOutlined />} onClick={() => openModal(record)}>Sửa</Button>
+        <div style={{ display: "flex", gap: 12 }}>
+          <Button 
+            type="text"
+            icon={<EditOutlined style={{ color: "#1677ff" }} />} 
+            onClick={() => openModal(record)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(22, 119, 255, 0.05)' }}
+          />
           <Popconfirm
-            title="Bạn chắc chắn muốn xóa?"
+            title="Xóa nguyên liệu"
+            description="Bạn có chắc chắn muốn xóa nguyên liệu này?"
             onConfirm={() => handleDelete(record._id)}
             okText="Xóa"
             cancelText="Hủy"
+            okButtonProps={{ danger: true }}
           >
-            <Button size="small" danger icon={<DeleteOutlined />}>Xóa</Button>
+            <Button 
+              type="text" 
+              danger 
+              icon={<DeleteOutlined />}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 77, 79, 0.05)' }}
+            />
           </Popconfirm>
         </div>
       ),
@@ -121,31 +138,78 @@ const IngredientManagementPage = () => {
     return itemName.includes(searchKeyword);
   });
   return (
-    <div>
-      <Title level={3}>📦 Quản lý kho nguyên liệu</Title>
+    <div className="modern-card animated-fade-in">
+      <div style={{ marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ 
+          width: 48, 
+          height: 48, 
+          borderRadius: 12, 
+          background: "linear-gradient(135deg, #1677ff 0%, #0958d9 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 24,
+          boxShadow: "0 4px 12px rgba(22, 119, 255, 0.2)"
+        }}>📦</div>
+        <div>
+          <Title level={2} style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Quản lý kho nguyên liệu</Title>
+          <Text type="secondary">Theo dõi và cập nhật số lượng nguyên liệu trong kho</Text>
+        </div>
+      </div>
 
-      {/* 2 Nút thêm và tìm kiếm nằm ngang hàng */}
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
-        <Button type="primary" onClick={() => openModal()}>
-          Thêm nguyên liệu
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24, gap: 16 }}>
+        <Button 
+          type="primary" 
+          size="large" 
+          icon={<PlusOutlined />} 
+          onClick={() => openModal()}
+          style={{ height: 48, padding: "0 24px", borderRadius: 10 }}
+        >
+          Thêm nguyên liệu mới
         </Button>
         <Input.Search
-          placeholder="Tìm kiếm nguyên liệu..."
+          placeholder="Tìm kiếm nguyên liệu theo tên..."
           allowClear
+          size="large"
           onChange={(e) => setSearchText(e.target.value)}
-          style={{ width: 300 }}
+          style={{ width: 350 }}
+          className="search-input-modern"
         />
       </div>
+
       {loading ? (
-        <Spin />
+        <div style={{ textAlign: "center", padding: "50px 0" }}><Spin size="large" /></div>
       ) : (
         <Table
-          dataSource={filteredIngredients} // Nạp dữ liệu ĐÃ QUA BỘ LỌC vào đây
+          dataSource={filteredIngredients}
           columns={columns}
           rowKey="_id"
-          pagination={{ pageSize: 8 }}
+          pagination={{ 
+            pageSize: 8,
+            showTotal: (total) => `Tổng cộng ${total} nguyên liệu`,
+            position: ["bottomRight"] 
+          }}
+          className="custom-table"
         />
       )}
+      <style>{`
+        .animated-fade-in {
+          animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .search-input-modern .ant-input-affix-wrapper {
+          border-radius: 10px !important;
+          background: #f8fafc !important;
+          border: 1px solid #e2e8f0 !important;
+        }
+        .search-input-modern .ant-input-affix-wrapper-focused {
+          background: #fff !important;
+          box-shadow: 0 0 0 2px rgba(22, 119, 255, 0.1) !important;
+        }
+      `}</style>
 
       <Modal
         open={modalOpen}

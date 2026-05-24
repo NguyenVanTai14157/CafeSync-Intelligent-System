@@ -43,13 +43,15 @@ const AdminLayout = ({ children }) => {
         <Header collapsed={collapsed} setCollapsed={setCollapsed} />
         <Content
           style={{
-            margin: "88px 24px 24px",
+            margin: "96px 24px 24px",
             padding: 24,
-            minHeight: 280,
-            background: "#fff",
-            borderRadius: 8,
-            marginLeft: collapsed ? 104 : 264,
+            minHeight: "calc(100vh - 120px)",
+            background: "#ffffff",
+            borderRadius: 16,
+            marginLeft: collapsed ? 104 : 284,
             transition: "all 0.2s",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.02)",
+            border: "1px solid #f1f5f9"
           }}
         >
           {children}

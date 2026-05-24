@@ -1,3 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-color: #1677ff;
+  --secondary-color: #722ed1;
+  --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  --sidebar-bg: #001529;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.3);
+  --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -11,5 +23,57 @@ html, body, #root {
 
 body {
   margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
   background-color: #f1f5f9;
+  scroll-behavior: smooth;
 }
+
+/* Glassmorphism utility */
+.glass-effect {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #aaa;
+}
+
+/* Ant Design Table Overrides */
+.ant-table {
+  background: transparent !important;
+}
+
+.ant-table-thead > tr > th {
+  background: rgba(250, 250, 250, 0.5) !important;
+  font-weight: 600 !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: rgba(22, 119, 255, 0.02) !important;
+}
+
+.modern-card {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid #f0f0f0;
+  padding: 24px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.modern-card:hover {
+  box-shadow: 0 12px 48px 0 rgba(31, 38, 135, 0.12);
+}

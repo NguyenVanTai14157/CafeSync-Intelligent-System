@@ -21,7 +21,6 @@ const Detail = () => {
         setCartCount(cart.reduce((sum, item) => sum + item.quantity, 0));
     };
 
-    // Kiểm tra xem món này đã nằm trong danh sách yêu thích chưa
     const checkFavoriteStatus = (productId) => {
         const favs = JSON.parse(localStorage.getItem('favorites')) || [];
         setIsFavorite(favs.some(f => f._id === productId));
@@ -46,10 +45,41 @@ const Detail = () => {
 
     if (!product) return <div className="loading-state"> Đang pha chế...</div>;
 
+    // Định nghĩa giá tiền của từng topping
+    const getToppingPrice = (toppingName) => {
+        const nameLower = toppingName.toLowerCase();
+        if (nameLower.includes("kem phô mai") || nameLower.includes("cream cheese") || nameLower.includes("cheese") || nameLower.includes("macchiato")) return 10000;
+        if (nameLower.includes("trân châu") || nameLower.includes("thạch") || nameLower.includes("pudding")) return 5000;
+        if (nameLower.includes("hạt chia") || nameLower.includes("basil")) return 3000;
+        return 5000; // Mặc định
+    };
+
+    // Giả lập lượng Calo dựa trên tên sản phẩm
+    const getCalories = () => {
+        if (!product) return 0;
+        const nameLower = product.name.toLowerCase();
+        if (nameLower.includes("sữa đá") || nameLower.includes("sữa nóng")) return 180;
+        if (nameLower.includes("đen đá") || nameLower.includes("americano")) return 15;
+        if (nameLower.includes("bạc xỉu") || nameLower.includes("latte") || nameLower.includes("cappuccino")) return 160;
+        if (nameLower.includes("sinh tố") || nameLower.includes("smoothie")) return 240;
+        if (nameLower.includes("trà sữa")) return 320;
+        if (nameLower.includes("nước ép") || nameLower.includes("juice")) return 130;
+        if (nameLower.includes("trà")) return 65;
+        return 120;
+    };
+
     const getExtraPrice = () => {
-        if (options.size === 'S') return 0;
-        if (options.size === 'L') return 10000;
-        return 5000;
+        let extra = 0;
+        if (options.size === 'S') extra = 0;
+        else if (options.size === 'L') extra = 10000;
+        else extra = 5000; // Size M
+
+        // Cộng giá các toppings đã chọn
+        options.toppings.forEach(t => {
+            extra += getToppingPrice(t);
+        });
+
+        return extra;
     };
 
     const totalPrice = (product.price + getExtraPrice()) * quantity;
@@ -61,7 +91,6 @@ const Detail = () => {
         setOptions({ ...options, toppings: current });
     };
 
-    // Hàm xử lý Yêu thích (Favorite)
     const toggleFavorite = () => {
         let favs = JSON.parse(localStorage.getItem('favorites')) || [];
         if (isFavorite) {
@@ -84,7 +113,7 @@ const Detail = () => {
             quantity,
             options,
             note,
-            category: product.category // Lưu thêm category để phục vụ logic gợi ý
+            category: product.category
         };
         let cart = JSON.parse(localStorage.getItem('cart')) || [];
         const existIdx = cart.findIndex(i => i._id === newItem._id && JSON.stringify(i.options) === JSON.stringify(newItem.options));
@@ -95,96 +124,159 @@ const Detail = () => {
         window.dispatchEvent(new Event('cartUpdated'));
         updateCartCount();
 
-        // Thông báo chuyên nghiệp thay cho alert()
         showToast(`Đã thêm ${quantity} x ${product.name} vào giỏ!`);
+    };
+
+    const sizeMap = {
+        'S': 'Nhỏ (S)',
+        'M': 'Vừa (M)',
+        'L': 'Lớn (L)'
+    };
+
+    const iceMap = {
+        'No ice': 'Không đá',
+        'Less ice': 'Ít đá',
+        'Normal': 'Bình thường',
+        '0%': 'Không đá',
+        '50%': 'Ít đá',
+        '100%': 'Bình thường'
     };
 
     return (
         <div className="detail-page-premium">
-            <div className="top-nav-bar">
-                <button className="nav-icon-btn" onClick={() => navigate(-1)}><i className="bi bi-chevron-left"></i></button>
-                <span className="nav-title">Chi tiết món</span>
-                <button className="nav-icon-btn" onClick={toggleFavorite}>
-                    <i className={`bi ${isFavorite ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
+            <div className="hero-image-wrapper">
+                <img src={`${API_URL}/images/${product.image}`} className="product-hero-image-new" alt={product.name} />
+                
+                {/* Các nút điều hướng nổi đè trên ảnh */}
+                <button className="floating-back-btn" onClick={() => navigate(-1)}>
+                    <i className="bi bi-chevron-left"></i>
                 </button>
+                <div className="floating-right-actions">
+                    <button className="floating-action-btn me-2" onClick={toggleFavorite}>
+                        <i className={`bi ${isFavorite ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
+                    </button>
+                    <button className="floating-action-btn position-relative" onClick={() => navigate('/cart')}>
+                        <i className="bi bi-bag-heart"></i>
+                        {cartCount > 0 && <span className="cart-badge-dot-new">{cartCount}</span>}
+                    </button>
+                </div>
+
+                {/* Huy hiệu Phổ biến */}
+                <span className="popular-badge-float">Phổ biến</span>
             </div>
 
-            <div className="hero-image-container">
-                <img src={`${API_URL}/images/${product.image}`} className="product-hero-image" alt={product.name} />
-            </div>
+            <div className="detail-content-sheet-new">
+                <div className="name-price-row">
+                    <h1 className="premium-item-name-new">{product.name}</h1>
+                    <span className="premium-item-price-new">{(product.price + getExtraPrice()).toLocaleString()}đ</span>
+                </div>
 
-            <div className="detail-content-sheet-full">
-                <h1 className="premium-item-name">{product.name}</h1>
-                <p className="premium-description">{product.description || "Hương vị cà phê đích thực từ CaféSync."}</p>
+                {/* Chỉ số calo giống như bản mẫu */}
+                <div className="calorie-badge">
+                    <i className="bi bi-fire me-1 text-danger"></i>
+                    <span>{getCalories()} CALORIES</span>
+                </div>
 
-                <div className="option-section">
+                {/* Chọn Size dạng viên thuốc rời */}
+                <div className="option-section mt-4">
                     <span className="premium-section-title">Kích cỡ ly</span>
-                    <div className="capsule-selector">
-                        {product.sizes?.map(s => {
-                            let extra = 0;
-                            if (s === 'M') extra = 5000;
-                            else if (s === 'L') extra = 10000;
-                            const finalPrice = product.price + extra;
-                            return (
-                                <div key={s} className={`flex-grow-1 capsule-item ${options.size === s ? 'active' : ''}`} onClick={() => setOptions({ ...options, size: s })}>
-                                    <div style={{ fontWeight: '600' }}>{s}</div>
-                                    <div style={{ fontSize: '0.85rem', opacity: 0.85 }}>{finalPrice.toLocaleString()}đ</div>
-                                </div>
-                            );
-                        })}
+                    <div className="pill-selector-group">
+                        {product.sizes?.map(s => (
+                            <button 
+                                key={s} 
+                                className={`pill-selector-item ${options.size === s ? 'active' : ''}`} 
+                                onClick={() => setOptions({ ...options, size: s })}
+                            >
+                                {sizeMap[s] || s}
+                            </button>
+                        ))}
                     </div>
                 </div>
 
+                {/* Mức đường dạng viên thuốc rời */}
                 <div className="option-section mt-4">
                     <span className="premium-section-title">Mức đường</span>
-                    <div className="capsule-selector-small">
+                    <div className="pill-selector-group">
                         {product.sugarOptions?.map(opt => (
-                            <div key={opt} className={`capsule-item-small ${options.sugar === opt ? 'active' : ''}`} onClick={() => setOptions({ ...options, sugar: opt })}>{opt}</div>
+                            <button 
+                                key={opt} 
+                                className={`pill-selector-item ${options.sugar === opt ? 'active' : ''}`} 
+                                onClick={() => setOptions({ ...options, sugar: opt })}
+                            >
+                                {opt}
+                            </button>
                         ))}
                     </div>
                 </div>
 
+                {/* Mức đá dạng viên thuốc rời */}
                 <div className="option-section mt-4">
                     <span className="premium-section-title">Mức đá</span>
-                    <div className="capsule-selector-small">
+                    <div className="pill-selector-group">
                         {product.iceOptions?.map(opt => (
-                            <div key={opt} className={`capsule-item-small ${options.ice === opt ? 'active' : ''}`} onClick={() => setOptions({ ...options, ice: opt })}>{opt}</div>
+                            <button 
+                                key={opt} 
+                                className={`pill-selector-item ${options.ice === opt ? 'active' : ''}`} 
+                                onClick={() => setOptions({ ...options, ice: opt })}
+                            >
+                                {iceMap[opt] || opt}
+                            </button>
                         ))}
                     </div>
                 </div>
 
+                {/* Topping dạng Checkbox list căn đều */}
                 {product.toppings?.length > 0 && (
                     <div className="option-section mt-4">
                         <span className="premium-section-title">Topping yêu thích</span>
-                        <div className="topping-capsule-group">
-                            {product.toppings.map(t => (
-                                <div key={t} className={`topping-capsule-item ${options.toppings.includes(t) ? 'active' : ''}`} onClick={() => handleToppingToggle(t)}>{t}</div>
-                            ))}
+                        <div className="topping-checkbox-list">
+                            {product.toppings.map(t => {
+                                const isSelected = options.toppings.includes(t);
+                                const toppingPrice = getToppingPrice(t);
+                                return (
+                                    <div key={t} className="topping-checkbox-row" onClick={() => handleToppingToggle(t)}>
+                                        <div className="d-flex align-items-center gap-2">
+                                            <span className="topping-checkbox-icon">
+                                                {isSelected ? (
+                                                    <i className="bi bi-check-square-fill text-dark fs-5"></i>
+                                                ) : (
+                                                    <i className="bi bi-square fs-5" style={{ color: '#ccc' }}></i>
+                                                )}
+                                            </span>
+                                            <span className="topping-name text-dark fw-semibold">{t}</span>
+                                        </div>
+                                        <span className="topping-price text-muted fw-bold">+{toppingPrice.toLocaleString()}đ</span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     </div>
                 )}
 
-                <div className="option-section mt-4 mb-5">
-                    <span className="premium-section-title">Ghi chú cho quán</span>
-                    <textarea className="premium-note-input" rows="2" placeholder="Ví dụ: Ít đường, không lấy ống hút..." value={note} onChange={(e) => setNote(e.target.value)}></textarea>
+                {/* Ghi chú */}
+                <div className="option-section mt-4 mb-5 pb-5">
+                    <span className="premium-section-title">Ghi chú đặc biệt</span>
+                    <textarea 
+                        className="premium-note-input" 
+                        rows="2" 
+                        placeholder="Ví dụ: Ít ngọt, không lấy ống hút, dị ứng hạt..." 
+                        value={note} 
+                        onChange={(e) => setNote(e.target.value)}
+                    ></textarea>
                 </div>
             </div>
 
-            <div className="premium-footer-container">
-                <div className="footer-price-row">
-                    <div className="premium-quantity-stepper">
+            {/* Footer dạng thanh đơn mỏng gọn giống thiết kế */}
+            <div className="premium-footer-container-new">
+                <div className="footer-layout-new">
+                    <div className="premium-quantity-stepper-new">
                         <button onClick={() => quantity > 1 && setQuantity(quantity - 1)}>−</button>
-                        <span className="quantity-num">{quantity}</span>
+                        <span className="quantity-num-new">{quantity}</span>
                         <button onClick={() => setQuantity(quantity + 1)}>+</button>
                     </div>
-                    <div className="final-price-display">{totalPrice.toLocaleString()}đ</div>
-                </div>
-                <div className="footer-button-row">
-                    <button className="bag-icon-btn position-relative" onClick={() => navigate('/cart')}>
-                        <i className="bi bi-bag-heart"></i>
-                        {cartCount > 0 && <span className="cart-badge-dot">{cartCount}</span>}
+                    <button className="btn-add-order-now-new" onClick={handleAddToCart}>
+                        Thêm vào giỏ | {totalPrice.toLocaleString()}đ
                     </button>
-                    <button className="btn-add-order-now" onClick={handleAddToCart}>Thêm vào giỏ</button>
                 </div>
             </div>
         </div>

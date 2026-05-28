@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import Swal from 'sweetalert2'; // Import thư viện thông báo xịn
@@ -21,6 +21,74 @@ const Login = () => {
         if (!fullName) return "bạn";
         return fullName.trim().split(' ').pop();
     };
+
+    // Hàm xử lý Đăng nhập mạng xã hội (Google & Facebook)
+    const handleSocialLogin = (provider) => {
+        if (provider === 'google') {
+            // Chuyển hướng trực tiếp đến route Passport OAuth của Backend
+            window.location.href = `${API_URL}/api/auth/google`;
+        } else {
+            Swal.fire({
+                icon: 'info',
+                title: 'Thông báo',
+                text: 'Chức năng đăng nhập Facebook hiện đang bảo trì, vui lòng sử dụng đăng nhập bằng Google!',
+                confirmButtonColor: '#826644'
+            });
+        }
+    };
+
+    const handleSocialSuccess = (data) => {
+        if (data.token) {
+            localStorage.removeItem('lastOrderDBId');
+            localStorage.removeItem('cart');
+            localStorage.setItem('userToken', data.token);
+            localStorage.setItem('userName', data.user.name);
+            localStorage.setItem('userEmail', data.user.email);
+
+            const friendlyName = getFirstName(data.user.name);
+            Swal.fire({
+                icon: 'success',
+                title: `Chào ${friendlyName}!`,
+                text: 'Bạn đã đăng nhập thành công bằng tài khoản mạng xã hội',
+                confirmButtonColor: '#826644',
+                timer: 2000,
+                showConfirmButton: false
+            });
+
+            setTimeout(() => {
+                navigate('/');
+                window.location.reload();
+            }, 2000);
+        }
+    };
+
+    // Effect lắng nghe thông tin trả về từ Google OAuth Callback qua URL params
+    useEffect(() => {
+        const queryParams = new URLSearchParams(window.location.search);
+        const tokenParam = queryParams.get('token');
+        const nameParam = queryParams.get('name');
+        const emailParam = queryParams.get('email');
+        const errorParam = queryParams.get('error');
+
+        if (tokenParam && nameParam && emailParam) {
+            // Xóa sạch query parameters trên URL để bảo mật
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Đăng nhập thành công
+            handleSocialSuccess({
+                token: tokenParam,
+                user: { name: nameParam, email: emailParam }
+            });
+        } else if (errorParam) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi đăng nhập Google',
+                text: 'Đăng nhập bằng tài khoản Google thất bại. Vui lòng thử lại!',
+                confirmButtonColor: '#826644'
+            });
+        }
+    }, [navigate]);
 
     // 3. Hàm xử lý Đăng nhập
     const handleLogin = async (e) => {
@@ -184,10 +252,10 @@ const Login = () => {
                     )}
 
                     <div className="text-center mt-4">
-                        <span className="text-white-50 small">or login with</span>
+                        <span className="text-white-50 small">hoặc đăng nhập bằng</span>
                         <div className="auth-social-group mt-2">
-                            <a href="#" className="auth-social-icon"><i className="bi bi-facebook"></i></a>
-                            <a href="#" className="auth-social-icon"><i className="bi bi-google"></i></a>
+                            <button type="button" className="auth-social-icon border-0 bg-transparent" onClick={() => handleSocialLogin('facebook')}><i className="bi bi-facebook"></i></button>
+                            <button type="button" className="auth-social-icon border-0 bg-transparent" onClick={() => handleSocialLogin('google')}><i className="bi bi-google"></i></button>
                         </div>
                     </div>
                 </div>

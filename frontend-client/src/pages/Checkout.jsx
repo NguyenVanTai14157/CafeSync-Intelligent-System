@@ -8,9 +8,7 @@ import '../assets/css/style.css';
 const Checkout = () => {
     const storedTable = localStorage.getItem('tableNumber');
     const [cart, setCart] = useState([]);
-    const [orderType, setOrderType] = useState(storedTable ? "Tại bàn" : "Tại bàn");
-    const [tableNo, setTableNo] = useState(storedTable || "1");
-    const [paymentMethod, setPaymentMethod] = useState("Tiền mặt");
+    const [paymentMethod, setPaymentMethod] = useState("Chuyển khoản");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const navigate = useNavigate();
@@ -42,8 +40,6 @@ const Checkout = () => {
         const savedName = localStorage.getItem('userName');
         const savedEmail = localStorage.getItem('userEmail');
 
-        const finalTableNumber = localStorage.getItem('tableNumber') || tableNo;
-
         const orderData = {
             orderID: finalOrderID,
             items: cart.map(item => ({
@@ -54,8 +50,8 @@ const Checkout = () => {
                 note: item.note
             })),
             totalPrice: totalPrice,
-            location: orderType === "Mang đi" ? "Mang đi" : `Bàn ${finalTableNumber}`,
-            tableNumber: orderType === "Tại bàn" ? Number(finalTableNumber) : null,
+            location: storedTable ? `Bàn ${storedTable}` : "Mang đi",
+            tableNumber: storedTable ? Number(storedTable) : null,
             paymentMethod: paymentMethod,
             customerEmail: savedEmail || savedName || "Guest",
             customerName: savedName || "Khách vãn lai"
@@ -147,21 +143,12 @@ const Checkout = () => {
 
                         {/* Phương thức thanh toán */}
                         <div className="card border-0 shadow-sm rounded-4 p-4">
-                            <h5 className="fw-bold mb-4">Phương thức thanh toán</h5>
-                            <div className="row g-3">
-                                <div className="col-6">
-                                    <div className={`p-3 rounded-4 border text-center ${paymentMethod === 'Tiền mặt' ? 'border-primary bg-light shadow-sm' : ''}`}
-                                        onClick={() => setPaymentMethod('Tiền mặt')} style={{ cursor: 'pointer', transition: '0.3s' }}>
-                                        <i className="bi bi-cash-stack fs-2 d-block mb-2"></i>
-                                        <span className="fw-bold small">Tiền mặt</span>
-                                    </div>
-                                </div>
-                                <div className="col-6">
-                                    <div className={`p-3 rounded-4 border text-center ${paymentMethod === 'Chuyển khoản' ? 'border-primary bg-light shadow-sm' : ''}`}
-                                        onClick={() => setPaymentMethod('Chuyển khoản')} style={{ cursor: 'pointer', transition: '0.3s' }}>
-                                        <i className="bi bi-qr-code-scan fs-2 d-block mb-2"></i>
-                                        <span className="fw-bold small">Chuyển khoản</span>
-                                    </div>
+                            <h5 className="fw-bold mb-3">Phương thức thanh toán</h5>
+                            <div className="p-3 rounded-4 border border-primary bg-light d-flex align-items-center gap-3">
+                                <i className="bi bi-qr-code-scan fs-3 text-primary"></i>
+                                <div>
+                                    <span className="fw-bold d-block">Chuyển khoản qua mã QR</span>
+                                    <small className="text-muted">Quét mã QR thanh toán nhanh qua PayOS</small>
                                 </div>
                             </div>
                         </div>
@@ -170,20 +157,22 @@ const Checkout = () => {
                     {/* Cột phải: Thông tin nhận hàng */}
                     <div className="col-lg-5">
                         <div className="card border-0 shadow-sm rounded-4 p-4 sticky-top" style={{ top: '20px' }}>
-                            <h5 className="fw-bold mb-4">Nhận hàng</h5>
-                            <div className="mb-3">
-                                <label className="small fw-bold text-muted mb-2 text-uppercase">Hình thức</label>
-                                <select className="form-select p-3 border-0 bg-light rounded-3 shadow-none fw-bold" disabled={!!storedTable} value={orderType} onChange={(e) => setOrderType(e.target.value)}>
-                                    <option value="Tại bàn">Tại bàn</option>
-                                    <option value="Mang đi">Mang đi</option>
-                                </select>
-                            </div>
-                            {orderType === "Tại bàn" && (
-                                <div className="mb-4">
-                                    <label className="small fw-bold text-muted mb-2 text-uppercase">Số bàn {storedTable && '(Từ mã QR)'}</label>
-                                    <select className="form-select p-3 border-0 bg-light rounded-3 shadow-none fw-bold" disabled={!!storedTable} value={tableNo} onChange={(e) => setTableNo(e.target.value)}>
-                                        {Array.from({ length: 50 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Bàn {n}</option>)}
-                                    </select>
+                            <h5 className="fw-bold mb-3">Thông tin phục vụ</h5>
+                            {storedTable ? (
+                                <div className="p-3 rounded-4 border border-warning bg-light d-flex align-items-center gap-3 mb-4">
+                                    <i className="bi bi-geo-alt-fill fs-3 text-warning"></i>
+                                    <div>
+                                        <span className="fw-bold d-block">Phục vụ tại Bàn {storedTable}</span>
+                                        <small className="text-muted">Nhận diện tự động từ mã QR</small>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="p-3 rounded-4 border border-success bg-light d-flex align-items-center gap-3 mb-4">
+                                    <i className="bi bi-bag-check-fill fs-3 text-success"></i>
+                                    <div>
+                                        <span className="fw-bold d-block">Mang đi (Takeaway)</span>
+                                        <small className="text-muted">Không có số bàn từ mã QR</small>
+                                    </div>
                                 </div>
                             )}
                             <button

@@ -9,6 +9,7 @@ const jwt = require('jsonwebtoken');
 // 1. CẤU HÌNH & KHỞI TẠO
 dotenv.config();
 const app = express();
+app.set('trust proxy', true);
 
 // 2. KẾT NỐI DATABASE
 connectDB();
@@ -23,6 +24,10 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+
+// 4.5. KHỞI TẠO PASSPORT (CHO GOOGLE OAUTH 2.0)
+const passport = require('./src/config/passport');
+app.use(passport.initialize());
 
 // 5. CẤU HÌNH THƯ MỤC TĨNH
 app.use('/images', express.static(path.join(__dirname, 'public/images')));

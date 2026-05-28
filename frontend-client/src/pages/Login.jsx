@@ -27,13 +27,9 @@ const Login = () => {
         if (provider === 'google') {
             // Chuyển hướng trực tiếp đến route Passport OAuth của Backend
             window.location.href = `${API_URL}/api/auth/google`;
-        } else {
-            Swal.fire({
-                icon: 'info',
-                title: 'Thông báo',
-                text: 'Chức năng đăng nhập Facebook hiện đang bảo trì, vui lòng sử dụng đăng nhập bằng Google!',
-                confirmButtonColor: '#826644'
-            });
+        } else if (provider === 'facebook') {
+            // Chuyển hướng trực tiếp đến route Passport OAuth của Backend
+            window.location.href = `${API_URL}/api/auth/facebook`;
         }
     };
 
@@ -62,7 +58,7 @@ const Login = () => {
         }
     };
 
-    // Effect lắng nghe thông tin trả về từ Google OAuth Callback qua URL params
+    // Effect lắng nghe thông tin trả về từ Google/Facebook OAuth Callback qua URL params
     useEffect(() => {
         const queryParams = new URLSearchParams(window.location.search);
         const tokenParam = queryParams.get('token');
@@ -81,10 +77,11 @@ const Login = () => {
             });
         } else if (errorParam) {
             window.history.replaceState({}, document.title, window.location.pathname);
+            const providerName = errorParam.includes('facebook') ? 'Facebook' : 'Google';
             Swal.fire({
                 icon: 'error',
-                title: 'Lỗi đăng nhập Google',
-                text: 'Đăng nhập bằng tài khoản Google thất bại. Vui lòng thử lại!',
+                title: `Lỗi đăng nhập ${providerName}`,
+                text: `Đăng nhập bằng tài khoản ${providerName} thất bại. Vui lòng thử lại!`,
                 confirmButtonColor: '#826644'
             });
         }

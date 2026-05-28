@@ -21,9 +21,23 @@ const Home = ({ cartCount }) => {
     const [userName, setUserName] = useState(localStorage.getItem('userName') || '');
     const [favorites, setFavorites] = useState(JSON.parse(localStorage.getItem('favorites')) || []);
     const [isPersonalized, setIsPersonalized] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
 
     const navigate = useNavigate();
     const location = useLocation();
+
+    // Lắng nghe cuộn trang để kích hoạt hiệu ứng sticky thu nhỏ gọn
+    useEffect(() => {
+        const handleScroll = () => {
+            if (window.scrollY > 15) {
+                setScrolled(true);
+            } else {
+                setScrolled(false);
+            }
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
     
     // Đọc số bàn từ URL sau khi quét QR (ví dụ: ?table=1)
     useEffect(() => {
@@ -142,75 +156,78 @@ const Home = ({ cartCount }) => {
 
     return (
         <div className="home-container pb-5 mb-5 animate__animated animate__fadeIn">
-            {/* Header */}
-            <div className="container pt-4 d-flex justify-content-between align-items-center mb-1">
-                <div>
-                    <h4 className="fw-bold mb-0" style={{ fontFamily: 'Playfair Display', color: '#826644' }}>CaféSync</h4>
-                    <small className="text-muted">{userName ? `Chào ${userName} ` : "Chào bạn "}</small>
+            {/* Sticky Wrapper cho toàn bộ Header + Banner + Search + Categories */}
+            <div className={`sticky-top-wrapper ${scrolled ? 'scrolled' : ''}`}>
+                {/* Header */}
+                <div className="container d-flex justify-content-between align-items-center mb-1">
+                    <div>
+                        <h4 className="fw-bold mb-0" style={{ fontFamily: 'Playfair Display', color: '#826644' }}>CaféSync</h4>
+                        <small className="text-muted">{userName ? `Chào ${userName} ` : "Chào bạn "}</small>
+                    </div>
+                    <div className="d-flex gap-2">
+                        {(userName || localStorage.getItem('lastOrderDBId')) && (
+                            <div className="icon-circle bg-white shadow-sm p-2 rounded-circle"
+                                style={{ cursor: 'pointer', color: '#826644' }}
+                                onClick={handleStatusClick} title="Lịch sử & Theo dõi">
+                                <i className="bi bi-clock-history fs-5"></i>
+                            </div>
+                        )}
+                        <div className="icon-circle bg-white shadow-sm p-2 rounded-circle text-danger"
+                            style={{ cursor: 'pointer' }} onClick={userName ? handleLogout : () => navigate('/login')}>
+                            <i className={userName ? "bi bi-box-arrow-right fs-5" : "bi bi-person fs-5"}></i>
+                        </div>
+                    </div>
                 </div>
-                <div className="d-flex gap-2">
-                    {(userName || localStorage.getItem('lastOrderDBId')) && (
-                        <div className="icon-circle bg-white shadow-sm p-2 rounded-circle"
-                            style={{ cursor: 'pointer', color: '#826644' }}
-                            onClick={handleStatusClick} title="Lịch sử & Theo dõi">
-                            <i className="bi bi-clock-history fs-5"></i>
+
+                {/* Smart Promo Banner */}
+                <div className="container mt-2">
+                    {userName ? (
+                        <div className="promo-banner shadow-sm" style={{ background: 'linear-gradient(135deg, #826644 0%, #a47551 100%)', color: 'white', marginBottom: '12px' }}>
+                            <div>
+                                <span className="badge bg-white text-dark rounded-pill mb-2 px-3 py-2 small">
+                                    {isPersonalized ? `Gu riêng của ${getShortName()}` : "Gợi ý riêng cho bạn"}
+                                </span>
+                                <h3 className="fw-bold mb-0">{isPersonalized ? "THỰC ĐƠN SMART" : "MÓN 'RUỘT' HÔM NAY"}</h3>
+                                <button
+                                    className={`btn btn-sm rounded-pill mt-2 px-4 fw-bold ${isPersonalized ? 'btn-warning text-dark shadow' : 'btn-light'}`}
+                                    onClick={handleShowPersonalized}
+                                >
+                                    {isPersonalized ? "Đang hiện Smart Menu" : "Xem ngay"}
+                                </button>
+                            </div>
+                            <i className={`bi ${isPersonalized ? 'bi-cpu-fill' : 'bi-stars'} fs-1 opacity-50`}></i>
+                        </div>
+                    ) : (
+                        <div className="promo-banner shadow-sm" style={{ marginBottom: '12px' }}>
+                            <div>
+                                <span className="badge bg-white text-dark rounded-pill mb-2 px-3 py-2 small">Ưu đãi hôm nay</span>
+                                <h3 className="fw-bold mb-0">GIẢM 50%</h3>
+                                <button className="btn btn-dark btn-sm rounded-pill mt-2 px-4" onClick={() => navigate('/login')}>Đặt Ngay</button>
+                            </div>
+                            <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200&q=80"
+                                className="rounded-circle shadow" style={{ width: '90px', height: '90px', objectFit: 'cover' }} alt="promo" />
                         </div>
                     )}
-                    <div className="icon-circle bg-white shadow-sm p-2 rounded-circle text-danger"
-                        style={{ cursor: 'pointer' }} onClick={userName ? handleLogout : () => navigate('/login')}>
-                        <i className={userName ? "bi bi-box-arrow-right fs-5" : "bi bi-person fs-5"}></i>
+                </div>
+
+                {/* Search */}
+                <div className="container mb-3">
+                    <div className="input-group shadow-sm rounded-pill overflow-hidden bg-white border-0">
+                        <span className="input-group-text bg-white border-0 ps-3"><i className="bi bi-search text-muted"></i></span>
+                        <input type="text" value={searchTerm} className="form-control border-0 py-3 shadow-none text-dark" placeholder="Tìm món ngon..."
+                            onChange={(e) => setSearchTerm(e.target.value)} />
                     </div>
                 </div>
-            </div>
 
-            {/* Smart Promo Banner */}
-            <div className="container mt-3">
-                {userName ? (
-                    <div className="promo-banner shadow-sm" style={{ background: 'linear-gradient(135deg, #826644 0%, #a47551 100%)', color: 'white' }}>
-                        <div>
-                            <span className="badge bg-white text-dark rounded-pill mb-2 px-3 py-2 small">
-                                {isPersonalized ? `Gu riêng của ${getShortName()}` : "Gợi ý riêng cho bạn"}
-                            </span>
-                            <h3 className="fw-bold mb-0">{isPersonalized ? "THỰC ĐƠN SMART" : "MÓN 'RUỘT' HÔM NAY"}</h3>
-                            <button
-                                className={`btn btn-sm rounded-pill mt-2 px-4 fw-bold ${isPersonalized ? 'btn-warning text-dark shadow' : 'btn-light'}`}
-                                onClick={handleShowPersonalized}
-                            >
-                                {isPersonalized ? "Đang hiện Smart Menu" : "Xem ngay"}
-                            </button>
-                        </div>
-                        <i className={`bi ${isPersonalized ? 'bi-cpu-fill' : 'bi-stars'} fs-1 opacity-50`}></i>
-                    </div>
-                ) : (
-                    <div className="promo-banner shadow-sm">
-                        <div>
-                            <span className="badge bg-white text-dark rounded-pill mb-2 px-3 py-2 small">Ưu đãi hôm nay</span>
-                            <h3 className="fw-bold mb-0">GIẢM 50%</h3>
-                            <button className="btn btn-dark btn-sm rounded-pill mt-2 px-4" onClick={() => navigate('/login')}>Đặt Ngay</button>
-                        </div>
-                        <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200&q=80"
-                            className="rounded-circle shadow" style={{ width: '90px', height: '90px', objectFit: 'cover' }} alt="promo" />
-                    </div>
-                )}
-            </div>
-
-            {/* Search */}
-            <div className="container mb-4 mt-3">
-                <div className="input-group shadow-sm rounded-pill overflow-hidden bg-white border-0">
-                    <span className="input-group-text bg-white border-0 ps-3"><i className="bi bi-search text-muted"></i></span>
-                    <input type="text" value={searchTerm} className="form-control border-0 py-3 shadow-none text-dark" placeholder="Tìm món ngon..."
-                        onChange={(e) => setSearchTerm(e.target.value)} />
+                {/* Categories */}
+                <div className="container overflow-auto d-flex gap-2 scrollbar-hidden">
+                    {['all', 'Cà Phê', 'Sinh tố', 'Nước ép', 'Trà'].map(cat => (
+                        <button key={cat} onClick={() => { setCategory(cat); setIsPersonalized(false); }}
+                            className={`btn rounded-pill px-4 fw-bold text-nowrap border-0 ${category === cat && !isPersonalized ? 'btn-dark' : 'bg-white shadow-sm'}`}>
+                            {cat === 'all' ? 'Tất cả' : cat}
+                        </button>
+                    ))}
                 </div>
-            </div>
-
-            {/* Categories */}
-            <div className="container mb-4 overflow-auto d-flex gap-2 scrollbar-hidden">
-                {['all', 'Cà Phê', 'Sinh tố', 'Nước ép', 'Trà'].map(cat => (
-                    <button key={cat} onClick={() => { setCategory(cat); setIsPersonalized(false); }}
-                        className={`btn rounded-pill px-4 fw-bold text-nowrap border-0 ${category === cat && !isPersonalized ? 'btn-dark' : 'bg-white shadow-sm'}`}>
-                        {cat === 'all' ? 'Tất cả' : cat}
-                    </button>
-                ))}
             </div>
 
             {/* Product List with Intelligence */}

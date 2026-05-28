@@ -138,3 +138,31 @@ body {
   .premium-card .card-img-top { height: 145px; }
   .bottom-nav { width: 95%; padding: 10px 20px; }
 }
+
+/* --- 5. Sticky Top Wrapper (Header, Banner, Search, Categories) --- */
+.sticky-top-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: var(--bg-creme);
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(130, 102, 68, 0.08);
+  box-shadow: 0 8px 25px rgba(130, 102, 68, 0.05);
+  transition: all 0.25s ease-in-out;
+}
+
+.sticky-top-wrapper.scrolled {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  box-shadow: 0 10px 30px rgba(130, 102, 68, 0.08);
+}
+
+/* Hide scrollbar for clean look */
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

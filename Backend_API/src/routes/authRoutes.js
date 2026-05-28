@@ -11,15 +11,15 @@ router.post("/login", authController.login);
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 // Route callback nhận phản hồi từ Google
-router.get('/google/callback', 
+router.get('/google/callback',
     (req, res, next) => {
         const requestHost = req.get('host') || '';
         const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
         const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
-        
-        passport.authenticate('google', { 
-            failureRedirect: `${FRONTEND_URL}/login?error=google_failed`, 
-            session: false 
+
+        passport.authenticate('google', {
+            failureRedirect: `${FRONTEND_URL}/login?error=google_failed`,
+            session: false
         })(req, res, next);
     },
     async (req, res) => {
@@ -34,7 +34,7 @@ router.get('/google/callback',
             // Xác định URL frontend để redirect về
             const requestHost = req.get('host') || '';
             const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
-            
+
             // Ở local, frontend client chạy trên port 5173
             const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
 
@@ -51,15 +51,15 @@ router.get('/google/callback',
 router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
 
 // Route callback nhận phản hồi từ Facebook
-router.get('/facebook/callback', 
+router.get('/facebook/callback',
     (req, res, next) => {
         const requestHost = req.get('host') || '';
         const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
         const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
-        
-        passport.authenticate('facebook', { 
-            failureRedirect: `${FRONTEND_URL}/login?error=facebook_failed`, 
-            session: false 
+
+        passport.authenticate('facebook', {
+            failureRedirect: `${FRONTEND_URL}/login?error=facebook_failed`,
+            session: false
         })(req, res, next);
     },
     async (req, res) => {
@@ -71,12 +71,10 @@ router.get('/facebook/callback',
                 { expiresIn: '1d' }
             );
 
-            // Xác định URL frontend để redirect về
             const requestHost = req.get('host') || '';
             const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
             const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
 
-            // Redirect về frontend kèm token và thông tin người dùng trong query
             res.redirect(`${FRONTEND_URL}/login?token=${token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}`);
         } catch (error) {
             console.error("Lỗi callback redirect Facebook:", error);

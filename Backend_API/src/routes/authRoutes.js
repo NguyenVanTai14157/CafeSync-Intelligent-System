@@ -48,7 +48,7 @@ router.get('/google/callback',
 );
 
 // Route khởi động đăng nhập Facebook
-router.get('/facebook', passport.authenticate('facebook', { scope: ['public_profile'] }));
+router.get('/facebook', passport.authenticate('facebook', { scope: ['public_profile', 'email'] }));
 
 // Route callback nhận phản hồi từ Facebook
 router.get('/facebook/callback',

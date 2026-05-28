@@ -47,4 +47,40 @@ router.get('/google/callback',
     }
 );
 
-module.exports = router;
+// Route khởi động đăng nhập Facebook
+router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
+
+// Route callback nhận phản hồi từ Facebook
+router.get('/facebook/callback',
+    (req, res, next) => {
+        const requestHost = req.get('host') || '';
+        const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
+        const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
+
+        passport.authenticate('facebook', {
+            failureRedirect: `${FRONTEND_URL}/login?error=facebook_failed`,
+            session: false
+        })(req, res, next);
+    },
+    async (req, res) => {
+        try {
+            const user = req.user;
+            const token = jwt.sign(
+                { id: user._id, role: user.role },
+                process.env.JWT_SECRET || 'CAFE_SYNC_SECRET_KEY',
+                { expiresIn: '1d' }
+            );
+
+            const requestHost = req.get('host') || '';
+            const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
+            const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
+
+            res.redirect(`${FRONTEND_URL}/login?token=${token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}`);
+        } catch (error) {
+            console.error("Lỗi callback redirect Facebook:", error);
+            res.status(500).send("Lỗi máy chủ khi đăng nhập Facebook.");
+        }
+    }
+);
+
+module.exports = router;

@@ -155,7 +155,7 @@ const receiveWebhook = async (req, res) => {
       // Tìm đơn hàng có orderID chứa dãy số orderCode từ PayOS gửi về
       const updatedOrder = await Order.findOneAndUpdate(
         { orderID: { $regex: orderCodeStr } },
-        { status: "Chờ xác nhận" },
+        { status: "Đã thanh toán" },
         { new: true }
       );
 

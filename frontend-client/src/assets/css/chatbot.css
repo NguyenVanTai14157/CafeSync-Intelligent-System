@@ -133,3 +133,28 @@
     0%, 60%, 100% { transform: translateY(0); }
     30% { transform: translateY(-4px); }
 }
+
+.syncie-products-list {
+    max-width: 85%;
+    align-self: flex-start;
+}
+
+.syncie-product-card {
+    border: 1px solid #eee !important;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.syncie-product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08) !important;
+}
+
+.syncie-product-card button {
+    background: #826644 !important;
+    color: white !important;
+    transition: background-color 0.2s;
+}
+
+.syncie-product-card button:hover {
+    background: #a47551 !important;
+}

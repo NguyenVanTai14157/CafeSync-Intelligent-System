@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import API_URL from '../config';
 import '../assets/css/style.css';
-import Chatbot from '../components/Chatbot';
-import { showToast, showConfirm } from '../utils/toast'; // Import bộ thông báo xịn
+import Chatbot from '../components/ChatBot';
+// Hàm loại bỏ dấu tiếng Việt để phục vụ tìm kiếm không dấu
+const removeAccents = (str) => {
+    if (!str) return '';
+    return str
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/đ/g, "d")
+        .replace(/Đ/g, "D");
+};
 
 const Home = ({ cartCount }) => {
     const [products, setProducts] = useState([]);
@@ -14,7 +23,19 @@ const Home = ({ cartCount }) => {
     const [isPersonalized, setIsPersonalized] = useState(false);
 
     const navigate = useNavigate();
-    const API_URL = "http://localhost:5000";
+    const location = useLocation();
+    
+    // Đọc số bàn từ URL sau khi quét QR (ví dụ: ?table=1)
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const table = queryParams.get('table');
+        if (table) {
+            localStorage.setItem('tableNumber', table);
+            console.log("📍 Đã nhận diện số bàn từ QR:", table);
+            showToast(`Chào mừng bạn tại Bàn ${table}!`);
+        }
+    }, [location]);
+    
 
     // Danh mục tương ứng với ID trong Database của Yến
     const categoryMap = {
@@ -202,7 +223,11 @@ const Home = ({ cartCount }) => {
 
                 <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
                     {products
-                        .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                        .filter(p => {
+                            const nameNormalized = removeAccents(p.name.toLowerCase());
+                            const searchNormalized = removeAccents(searchTerm.toLowerCase());
+                            return nameNormalized.includes(searchNormalized);
+                        })
                         .filter(p => {
                             if (!isPersonalized) return true;
                             const hour = new Date().getHours();

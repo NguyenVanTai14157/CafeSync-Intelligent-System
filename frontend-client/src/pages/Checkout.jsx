@@ -2,17 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import API_URL from '../config';
 import '../assets/css/style.css';
 
 const Checkout = () => {
+    const storedTable = localStorage.getItem('tableNumber');
     const [cart, setCart] = useState([]);
-    const [orderType, setOrderType] = useState("Tại bàn");
-    const [tableNo, setTableNo] = useState("1");
+    const [orderType, setOrderType] = useState(storedTable ? "Tại bàn" : "Tại bàn");
+    const [tableNo, setTableNo] = useState(storedTable || "1");
     const [paymentMethod, setPaymentMethod] = useState("Tiền mặt");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const navigate = useNavigate();
-    const API_URL = "http://localhost:5000";
+    
 
     useEffect(() => {
         const savedCart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -40,6 +42,8 @@ const Checkout = () => {
         const savedName = localStorage.getItem('userName');
         const savedEmail = localStorage.getItem('userEmail');
 
+        const finalTableNumber = localStorage.getItem('tableNumber') || tableNo;
+
         const orderData = {
             orderID: finalOrderID,
             items: cart.map(item => ({
@@ -50,7 +54,8 @@ const Checkout = () => {
                 note: item.note
             })),
             totalPrice: totalPrice,
-            location: orderType === "Mang đi" ? "Mang đi" : `Bàn ${tableNo}`,
+            location: orderType === "Mang đi" ? "Mang đi" : `Bàn ${finalTableNumber}`,
+            tableNumber: orderType === "Tại bàn" ? Number(finalTableNumber) : null,
             paymentMethod: paymentMethod,
             customerEmail: savedEmail || savedName || "Guest",
             customerName: savedName || "Khách vãn lai"
@@ -73,9 +78,11 @@ const Checkout = () => {
                 localStorage.setItem('lastOrderDBId', dbOrderId);
             }
 
-            // Xóa sạch giỏ hàng và cập nhật Badge
-            localStorage.removeItem('cart');
-            window.dispatchEvent(new Event('cartUpdated'));
+            // Xóa sạch giỏ hàng và cập nhật Badge chỉ khi thanh toán bằng Tiền mặt
+            if (paymentMethod === "Tiền mặt") {
+                localStorage.removeItem('cart');
+                window.dispatchEvent(new Event('cartUpdated'));
+            }
 
             if (paymentMethod !== "Tiền mặt" && response.data.checkoutUrl) {
                 // Chuyển hướng sang trang thanh toán online nếu có
@@ -166,16 +173,16 @@ const Checkout = () => {
                             <h5 className="fw-bold mb-4">Nhận hàng</h5>
                             <div className="mb-3">
                                 <label className="small fw-bold text-muted mb-2 text-uppercase">Hình thức</label>
-                                <select className="form-select p-3 border-0 bg-light rounded-3 shadow-none fw-bold" value={orderType} onChange={(e) => setOrderType(e.target.value)}>
+                                <select className="form-select p-3 border-0 bg-light rounded-3 shadow-none fw-bold" disabled={!!storedTable} value={orderType} onChange={(e) => setOrderType(e.target.value)}>
                                     <option value="Tại bàn">Tại bàn</option>
                                     <option value="Mang đi">Mang đi</option>
                                 </select>
                             </div>
                             {orderType === "Tại bàn" && (
                                 <div className="mb-4">
-                                    <label className="small fw-bold text-muted mb-2 text-uppercase">Số bàn</label>
-                                    <select className="form-select p-3 border-0 bg-light rounded-3 shadow-none fw-bold" value={tableNo} onChange={(e) => setTableNo(e.target.value)}>
-                                        {[1, 2, 3, 4, 5, 6, 7, 8].map(n => <option key={n} value={n}>Bàn {n}</option>)}
+                                    <label className="small fw-bold text-muted mb-2 text-uppercase">Số bàn {storedTable && '(Từ mã QR)'}</label>
+                                    <select className="form-select p-3 border-0 bg-light rounded-3 shadow-none fw-bold" disabled={!!storedTable} value={tableNo} onChange={(e) => setTableNo(e.target.value)}>
+                                        {Array.from({ length: 50 }, (_, i) => i + 1).map(n => <option key={n} value={n}>Bàn {n}</option>)}
                                     </select>
                                 </div>
                             )}

@@ -8,10 +8,12 @@ import {
   InputNumber,
   Upload,
   message,
+  Typography,
+  Tag,
+  Select
 } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined, EditOutlined, DeleteOutlined, ShopOutlined } from "@ant-design/icons";
 import { getCategories } from "../api/categoryApi";
-import { Select } from "antd";
 import {
   getProducts,
   createProduct,
@@ -19,6 +21,8 @@ import {
   deleteProduct,
   uploadImages,
 } from "../api/productApi";
+
+const { Title, Text } = Typography;
 
 const removeAccents = (str) => {
   if (!str) return "";
@@ -125,34 +129,64 @@ const ProductPage = () => {
 
   const columns = [
     {
-      title: "Hình",
+      title: "Hình ảnh",
       dataIndex: "image",
+      width: 100,
       render: (img) => (
-        <img
-          src={`http://localhost:5000/images/${img}`}
-          style={{ width: 60, height: 60, objectFit: "cover" }}
-        />
+        <div style={{ 
+          width: 60, 
+          height: 60, 
+          borderRadius: 12, 
+          overflow: 'hidden',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+          border: '2px solid #fff' 
+        }}>
+          <img
+            src={`https://cafesync-intelligent-system-sntf.onrender.com/images/${img}`}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
       ),
     },
-    { title: "Tên món", dataIndex: "name" },
-    { title: "Giá", dataIndex: "price" },
+    { 
+      title: "Tên món", 
+      dataIndex: "name",
+      render: (text) => <Text strong style={{ fontSize: 15 }}>{text}</Text>
+    },
+    { 
+      title: "Giá bán", 
+      dataIndex: "price",
+      render: (v) => <Text style={{ color: "#059669", fontWeight: 600 }}>{v?.toLocaleString("vi-VN")} ₫</Text>
+    },
     {
       title: "Danh mục",
       dataIndex: "category",
-      render: (cat) => cat?.name || ""
+      render: (cat) => <Tag color="blue" style={{ borderRadius: 6 }}>{cat?.name || "Chưa phân loại"}</Tag>
     },
     {
       title: "Thao tác",
+      key: "actions",
+      width: 150,
       render: (_, record) => (
-        <>
-          <Button onClick={() => openModal(record)}>Sửa</Button>
-          <Button danger onClick={() => handleDelete(record._id)}>
-            Xóa
-          </Button>
-        </>
+        <div style={{ display: "flex", gap: 12 }}>
+          <Button 
+            type="text"
+            icon={<EditOutlined style={{ color: "#1677ff" }} />} 
+            onClick={() => openModal(record)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(22, 119, 255, 0.05)' }}
+          />
+          <Button 
+            type="text" 
+            danger 
+            icon={<DeleteOutlined />}
+            onClick={() => handleDelete(record._id)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 77, 79, 0.05)' }}
+          />
+        </div>
       ),
     },
   ];
+
   const filteredProducts = products.filter((product) => {
     const productName = removeAccents(product.name);
     const searchKeyword = removeAccents(searchText).trim();
@@ -160,25 +194,74 @@ const ProductPage = () => {
   });
 
   return (
-    <div>
-      <h2>☕ Quản lý món uống</h2>
+    <div className="modern-card animated-fade-in">
+      <div style={{ marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ 
+          width: 48, 
+          height: 48, 
+          borderRadius: 12, 
+          background: "linear-gradient(135deg, #722ed1 0%, #391085 100%)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 24,
+          boxShadow: "0 4px 12px rgba(114, 46, 209, 0.2)"
+        }}>☕</div>
+        <div>
+          <Title level={2} style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Quản lý món uống</Title>
+          <Text type="secondary">Quản lý thực đơn, giá cả và các tùy chọn món ăn</Text>
+        </div>
+      </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 24, gap: 16 }}>
         <Button
           type="primary"
+          size="large"
           icon={<PlusOutlined />}
           onClick={() => openModal()}
+          style={{ height: 48, padding: "0 24px", borderRadius: 10, background: "#722ed1" }}
         >
-          Thêm món
+          Thêm món mới
         </Button>
         <Input.Search
           placeholder="Tìm kiếm món theo tên..."
           allowClear
+          size="large"
           onChange={(e) => setSearchText(e.target.value)}
-          style={{ width: 300 }}
+          style={{ width: 350 }}
+          className="search-input-modern"
         />
       </div>
-      <Table rowKey="_id" dataSource={filteredProducts} columns={columns} />
+      
+      <Table 
+        rowKey="_id" 
+        dataSource={filteredProducts} 
+        columns={columns}
+        pagination={{ 
+          pageSize: 6,
+          showTotal: (total) => `Tổng cộng ${total} món`,
+          position: ["bottomRight"] 
+        }}
+      />
+      
+      <style>{`
+        .animated-fade-in {
+          animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .search-input-modern .ant-input-affix-wrapper {
+          border-radius: 10px !important;
+          background: #f8fafc !important;
+          border: 1px solid #e2e8f0 !important;
+        }
+        .search-input-modern .ant-input-affix-wrapper-focused {
+          background: #fff !important;
+          box-shadow: 0 0 0 2px rgba(114, 46, 209, 0.1) !important;
+        }
+      `}</style>
 
       {/* MODAL */}
       <Modal

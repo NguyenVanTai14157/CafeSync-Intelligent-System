@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_URL from '../config';
 import '../assets/css/detail.css';
 import { showToast } from '../utils/toast'; // Import bộ thông báo xịn
 
 const Detail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const API_URL = "http://localhost:5000";
 
     const [product, setProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);

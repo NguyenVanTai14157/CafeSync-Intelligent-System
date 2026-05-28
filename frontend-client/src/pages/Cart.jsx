@@ -3,11 +3,11 @@ import { useNavigate, Link } from 'react-router-dom';
 import '../assets/css/style.css';
 import { showToast, showConfirm } from '../utils/toast'; // Import bộ thông báo xịn
 import Swal from 'sweetalert2'; // <--- Thêm dòng này để chạy được thông báo Hủy thanh toán
+import API_URL from '../config';
 
 const Cart = () => {
     const [cart, setCart] = useState([]);
     const navigate = useNavigate();
-    const API_URL = "http://localhost:5000";
 
     // 1. Tải giỏ hàng từ LocalStorage khi vào trang
     useEffect(() => {

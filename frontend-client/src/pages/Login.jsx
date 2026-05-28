@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
 import Swal from 'sweetalert2'; // Import thư viện thông báo xịn
+import API_URL from '../config';
 import '../assets/css/auth.css';
 
 const Login = () => {
@@ -13,7 +14,7 @@ const Login = () => {
     const [registerData, setRegisterData] = useState({ name: '', email: '', password: '' });
 
     const navigate = useNavigate();
-    const API_URL = 'http://localhost:5000/api/auth';
+    const AUTH_API_URL = `${API_URL}/api/auth`;
 
     // Hàm lấy tên gọi thân mật tự động từ chuỗi họ tên
     const getFirstName = (fullName) => {
@@ -25,7 +26,7 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const res = await axios.post(`${API_URL}/login-custom`, loginData);
+            const res = await axios.post(`${AUTH_API_URL}/login-custom`, loginData);
             if (res.data.token) {
                 // XÓA DẤU VẾT KHÁCH VÃN LAI TRƯỚC KHI LƯU USER MỚI
                 localStorage.removeItem('lastOrderDBId');
@@ -66,7 +67,7 @@ const Login = () => {
     const handleRegister = async (e) => {
         e.preventDefault();
         try {
-            await axios.post(`${API_URL}/register-custom`, registerData);
+            await axios.post(`${AUTH_API_URL}/register-custom`, registerData);
 
             // 1. Xóa dấu vết đơn hàng khách vãn lai để tài khoản mới sạch sẽ
             localStorage.removeItem('lastOrderDBId');

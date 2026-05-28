@@ -1,3 +1,4 @@
+import { ConfigProvider, theme } from "antd";
 import LoginPage from "./pages/LoginPage";
 import RequireAuth from "./components/RequireAuth";
 import RequireAdmin from "./components/RequireAdmin";
@@ -12,39 +13,75 @@ import OrderManagementPage from "./pages/OrderManagementPage";
 import RevenueReportPage from "./pages/RevenueReportPage";
 import POSPage from "./pages/POSPage"; // 👈 Import trang POS mới của Yến
 import ProfilePage from "./pages/ProfilePage";
+import TableManagementPage from "./pages/TableManagementPage";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-
-        <Route
-          path="/*"
-          element={
-            <RequireAuth>
-              <AdminLayout>
-                <Routes>
-                  {/* --- CHỨC NĂNG DÙNG CHUNG --- */}
-                  <Route path="/" element={<WelcomePage />} />
-                  <Route path="/orders" element={<OrderManagementPage />} />
-                  <Route path="/pos" element={<POSPage />} /> {/* 👈 Route cho Nhân viên/POS */}
-                  <Route path="/profile" element={<ProfilePage />} />
-
-                  {/* --- CHỨC NĂNG CHỈ ADMIN --- */}
-                  <Route path="/CategoryPage" element={<RequireAdmin><CategoryPage /></RequireAdmin>} />
-                  <Route path="/users" element={<RequireAdmin><UserManagementPage /></RequireAdmin>} />
-                  <Route path="/products" element={<RequireAdmin><ProductPage /></RequireAdmin>} />
-                  <Route path="/ingredients" element={<RequireAdmin><IngredientManagementPage /></RequireAdmin>} />
-                  <Route path="/reports" element={<RequireAdmin><RevenueReportPage /></RequireAdmin>} />
-                </Routes>
-              </AdminLayout>
-            </RequireAuth>
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: "#1677ff",
+          borderRadius: 12,
+          fontFamily: "'Inter', sans-serif",
+          colorBgContainer: "#ffffff",
+          colorBgLayout: "#f1f5f9",
+          boxShadow: "0 8px 32px 0 rgba(31, 38, 135, 0.07)",
+        },
+        components: {
+          Button: {
+            borderRadius: 8,
+            controlHeight: 40,
+            fontWeight: 500,
+          },
+          Table: {
+            borderRadius: 12,
+            headerBg: "rgba(250, 250, 250, 0.5)",
+            headerColor: "#475569",
+          },
+          Card: {
+            borderRadiusLG: 16,
+          },
+          Menu: {
+            itemBg: "transparent",
+            itemSelectedBg: "rgba(22, 119, 255, 0.1)",
+            itemActiveBg: "rgba(22, 119, 255, 0.05)",
           }
-        />
-      </Routes>
-    </BrowserRouter>
+        }
+      }}
+    >
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+
+          <Route
+            path="/*"
+            element={
+              <RequireAuth>
+                <AdminLayout>
+                  <Routes>
+                    {/* --- CHỨC NĂNG DÙNG CHUNG --- */}
+                    <Route path="/" element={<WelcomePage />} />
+                    <Route path="/orders" element={<OrderManagementPage />} />
+                    <Route path="/tables" element={<TableManagementPage />} />
+                    <Route path="/pos" element={<POSPage />} /> {/* 👈 Route cho Nhân viên/POS */}
+                    <Route path="/profile" element={<ProfilePage />} />
+
+                    {/* --- CHỨC NĂNG CHỈ ADMIN --- */}
+                    <Route path="/CategoryPage" element={<RequireAdmin><CategoryPage /></RequireAdmin>} />
+                    <Route path="/users" element={<RequireAdmin><UserManagementPage /></RequireAdmin>} />
+                    <Route path="/products" element={<RequireAdmin><ProductPage /></RequireAdmin>} />
+                    <Route path="/ingredients" element={<RequireAdmin><IngredientManagementPage /></RequireAdmin>} />
+                    <Route path="/reports" element={<RequireAdmin><RevenueReportPage /></RequireAdmin>} />
+                  </Routes>
+                </AdminLayout>
+              </RequireAuth>
+            }
+          />
+        </Routes>
+      </BrowserRouter>
+    </ConfigProvider>
   );
 }
+
 
 export default App;

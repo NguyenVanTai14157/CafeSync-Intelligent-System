@@ -5,7 +5,8 @@ const {
     getProducts, 
     createProduct, 
     deleteProduct, 
-    updateProduct 
+    updateProduct,
+    getProductById
 } = require('../controllers/productController');
 
 const upload = require('../config/upload');
@@ -18,6 +19,9 @@ router.post('/upload', upload.array('images', 10), (req, res) => {
 });
 // GET tất cả sản phẩm
 router.get('/', getProducts);
+
+// GET sản phẩm theo ID
+router.get('/:id', getProductById);
 
 // Thêm sản phẩm
 router.post('/', createProduct);

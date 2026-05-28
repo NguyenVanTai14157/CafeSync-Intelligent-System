@@ -19,6 +19,7 @@ const orderSchema = mongoose.Schema({
   ],
   totalPrice: { type: Number, required: true },
   location: { type: String, required: true },
+  tableNumber: { type: Number, default: null }, // Mới thêm: theo dõi theo bàn
   customerEmail: { type: String, default: 'Guest' }, // Trường để lọc lịch sử
   paymentMethod: { type: String, default: 'Tiền mặt' },
   status: { type: String, default: 'Chờ xác nhận' },

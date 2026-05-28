@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../assets/css/style.css';
 
+import API_URL from '../config';
+
 const OrderHistory = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -11,7 +13,6 @@ const OrderHistory = () => {
 
     // Đồng bộ cách lấy định danh: Email trước, Name sau
     const userIdentifier = localStorage.getItem('userEmail') || localStorage.getItem('userName');
-    const API_URL = "http://localhost:5000";
 
     useEffect(() => {
         // Nếu không có định danh thì cho về Home (hoặc Login tùy Yến)

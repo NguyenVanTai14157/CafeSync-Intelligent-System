@@ -31,10 +31,10 @@ const RevenueReportPage = () => {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      axios.get("http://localhost:5000/api/reports/total"),
-      axios.get("http://localhost:5000/api/reports/today"),
-      axios.get("http://localhost:5000/api/reports/month"),
-      axios.get("http://localhost:5000/api/reports/chart/week"),
+      axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/total"),
+      axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/today"),
+      axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/month"),
+      axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/chart/week"),
     ])
       .then(([total, today, month, chart]) => {
         setTotalRevenue(total.data.totalRevenue);

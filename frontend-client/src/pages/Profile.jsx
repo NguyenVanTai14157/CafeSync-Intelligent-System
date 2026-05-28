@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_URL from '../config';
 import '../assets/css/style.css';
 import { showToast, showConfirm } from '../utils/toast'; // Sử dụng bộ thông báo xịn
 
@@ -8,7 +9,6 @@ const Profile = () => {
     const navigate = useNavigate();
     const [orderCount, setOrderCount] = useState(0);
     const [cartCount, setCartCount] = useState(0);
-    const API_URL = "http://localhost:5000";
 
     // Lấy thông tin khách hàng từ LocalStorage
     const userName = localStorage.getItem('userName') || 'Khách hàng';

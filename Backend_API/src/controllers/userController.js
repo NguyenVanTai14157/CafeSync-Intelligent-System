@@ -49,6 +49,27 @@ exports.loginUser = async (req, res) => {
 // PHẦN CỦA TÀI: DÀNH CHO QUẢN TRỊ (ADMIN)
 // ==========================================
 
+// Lấy thống kê số lượng user theo vai trò
+exports.getUserStats = async (req, res) => {
+  try {
+    const total = await User.countDocuments();
+    const admins = await User.countDocuments({ role: "admin" });
+    const managers = await User.countDocuments({ role: { $in: ["manager", "quanly"] } });
+    const staff = await User.countDocuments({ role: "nhanvien" });
+    const customers = await User.countDocuments({ role: "customer" });
+
+    res.json({
+      total,
+      admins,
+      managers,
+      staff,
+      customers
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Lỗi server khi lấy thống kê user" });
+  }
+};
+
 // Lấy tất cả user
 exports.getAllUsers = async (req, res) => {
   const users = await User.find().select("-password");

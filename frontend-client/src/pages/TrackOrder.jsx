@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_URL from '../config';
 import '../assets/css/track.css';
 import '../assets/css/style.css'; // Đảm bảo import để có style cho bottom-nav
 
@@ -9,7 +10,6 @@ const TrackOrder = () => {
     const [loading, setLoading] = useState(true);
     const [cartCount, setCartCount] = useState(0); // Thêm state để giữ số lượng giỏ hàng
     const navigate = useNavigate();
-    const API_URL = "http://localhost:5000";
 
     const savedEmail = localStorage.getItem('userEmail');
     const savedName = localStorage.getItem('userName');
@@ -50,7 +50,26 @@ const TrackOrder = () => {
     };
 
     useEffect(() => {
-        fetchStatus();
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const orderCode = urlParams.get('orderCode');
+        
+        if (code === '00' && orderCode) {
+            axios.post(`${API_URL}/api/orders/payment-success`, { orderCode })
+                .then(() => {
+                    localStorage.removeItem('cart');
+                    window.dispatchEvent(new Event('cartUpdated'));
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    fetchStatus();
+                })
+                .catch(err => {
+                    console.error("Lỗi xác nhận thanh toán PayOS:", err);
+                    fetchStatus();
+                });
+        } else {
+            fetchStatus();
+        }
+
         const interval = setInterval(fetchStatus, 10000);
         return () => clearInterval(interval);
     }, []);

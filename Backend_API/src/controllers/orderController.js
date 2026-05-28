@@ -3,8 +3,19 @@ const Order = require("../models/Order");
 // 📌 1. Xử lý đặt hàng
 const createOrder = async (req, res) => {
   try {
-    const { items, totalPrice, location, paymentMethod, orderID, customerEmail } = req.body;
+    const { items, totalPrice, location, tableNumber, paymentMethod, orderID, customerEmail } = req.body;
+
     const finalOrderID = orderID || `CFS${Math.floor(Math.random() * 900000 + 100000)}`;
+    const Table = require('../models/Table');
+
+    // Cập nhật trạng thái bàn nếu có chọn bàn
+    if (tableNumber) {
+      const updatedTable = await Table.findOneAndUpdate({ tableNumber }, { status: 'Đang phục vụ' }, { new: true });
+      const io = req.app.get('io');
+      if (io && updatedTable) {
+        io.emit('table_updated', updatedTable.toObject());
+      }
+    }
 
     // --- TRƯỜNG HỢP 1: THANH TOÁN TIỀN MẶT ---
     if (paymentMethod === "Tiền mặt") {
@@ -13,6 +24,7 @@ const createOrder = async (req, res) => {
         items,
         totalPrice,
         location,
+        tableNumber: tableNumber || null,
         paymentMethod: "Tiền mặt",
         customerEmail: customerEmail || "Guest",
         status: "Chờ xác nhận",
@@ -38,12 +50,23 @@ const createOrder = async (req, res) => {
 
       const orderCode = Number(finalOrderID.replace(/[^0-9]/g, ""));
 
+      const requestHost = req.get('host') || '';
+      const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1');
+
+      const FRONTEND_URL = isLocalhost 
+        ? (req.get('origin') || "http://localhost:3001")
+        : (process.env.FRONTEND_URL || "https://cafe-sync-intelligent-system.vercel.app");
+
+      const BACKEND_URL = isLocalhost
+        ? `${req.protocol}://${requestHost}`
+        : (process.env.BACKEND_URL || "https://cafesync-intelligent-system-sntf.onrender.com");
+
       const paymentData = {
         orderCode: orderCode,
         amount: totalPrice,
         description: `TT don ${finalOrderID.slice(-8)}`, // Viết tắt và chỉ lấy 8 số cuối của ID cho ngắn
-        returnUrl: `http://localhost:3001/track-order`,
-        cancelUrl: `http://localhost:5000/api/orders/cancel/${finalOrderID}`,
+        returnUrl: `${FRONTEND_URL}/track-order`,
+        cancelUrl: `${BACKEND_URL}/api/orders/cancel/${finalOrderID}`,
       };
 
       const paymentLinkRes = await payosInstance.createPaymentLink(paymentData);
@@ -53,6 +76,7 @@ const createOrder = async (req, res) => {
         items,
         totalPrice,
         location,
+        tableNumber: tableNumber || null,
         paymentMethod: "Chuyển khoản/Ví điện tử",
         customerEmail: customerEmail || "Guest",
         status: "Chờ thanh toán",
@@ -137,10 +161,17 @@ const deleteOrder = async (req, res) => {
 const cancelOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
+    const requestHost = req.get('host') || '';
+    const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1');
+    const FRONTEND_URL = isLocalhost 
+      ? "http://localhost:3001" 
+      : (process.env.FRONTEND_URL || "https://cafe-sync-intelligent-system.vercel.app");
+
     await Order.findOneAndDelete({ orderID: orderId });
     console.log(`🗑️ Đã xóa vĩnh viễn đơn hàng hủy: ${orderId}`);
-    res.redirect(`http://localhost:3001/cart?status=cancelled`);
+    res.redirect(`${FRONTEND_URL}/cart?status=cancelled`);
   } catch (error) {
+    console.error("Lỗi khi hủy đơn hàng:", error);
     res.status(500).json({ message: "Không thể xử lý yêu cầu xóa đơn." });
   }
 };
@@ -148,19 +179,39 @@ const cancelOrder = async (req, res) => {
 const receiveWebhook = async (req, res) => {
   try {
     console.log("🔔 Đã nhận tín hiệu từ PayOS:", req.body);
-    // Trong hàm receiveWebhook (orderController.js)
     const { data } = req.body;
     if (data) {
-      const orderCodeStr = data.orderCode.toString();
-      // Tìm đơn hàng có orderID chứa dãy số orderCode từ PayOS gửi về
+      const orderCodeNum = data.orderCode;
+      console.log(`🔎 Đang tìm đơn hàng khớp với mã PayOS: ${orderCodeNum}`);
+
+      // Tìm bằng nhiều cách: khớp chính xác hoặc khớp dãy số trong CFS...
       const updatedOrder = await Order.findOneAndUpdate(
-        { orderID: { $regex: orderCodeStr } },
+        {
+          $or: [
+            { orderID: String(orderCodeNum) },
+            { orderID: `CFS${orderCodeNum}` },
+            { orderID: { $regex: String(orderCodeNum) } }
+          ]
+        },
         { status: "Đã thanh toán" },
         { new: true }
       );
 
       if (updatedOrder) {
-        console.log(`✅ Tuyệt vời! Đơn ${updatedOrder.orderID} đã tự động đổi sang Chờ xác nhận`);
+        console.log(`✅ Tuyệt vời! Đơn ${updatedOrder.orderID} đã tự động đổi sang Đã thanh toán`);
+
+        // Cập nhật trạng thái bàn sang "Đang phục vụ" nếu chưa cập nhật
+        if (updatedOrder.tableNumber) {
+          const Table = require('../models/Table');
+          const updatedTable = await Table.findOneAndUpdate(
+            { tableNumber: updatedOrder.tableNumber },
+            { status: 'Đang phục vụ' },
+            { new: true }
+          );
+          const io = req.app.get('io');
+          if (io && updatedTable) io.emit('table_updated', updatedTable.toObject());
+        }
+
         // Bắn socket cho admin thấy luôn
         const io = req.app.get('io');
         if (io) io.emit('order_updated', updatedOrder);
@@ -175,6 +226,32 @@ const receiveWebhook = async (req, res) => {
   }
 };
 
+// 📌 9. Cập nhật trạng thái từ Frontend (Dự phòng cho Localhost khi không có Ngrok)
+const paymentSuccess = async (req, res) => {
+  try {
+    const { orderCode } = req.body;
+    if (orderCode) {
+      const orderCodeStr = orderCode.toString();
+      const updatedOrder = await Order.findOneAndUpdate(
+        { orderID: { $regex: orderCodeStr } },
+        { status: "Đã thanh toán" },
+        { new: true }
+      );
+
+      if (updatedOrder) {
+        console.log(`✅ Đơn ${updatedOrder.orderID} đã Đã thanh toán (qua Client SDK/ReturnURL)`);
+        const io = req.app.get('io');
+        if (io) io.emit('order_updated', updatedOrder);
+        return res.status(200).json({ message: "Thành công", order: updatedOrder });
+      }
+    }
+    return res.status(400).json({ message: "Không tìm thấy đơn hoặc thiếu mã!" });
+  } catch (error) {
+    console.error("Lỗi Return URL:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   createOrder,
   getOrders,
@@ -184,4 +261,5 @@ module.exports = {
   deleteOrder,
   cancelOrder,
   receiveWebhook,
+  paymentSuccess,
 };

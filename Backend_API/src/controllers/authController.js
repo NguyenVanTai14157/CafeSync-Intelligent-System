@@ -94,7 +94,7 @@ exports.forgotPassword = async (req, res) => {
     const resetUrl = `${FRONTEND_URL}/reset-password/${resetToken}`;
 
     const mailOptions = {
-      from: `"CafeSync Intelligent System" <${process.env.EMAIL_USER}>`,
+      from: `"CafeSync Intelligent System" <${process.env.EMAIL_SENDER || process.env.EMAIL_USER}>`,
       to: user.email,
       subject: "🔒 KHÔI PHỤC MẬT KHẨU TÀI KHOẢN CAFESYNC 🔒",
       html: `
@@ -142,7 +142,7 @@ exports.resetPassword = async (req, res) => {
 
     // Cập nhật mật khẩu mới (Mongoose pre-save hook sẽ tự động băm mật khẩu này)
     user.password = password;
-    
+
     // Xóa bỏ token sau khi đã dùng xong
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;

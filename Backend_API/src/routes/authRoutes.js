@@ -10,6 +10,10 @@ const codeCache = new Map();
 // Route login gốc của Admin
 router.post("/login", authController.login);
 
+// Các tuyến đường khôi phục mật khẩu
+router.post("/forgot-password", authController.forgotPassword);
+router.post("/reset-password/:token", authController.resetPassword);
+
 // Route khởi động đăng nhập Google
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 

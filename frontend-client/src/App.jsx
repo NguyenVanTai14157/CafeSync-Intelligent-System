@@ -12,6 +12,7 @@ import Login from './pages/Login.jsx';
 import Favorites from './pages/Favorites.jsx';
 import OrderHistory from './pages/OrderHistory.jsx';
 import Profile from './pages/Profile.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
 import Chatbot from './components/ChatBot.jsx';
 
 function App() {
@@ -54,6 +55,7 @@ function App() {
           <Route path="/history" element={<OrderHistory />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/favorites" element={<Favorites />} />
         </Routes>
 

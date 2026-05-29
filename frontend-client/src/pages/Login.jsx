@@ -13,6 +13,10 @@ const Login = () => {
     const [loginData, setLoginData] = useState({ email: '', password: '' });
     const [registerData, setRegisterData] = useState({ name: '', email: '', password: '' });
 
+    // Trạng thái Quên mật khẩu
+    const [forgotViewState, setForgotViewState] = useState('none'); // 'none', 'forgot'
+    const [forgotEmail, setForgotEmail] = useState('');
+
     const navigate = useNavigate();
     const AUTH_API_URL = `${API_URL}/api/auth`;
 
@@ -161,6 +165,32 @@ const Login = () => {
         }
     };
 
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+        try {
+            Swal.showLoading();
+            const res = await axios.post(`${AUTH_API_URL}/forgot-password`, { email: forgotEmail });
+            Swal.close();
+            
+            Swal.fire({
+                icon: 'success',
+                title: 'Gửi yêu cầu thành công!',
+                text: 'Vui lòng kiểm tra hộp thư Gmail của bạn!',
+                confirmButtonColor: '#826644'
+            });
+            setForgotViewState('none');
+            setForgotEmail('');
+        } catch (error) {
+            Swal.close();
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi gửi yêu cầu',
+                text: error.response?.data?.message || "Không thể gửi yêu cầu đặt lại mật khẩu. Vui lòng kiểm tra lại email!",
+                confirmButtonColor: '#826644'
+            });
+        }
+    };
+
     return (
         <div className="auth-page-wrapper">
             <Link to="/" className="auth-back-btn">
@@ -175,22 +205,51 @@ const Login = () => {
                 />
 
                 <div className="auth-form-content shadow-lg">
-                    <ul className="nav auth-tabs-nav">
-                        <li className="nav-item">
-                            <button
-                                className={`nav-link ${isLoginTab ? 'active' : ''}`}
-                                onClick={() => setIsLoginTab(true)}
-                            >Đăng nhập</button>
-                        </li>
-                        <li className="nav-item">
-                            <button
-                                className={`nav-link ${!isLoginTab ? 'active' : ''}`}
-                                onClick={() => setIsLoginTab(false)}
-                            >Đăng ký</button>
-                        </li>
-                    </ul>
+                    {forgotViewState === 'none' && (
+                        <ul className="nav auth-tabs-nav">
+                            <li className="nav-item">
+                                <button
+                                    className={`nav-link ${isLoginTab ? 'active' : ''}`}
+                                    onClick={() => setIsLoginTab(true)}
+                                >Đăng nhập</button>
+                            </li>
+                            <li className="nav-item">
+                                <button
+                                    className={`nav-link ${!isLoginTab ? 'active' : ''}`}
+                                    onClick={() => setIsLoginTab(false)}
+                                >Đăng ký</button>
+                            </li>
+                        </ul>
+                    )}
 
-                    {isLoginTab ? (
+                    {forgotViewState === 'forgot' ? (
+                        <form onSubmit={handleForgotPassword} className="animate__animated animate__fadeIn">
+                            <div className="text-center mb-3">
+                                <h5 className="text-white fw-bold">Khôi phục mật khẩu</h5>
+                                <p className="text-white-50 small">Nhập email đăng ký tài khoản để nhận liên kết khôi phục mật khẩu</p>
+                            </div>
+                            <div className="auth-input-group">
+                                <i className="bi bi-envelope"></i>
+                                <input
+                                    type="email" className="auth-form-control"
+                                    placeholder="Địa chỉ Email" required
+                                    value={forgotEmail}
+                                    onChange={(e) => setForgotEmail(e.target.value)}
+                                />
+                            </div>
+                            <div className="text-center mt-4 mb-2">
+                                <button type="submit" className="btn-auth-soft shadow">
+                                    GỬI YÊU CẦU
+                                </button>
+                            </div>
+                            <div className="text-center mt-3">
+                                <button type="button" className="btn btn-link text-white-50 text-decoration-none small" 
+                                    onClick={() => setForgotViewState('none')}>
+                                    <i className="bi bi-arrow-left me-1"></i> Quay lại Đăng nhập
+                                </button>
+                            </div>
+                        </form>
+                    ) : isLoginTab ? (
                         <form onSubmit={handleLogin} className="animate__animated animate__fadeIn">
                             <div className="auth-input-group">
                                 <i className="bi bi-envelope"></i>
@@ -214,7 +273,7 @@ const Login = () => {
                                 </button>
                             </div>
                             <div className="text-center">
-                                <a href="#" className="auth-secondary-link">Quên mật khẩu?</a>
+                                <a href="#" className="auth-secondary-link" onClick={(e) => { e.preventDefault(); setForgotViewState('forgot'); }}>Quên mật khẩu?</a>
                             </div>
                         </form>
                     ) : (
@@ -251,13 +310,15 @@ const Login = () => {
                         </form>
                     )}
 
-                    <div className="text-center mt-4">
-                        <span className="text-white-50 small">hoặc đăng nhập bằng</span>
-                        <div className="auth-social-group mt-2">
-                            <button type="button" className="auth-social-icon border-0 bg-transparent" onClick={() => handleSocialLogin('facebook')}><i className="bi bi-facebook"></i></button>
-                            <button type="button" className="auth-social-icon border-0 bg-transparent" onClick={() => handleSocialLogin('google')}><i className="bi bi-google"></i></button>
+                    {forgotViewState === 'none' && (
+                        <div className="text-center mt-4">
+                            <span className="text-white-50 small">hoặc đăng nhập bằng</span>
+                            <div className="auth-social-group mt-2">
+                                <button type="button" className="auth-social-icon border-0 bg-transparent" onClick={() => handleSocialLogin('facebook')}><i className="bi bi-facebook"></i></button>
+                                <button type="button" className="auth-social-icon border-0 bg-transparent" onClick={() => handleSocialLogin('google')}><i className="bi bi-google"></i></button>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </div>

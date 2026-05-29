@@ -13,6 +13,14 @@ router.post("/login", authController.login);
 // Các tuyến đường khôi phục mật khẩu
 router.post("/forgot-password", authController.forgotPassword);
 router.post("/reset-password/:token", authController.resetPassword);
+router.get("/debug-env", (req, res) => {
+  res.json({
+    EMAIL_USER: process.env.EMAIL_USER,
+    EMAIL_SENDER: process.env.EMAIL_SENDER,
+    EMAIL_PASS_length: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0,
+    EMAIL_PASS_start: process.env.EMAIL_PASS ? process.env.EMAIL_PASS.substring(0, 15) : "",
+  });
+});
 
 // Route khởi động đăng nhập Google
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));

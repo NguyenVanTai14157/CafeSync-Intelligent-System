@@ -71,9 +71,9 @@ exports.forgotPassword = async (req, res) => {
     }
 
     const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 465,
-      secure: true,
+      host: "smtp-relay.brevo.com",
+      port: 2525,
+      secure: false, // Cổng 2525 sử dụng STARTTLS (bắt buộc secure: false)
       lookup: (hostname, options, callback) => {
         dns.lookup(hostname, { ...options, family: 4 }, callback);
       },

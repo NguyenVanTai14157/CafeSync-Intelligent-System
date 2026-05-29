@@ -49,7 +49,7 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
     clientID: process.env.FACEBOOK_APP_ID,
     clientSecret: process.env.FACEBOOK_APP_SECRET,
     callbackURL: process.env.FACEBOOK_CALLBACK_URL || 'http://localhost:5000/api/auth/facebook/callback',
-    profileFields: ['id', 'displayName', 'emails', 'name'],
+    profileFields: ['id', 'displayName', 'name'],
     graphAPIVersion: 'v18.0',
     proxy: true
   },

@@ -53,6 +53,7 @@ router.get('/facebook', passport.authenticate('facebook', { scope: ['public_prof
 // Route callback nhận phản hồi từ Facebook
 router.get('/facebook/callback',
     (req, res, next) => {
+        console.log(`[FB_CALLBACK] ➡️ Nhận yêu cầu callback từ Facebook: ${req.originalUrl} | IP: ${req.ip} | Thời gian: ${new Date().toISOString()}`);
         const requestHost = req.get('host') || '';
         const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
         const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
@@ -61,7 +62,8 @@ router.get('/facebook/callback',
             session: false
         }, (err, user, info) => {
             if (err) {
-                console.error("Custom Passport Facebook auth error:", err);
+                console.error("[FB_CALLBACK] ❌ Lỗi xác thực Passport Facebook:", err);
+                // Trả về JSON lỗi chi tiết để gỡ lỗi trực quan
                 return res.status(500).json({
                     message: "Passport Facebook Strategy error",
                     error: err.message || err,
@@ -70,6 +72,7 @@ router.get('/facebook/callback',
                 });
             }
             if (!user) {
+                console.warn("[FB_CALLBACK] ⚠️ Không tìm thấy hoặc xác thực user thất bại");
                 return res.redirect(`${FRONTEND_URL}/login?error=facebook_failed`);
             }
             req.user = user;
@@ -89,9 +92,10 @@ router.get('/facebook/callback',
             const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
             const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
 
+            console.log(`[FB_CALLBACK] ✅ Đăng nhập thành công, chuyển hướng về frontend: ${user.email}`);
             res.redirect(`${FRONTEND_URL}/login?token=${token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}`);
         } catch (error) {
-            console.error("Lỗi callback redirect Facebook:", error);
+            console.error("[FB_CALLBACK] ❌ Lỗi khi sinh token hoặc redirect:", error);
             res.status(500).send("Lỗi máy chủ khi đăng nhập Facebook.");
         }
     }

@@ -368,3 +368,80 @@ body {
 .btn-add-order-now-new:active {
     transform: scale(0.98);
 }
+
+/* Media query for tablet and desktop viewports */
+@media (min-width: 768px) {
+    .detail-page-premium {
+        max-width: 1050px;
+        margin: 40px auto;
+        display: flex;
+        gap: 40px;
+        background: transparent;
+        box-shadow: none;
+        min-height: auto;
+        padding: 0 20px;
+        align-items: flex-start;
+    }
+
+    .hero-image-wrapper {
+        flex: 1.1;
+        position: sticky;
+        top: 30px;
+        height: 520px;
+        border-radius: 24px;
+        box-shadow: 0 15px 35px rgba(130, 102, 68, 0.08);
+        overflow: hidden;
+    }
+
+    .product-hero-image-new {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .hero-image-wrapper:hover .product-hero-image-new {
+        transform: scale(1.05);
+    }
+
+    .detail-content-sheet-new {
+        flex: 1.2;
+        background: white;
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 15px 35px rgba(130, 102, 68, 0.05);
+    }
+
+    /* Remove bottom padding since footer is inline on desktop */
+    .detail-content-sheet-new .option-section.mb-5.pb-5 {
+        margin-bottom: 20px !important;
+        padding-bottom: 0 !important;
+    }
+
+    .premium-footer-container-new {
+        position: static;
+        max-width: none;
+        padding: 24px 0 0 0;
+        background: transparent;
+        box-shadow: none;
+        border-top: 1.5px solid rgba(130, 102, 68, 0.1);
+        margin-top: 20px;
+        border-radius: 0;
+    }
+
+    .footer-layout-new {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .btn-add-order-now-new {
+        padding: 16px 28px;
+        font-size: 1.1rem;
+    }
+
+    .btn-add-order-now-new:hover {
+        background: var(--umber-dark);
+        box-shadow: 0 8px 25px rgba(92, 64, 51, 0.25);
+    }
+}

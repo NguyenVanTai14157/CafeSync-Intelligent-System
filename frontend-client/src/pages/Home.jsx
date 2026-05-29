@@ -239,7 +239,7 @@ const Home = ({ cartCount }) => {
                     </div>
                 )}
 
-                <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
+                <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3" key={`${category}-${isPersonalized}`}>
                     {products
                         .filter(p => {
                             const nameNormalized = removeAccents(p.name.toLowerCase());
@@ -261,8 +261,16 @@ const Home = ({ cartCount }) => {
                             if (hour >= 12 && hour < 18) return p.category === categoryMap["Sinh tố"] || p.category === categoryMap["Trà"] || isSpecial;
                             return p.category === categoryMap["Nước ép"] || isSpecial;
                         })
-                        .map(p => (
-                            <div key={p._id} className="col mb-2 animate__animated animate__fadeInUp">
+                        .map((p, index) => (
+                            <div 
+                                key={p._id} 
+                                className="col mb-2 animate__animated animate__fadeInUp"
+                                style={{ 
+                                    animationDelay: `${Math.min(index, 8) * 0.06}s`,
+                                    animationDuration: '0.4s',
+                                    animationFillMode: 'both'
+                                }}
+                            >
                                 <div className="card h-100 premium-card shadow-sm position-relative" onClick={() => navigate(`/product/${p._id}`)}>
                                     <button className="btn-favorite-float" onClick={(e) => toggleFavorite(e, p)}>
                                         <i className={`bi ${favorites.find(f => f._id === p._id) ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>

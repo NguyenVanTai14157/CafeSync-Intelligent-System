@@ -44,7 +44,7 @@ body {
   background: var(--card-white);
   border-radius: 25px !important;
   border: none !important;
-  transition: all 0.3s ease;
+  transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(130, 102, 68, 0.05) !important;
   cursor: pointer;
@@ -225,4 +225,18 @@ body {
 .scrollbar-hidden {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Category Buttons & Navigation Transitions */
+.scrollbar-hidden .btn {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.scrollbar-hidden .btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(130, 102, 68, 0.12) !important;
+}
+
+.scrollbar-hidden .btn:active {
+  transform: scale(0.95);
 }

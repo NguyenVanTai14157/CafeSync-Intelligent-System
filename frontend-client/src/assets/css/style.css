@@ -240,3 +240,49 @@ body {
 .scrollbar-hidden .btn:active {
   transform: scale(0.95);
 }
+
+/* Premium entrance animation for products */
+@keyframes premiumFadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.product-card-animate {
+  animation: premiumFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Premium Skeleton Loader */
+.skeleton-pulse {
+  background: linear-gradient(90deg, #f0eae1 25%, #e6dfd3 50%, #f0eae1 75%);
+  background-size: 200% 100%;
+  animation: skeletonloading 1.5s infinite ease-in-out;
+}
+
+@keyframes skeletonloading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton-card {
+  border-radius: 25px;
+  background: var(--card-white);
+  border: none;
+  overflow: hidden;
+  height: 100%;
+  box-shadow: 0 4px 15px rgba(130, 102, 68, 0.03);
+}
+
+.skeleton-img {
+  width: 100%;
+  height: 160px;
+}

@@ -23,6 +23,7 @@ const Home = ({ cartCount }) => {
     const [favorites, setFavorites] = useState(JSON.parse(localStorage.getItem('favorites')) || []);
     const [isPersonalized, setIsPersonalized] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [loading, setLoading] = useState(false);
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -109,6 +110,7 @@ const Home = ({ cartCount }) => {
 
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true);
             try {
                 let url = `${API_URL}/api/products`;
                 // Logic lọc theo danh mục chuẩn xác
@@ -120,6 +122,8 @@ const Home = ({ cartCount }) => {
                 setProducts(res.data);
             } catch (err) {
                 console.error("Lỗi lấy dữ liệu:", err);
+            } finally {
+                setLoading(false);
             }
         };
         fetchData();
@@ -239,54 +243,69 @@ const Home = ({ cartCount }) => {
                     </div>
                 )}
 
-                <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3" key={`${category}-${isPersonalized}`}>
-                    {products
-                        .filter(p => {
-                            const nameNormalized = removeAccents(p.name.toLowerCase());
-                            const searchNormalized = removeAccents(searchTerm.toLowerCase());
-                            return nameNormalized.includes(searchNormalized);
-                        })
-                        .filter(p => {
-                            if (!isPersonalized) return true;
-                            const hour = new Date().getHours();
-                            const isFav = favorites.some(f => f._id === p._id);
-
-                            // 1. Món đã thả tim luôn hiện
-                            if (isFav) return true;
-
-                            // 2. Logic dự phòng: Hiện Best Seller hoặc món giá cao
-                            const isSpecial = p.name.includes("đặc biệt") || p.name.includes("muối") || p.price > 55000;
-
-                            if (hour >= 5 && hour < 12) return p.category === categoryMap["Cà Phê"] || isSpecial;
-                            if (hour >= 12 && hour < 18) return p.category === categoryMap["Sinh tố"] || p.category === categoryMap["Trà"] || isSpecial;
-                            return p.category === categoryMap["Nước ép"] || isSpecial;
-                        })
-                        .map((p, index) => (
-                            <div 
-                                key={p._id} 
-                                className="col mb-2 animate__animated animate__fadeInUp"
-                                style={{ 
-                                    animationDelay: `${Math.min(index, 8) * 0.06}s`,
-                                    animationDuration: '0.4s',
-                                    animationFillMode: 'both'
-                                }}
-                            >
-                                <div className="card h-100 premium-card shadow-sm position-relative" onClick={() => navigate(`/product/${p._id}`)}>
-                                    <button className="btn-favorite-float" onClick={(e) => toggleFavorite(e, p)}>
-                                        <i className={`bi ${favorites.find(f => f._id === p._id) ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
-                                    </button>
-                                    <img src={`${API_URL}/images/${p.image}`} className="card-img-top" alt={p.name}
-                                        onError={(e) => e.target.src = 'https://placehold.co/200x250?text=CaféSync'} />
-                                    <div className="card-body p-3">
-                                        <h6 className="card-title text-truncate fw-bold">{p.name}</h6>
-                                        <div className="d-flex justify-content-between align-items-center mt-2">
-                                            <span className="fw-bold" style={{ color: '#D9A673' }}>{p.price.toLocaleString()}đ</span>
-                                            <button className="btn-cart-small shadow-sm" onClick={(e) => addToCart(e, p)}><i className="bi bi-plus"></i></button>
+                <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
+                    {loading ? (
+                        Array.from({ length: 4 }).map((_, idx) => (
+                            <div key={`skeleton-${idx}`} className="col mb-2">
+                                <div className="skeleton-card p-0">
+                                    <div className="skeleton-img skeleton-pulse"></div>
+                                    <div className="p-3">
+                                        <div className="skeleton-text skeleton-title skeleton-pulse" style={{ height: '16px', borderRadius: '4px', marginBottom: '10px', width: '70%' }}></div>
+                                        <div className="d-flex justify-content-between align-items-center mt-3">
+                                            <div className="skeleton-text skeleton-pulse mb-0" style={{ height: '20px', borderRadius: '4px', width: '40%' }}></div>
+                                            <div className="skeleton-btn skeleton-pulse" style={{ width: '35px', height: '35px', borderRadius: '12px' }}></div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                        ))
+                    ) : (
+                        products
+                            .filter(p => {
+                                const nameNormalized = removeAccents(p.name.toLowerCase());
+                                const searchNormalized = removeAccents(searchTerm.toLowerCase());
+                                return nameNormalized.includes(searchNormalized);
+                            })
+                            .filter(p => {
+                                if (!isPersonalized) return true;
+                                const hour = new Date().getHours();
+                                const isFav = favorites.some(f => f._id === p._id);
+
+                                // 1. Món đã thả tim luôn hiện
+                                if (isFav) return true;
+
+                                // 2. Logic dự phòng: Hiện Best Seller hoặc món giá cao
+                                const isSpecial = p.name.includes("đặc biệt") || p.name.includes("muối") || p.price > 55000;
+
+                                if (hour >= 5 && hour < 12) return p.category === categoryMap["Cà Phê"] || isSpecial;
+                                if (hour >= 12 && hour < 18) return p.category === categoryMap["Sinh tố"] || p.category === categoryMap["Trà"] || isSpecial;
+                                return p.category === categoryMap["Nước ép"] || isSpecial;
+                            })
+                            .map((p, index) => (
+                                <div 
+                                    key={p._id} 
+                                    className="col mb-2 product-card-animate"
+                                    style={{ 
+                                        animationDelay: `${Math.min(index, 8) * 0.05}s`
+                                    }}
+                                >
+                                    <div className="card h-100 premium-card shadow-sm position-relative" onClick={() => navigate(`/product/${p._id}`)}>
+                                        <button className="btn-favorite-float" onClick={(e) => toggleFavorite(e, p)}>
+                                            <i className={`bi ${favorites.find(f => f._id === p._id) ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
+                                        </button>
+                                        <img src={`${API_URL}/images/${p.image}`} className="card-img-top" alt={p.name}
+                                            onError={(e) => e.target.src = 'https://placehold.co/200x250?text=CaféSync'} />
+                                        <div className="card-body p-3">
+                                            <h6 className="card-title text-truncate fw-bold">{p.name}</h6>
+                                            <div className="d-flex justify-content-between align-items-center mt-2">
+                                                <span className="fw-bold" style={{ color: '#D9A673' }}>{p.price.toLocaleString()}đ</span>
+                                                <button className="btn-cart-small shadow-sm" onClick={(e) => addToCart(e, p)}><i className="bi bi-plus"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                    )}
                 </div>
             </div>
 

@@ -165,118 +165,120 @@ const Detail = () => {
                 <span className="popular-badge-float">Phổ biến</span>
             </div>
 
-            <div className="detail-content-sheet-new">
-                <div className="name-price-row">
-                    <h1 className="premium-item-name-new">{product.name}</h1>
-                    <span className="premium-item-price-new">{(product.price + getExtraPrice()).toLocaleString()}đ</span>
-                </div>
-
-                {/* Chỉ số calo giống như bản mẫu */}
-                <div className="calorie-badge">
-                    <i className="bi bi-fire me-1 text-danger"></i>
-                    <span>{getCalories()} CALORIES</span>
-                </div>
-
-                {/* Chọn Size dạng viên thuốc rời */}
-                <div className="option-section mt-4">
-                    <span className="premium-section-title">Kích cỡ ly</span>
-                    <div className="pill-selector-group">
-                        {product.sizes?.map(s => (
-                            <button 
-                                key={s} 
-                                className={`pill-selector-item ${options.size === s ? 'active' : ''}`} 
-                                onClick={() => setOptions({ ...options, size: s })}
-                            >
-                                {sizeMap[s] || s}
-                            </button>
-                        ))}
+            <div className="detail-info-wrapper-new">
+                <div className="detail-content-sheet-new">
+                    <div className="name-price-row">
+                        <h1 className="premium-item-name-new">{product.name}</h1>
+                        <span className="premium-item-price-new">{(product.price + getExtraPrice()).toLocaleString()}đ</span>
                     </div>
-                </div>
 
-                {/* Mức đường dạng viên thuốc rời */}
-                <div className="option-section mt-4">
-                    <span className="premium-section-title">Mức đường</span>
-                    <div className="pill-selector-group">
-                        {product.sugarOptions?.map(opt => (
-                            <button 
-                                key={opt} 
-                                className={`pill-selector-item ${options.sugar === opt ? 'active' : ''}`} 
-                                onClick={() => setOptions({ ...options, sugar: opt })}
-                            >
-                                {opt}
-                            </button>
-                        ))}
+                    {/* Chỉ số calo giống như bản mẫu */}
+                    <div className="calorie-badge">
+                        <i className="bi bi-fire me-1 text-danger"></i>
+                        <span>{getCalories()} CALORIES</span>
                     </div>
-                </div>
 
-                {/* Mức đá dạng viên thuốc rời */}
-                <div className="option-section mt-4">
-                    <span className="premium-section-title">Mức đá</span>
-                    <div className="pill-selector-group">
-                        {product.iceOptions?.map(opt => (
-                            <button 
-                                key={opt} 
-                                className={`pill-selector-item ${options.ice === opt ? 'active' : ''}`} 
-                                onClick={() => setOptions({ ...options, ice: opt })}
-                            >
-                                {iceMap[opt] || opt}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Topping dạng Checkbox list căn đều */}
-                {product.toppings?.length > 0 && (
+                    {/* Chọn Size dạng viên thuốc rời */}
                     <div className="option-section mt-4">
-                        <span className="premium-section-title">Topping yêu thích</span>
-                        <div className="topping-checkbox-list">
-                            {product.toppings.map(t => {
-                                const isSelected = options.toppings.includes(t);
-                                const toppingPrice = getToppingPrice(t);
-                                return (
-                                    <div key={t} className="topping-checkbox-row" onClick={() => handleToppingToggle(t)}>
-                                        <div className="d-flex align-items-center gap-2">
-                                            <span className="topping-checkbox-icon">
-                                                {isSelected ? (
-                                                    <i className="bi bi-check-square-fill text-dark fs-5"></i>
-                                                ) : (
-                                                    <i className="bi bi-square fs-5" style={{ color: '#ccc' }}></i>
-                                                )}
-                                            </span>
-                                            <span className="topping-name text-dark fw-semibold">{t}</span>
-                                        </div>
-                                        <span className="topping-price text-muted fw-bold">+{toppingPrice.toLocaleString()}đ</span>
-                                    </div>
-                                );
-                            })}
+                        <span className="premium-section-title">Kích cỡ ly</span>
+                        <div className="pill-selector-group">
+                            {product.sizes?.map(s => (
+                                <button 
+                                    key={s} 
+                                    className={`pill-selector-item ${options.size === s ? 'active' : ''}`} 
+                                    onClick={() => setOptions({ ...options, size: s })}
+                                >
+                                    {sizeMap[s] || s}
+                                </button>
+                            ))}
                         </div>
                     </div>
-                )}
 
-                {/* Ghi chú */}
-                <div className="option-section mt-4 mb-5 pb-5">
-                    <span className="premium-section-title">Ghi chú đặc biệt</span>
-                    <textarea 
-                        className="premium-note-input" 
-                        rows="2" 
-                        placeholder="Ví dụ: Ít ngọt, không lấy ống hút, dị ứng hạt..." 
-                        value={note} 
-                        onChange={(e) => setNote(e.target.value)}
-                    ></textarea>
-                </div>
-            </div>
-
-            {/* Footer dạng thanh đơn mỏng gọn giống thiết kế */}
-            <div className="premium-footer-container-new">
-                <div className="footer-layout-new">
-                    <div className="premium-quantity-stepper-new">
-                        <button onClick={() => quantity > 1 && setQuantity(quantity - 1)}>−</button>
-                        <span className="quantity-num-new">{quantity}</span>
-                        <button onClick={() => setQuantity(quantity + 1)}>+</button>
+                    {/* Mức đường dạng viên thuốc rời */}
+                    <div className="option-section mt-4">
+                        <span className="premium-section-title">Mức đường</span>
+                        <div className="pill-selector-group">
+                            {product.sugarOptions?.map(opt => (
+                                <button 
+                                    key={opt} 
+                                    className={`pill-selector-item ${options.sugar === opt ? 'active' : ''}`} 
+                                    onClick={() => setOptions({ ...options, sugar: opt })}
+                                >
+                                    {opt}
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                    <button className="btn-add-order-now-new" onClick={handleAddToCart}>
-                        Thêm vào giỏ | {totalPrice.toLocaleString()}đ
-                    </button>
+
+                    {/* Mức đá dạng viên thuốc rời */}
+                    <div className="option-section mt-4">
+                        <span className="premium-section-title">Mức đá</span>
+                        <div className="pill-selector-group">
+                            {product.iceOptions?.map(opt => (
+                                <button 
+                                    key={opt} 
+                                    className={`pill-selector-item ${options.ice === opt ? 'active' : ''}`} 
+                                    onClick={() => setOptions({ ...options, ice: opt })}
+                                >
+                                    {iceMap[opt] || opt}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Topping dạng Checkbox list căn đều */}
+                    {product.toppings?.length > 0 && (
+                        <div className="option-section mt-4">
+                            <span className="premium-section-title">Topping yêu thích</span>
+                            <div className="topping-checkbox-list">
+                                {product.toppings.map(t => {
+                                    const isSelected = options.toppings.includes(t);
+                                    const toppingPrice = getToppingPrice(t);
+                                    return (
+                                        <div key={t} className="topping-checkbox-row" onClick={() => handleToppingToggle(t)}>
+                                            <div className="d-flex align-items-center gap-2">
+                                                <span className="topping-checkbox-icon">
+                                                    {isSelected ? (
+                                                        <i className="bi bi-check-square-fill text-dark fs-5"></i>
+                                                    ) : (
+                                                        <i className="bi bi-square fs-5" style={{ color: '#ccc' }}></i>
+                                                    )}
+                                                </span>
+                                                <span className="topping-name text-dark fw-semibold">{t}</span>
+                                            </div>
+                                            <span className="topping-price text-muted fw-bold">+{toppingPrice.toLocaleString()}đ</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Ghi chú */}
+                    <div className="option-section mt-4 mb-5 pb-5">
+                        <span className="premium-section-title">Ghi chú đặc biệt</span>
+                        <textarea 
+                            className="premium-note-input" 
+                            rows="2" 
+                            placeholder="Ví dụ: Ít ngọt, không lấy ống hút, dị ứng hạt..." 
+                            value={note} 
+                            onChange={(e) => setNote(e.target.value)}
+                        ></textarea>
+                    </div>
+                </div>
+
+                {/* Footer dạng thanh đơn mỏng gọn giống thiết kế */}
+                <div className="premium-footer-container-new">
+                    <div className="footer-layout-new">
+                        <div className="premium-quantity-stepper-new">
+                            <button onClick={() => quantity > 1 && setQuantity(quantity - 1)}>−</button>
+                            <span className="quantity-num-new">{quantity}</span>
+                            <button onClick={() => setQuantity(quantity + 1)}>+</button>
+                        </div>
+                        <button className="btn-add-order-now-new" onClick={handleAddToCart}>
+                            Thêm vào giỏ | {totalPrice.toLocaleString()}đ
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

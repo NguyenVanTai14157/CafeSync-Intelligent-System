@@ -71,7 +71,9 @@ exports.forgotPassword = async (req, res) => {
     }
 
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 465,
+      secure: true,
       lookup: (hostname, options, callback) => {
         dns.lookup(hostname, { ...options, family: 4 }, callback);
       },
@@ -79,6 +81,10 @@ exports.forgotPassword = async (req, res) => {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
       },
+      tls: {
+        // Không từ chối kết nối nếu chứng chỉ tự ký (Né lỗi phân giải TLS trên Render)
+        rejectUnauthorized: false
+      }
     });
 
     // Xác định URL frontend động để sinh resetUrl

@@ -160,10 +160,10 @@ const Home = ({ cartCount }) => {
             {/* Sticky Wrapper cho toàn bộ Header + Banner + Search + Categories */}
             <div className={`sticky-top-wrapper ${scrolled ? 'scrolled' : ''}`}>
                 {/* Header */}
-                <div className="container d-flex justify-content-between align-items-center mb-1">
+                <div className="container d-flex justify-content-between align-items-center mb-1 home-header-wrapper">
                     <div>
-                        <h4 className="fw-bold mb-0" style={{ fontFamily: 'Playfair Display', color: '#826644' }}>CaféSync</h4>
-                        <small className="text-muted">{userName ? `Chào ${userName} ` : "Chào bạn "}</small>
+                        <h4 className="fw-bold mb-0 home-header-title" style={{ fontFamily: 'Playfair Display', color: '#826644' }}>CaféSync</h4>
+                        <small className="text-muted home-header-subtitle">{userName ? `Chào ${userName} ` : "Chào bạn "}</small>
                     </div>
                     <div className="d-flex gap-2">
                         {(userName || localStorage.getItem('lastOrderDBId')) && (
@@ -181,7 +181,7 @@ const Home = ({ cartCount }) => {
                 </div>
 
                 {/* Smart Promo Banner */}
-                <div className="container mt-2">
+                <div className="container mt-2 promo-banner-wrapper">
                     {userName ? (
                         <div className="promo-banner shadow-sm" style={{ background: 'linear-gradient(135deg, #826644 0%, #a47551 100%)', color: 'white', marginBottom: '12px' }}>
                             <div>
@@ -212,7 +212,7 @@ const Home = ({ cartCount }) => {
                 </div>
 
                 {/* Search */}
-                <div className="container mb-3">
+                <div className="container mb-3 search-container-wrapper">
                     <div className="input-group shadow-sm rounded-pill overflow-hidden bg-white border-0">
                         <span className="input-group-text bg-white border-0 ps-3"><i className="bi bi-search text-muted"></i></span>
                         <input type="text" value={searchTerm} className="form-control border-0 py-3 shadow-none text-dark" placeholder="Tìm món ngon..."

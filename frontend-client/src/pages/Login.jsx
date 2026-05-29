@@ -76,12 +76,15 @@ const Login = () => {
                 user: { name: nameParam, email: emailParam }
             });
         } else if (errorParam) {
+            const detailsParam = queryParams.get('details');
             window.history.replaceState({}, document.title, window.location.pathname);
             const providerName = errorParam.includes('facebook') ? 'Facebook' : 'Google';
             Swal.fire({
                 icon: 'error',
                 title: `Lỗi đăng nhập ${providerName}`,
-                text: `Đăng nhập bằng tài khoản ${providerName} thất bại. Vui lòng thử lại!`,
+                text: detailsParam 
+                    ? `Chi tiết: ${decodeURIComponent(detailsParam)}` 
+                    : `Đăng nhập bằng tài khoản ${providerName} thất bại. Vui lòng thử lại!`,
                 confirmButtonColor: '#826644'
             });
         }

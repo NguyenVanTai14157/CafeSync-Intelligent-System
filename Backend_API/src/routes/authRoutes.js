@@ -63,13 +63,9 @@ router.get('/facebook/callback',
         }, (err, user, info) => {
             if (err) {
                 console.error("[FB_CALLBACK] ❌ Lỗi xác thực Passport Facebook:", err);
-                // Trả về JSON lỗi chi tiết để gỡ lỗi trực quan
-                return res.status(500).json({
-                    message: "Passport Facebook Strategy error",
-                    error: err.message || err,
-                    stack: err.stack,
-                    info: info
-                });
+                // Thay vì hiển thị trang JSON lỗi 500 gây đứng màn hình,
+                // chuyển hướng người dùng về trang login kèm thông tin chi tiết lỗi.
+                return res.redirect(`${FRONTEND_URL}/login?error=facebook_failed&details=${encodeURIComponent(err.message || err)}`);
             }
             if (!user) {
                 console.warn("[FB_CALLBACK] ⚠️ Không tìm thấy hoặc xác thực user thất bại");

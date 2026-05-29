@@ -185,7 +185,7 @@ const Login = () => {
             Swal.fire({
                 icon: 'error',
                 title: 'Lỗi gửi yêu cầu',
-                text: error.response?.data?.message || "Không thể gửi yêu cầu đặt lại mật khẩu. Vui lòng kiểm tra lại email!",
+                text: error.response?.data?.error || error.response?.data?.message || "Không thể gửi yêu cầu đặt lại mật khẩu. Vui lòng kiểm tra lại email!",
                 confirmButtonColor: '#826644'
             });
         }

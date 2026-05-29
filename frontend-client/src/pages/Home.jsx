@@ -4,6 +4,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import API_URL from '../config';
 import '../assets/css/style.css';
 import Chatbot from '../components/ChatBot';
+import { showToast, showConfirm } from '../utils/toast';
 // Hàm loại bỏ dấu tiếng Việt để phục vụ tìm kiếm không dấu
 const removeAccents = (str) => {
     if (!str) return '';

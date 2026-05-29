@@ -180,13 +180,13 @@ const Login = () => {
                             <button
                                 className={`nav-link ${isLoginTab ? 'active' : ''}`}
                                 onClick={() => setIsLoginTab(true)}
-                            >Sign In</button>
+                            >Đăng nhập</button>
                         </li>
                         <li className="nav-item">
                             <button
                                 className={`nav-link ${!isLoginTab ? 'active' : ''}`}
                                 onClick={() => setIsLoginTab(false)}
-                            >Sign Up</button>
+                            >Đăng ký</button>
                         </li>
                     </ul>
 
@@ -196,7 +196,7 @@ const Login = () => {
                                 <i className="bi bi-envelope"></i>
                                 <input
                                     type="email" className="auth-form-control"
-                                    placeholder="Email Address" required
+                                    placeholder="Địa chỉ Email" required
                                     onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                                 />
                             </div>
@@ -204,17 +204,17 @@ const Login = () => {
                                 <i className="bi bi-lock"></i>
                                 <input
                                     type="password" className="auth-form-control"
-                                    placeholder="Password" required
+                                    placeholder="Mật khẩu" required
                                     onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                                 />
                             </div>
                             <div className="text-center mt-4 mb-3">
                                 <button type="submit" className="btn-auth-soft shadow">
-                                    SIGN IN
+                                    ĐĂNG NHẬP
                                 </button>
                             </div>
                             <div className="text-center">
-                                <a href="#" className="auth-secondary-link">Forgot Password?</a>
+                                <a href="#" className="auth-secondary-link">Quên mật khẩu?</a>
                             </div>
                         </form>
                     ) : (
@@ -223,7 +223,7 @@ const Login = () => {
                                 <i className="bi bi-person"></i>
                                 <input
                                     type="text" className="auth-form-control"
-                                    placeholder="Full Name" required
+                                    placeholder="Họ và tên" required
                                     onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
                                 />
                             </div>
@@ -231,7 +231,7 @@ const Login = () => {
                                 <i className="bi bi-envelope"></i>
                                 <input
                                     type="email" className="auth-form-control"
-                                    placeholder="Email Address" required
+                                    placeholder="Địa chỉ Email" required
                                     onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                                 />
                             </div>
@@ -239,13 +239,13 @@ const Login = () => {
                                 <i className="bi bi-lock"></i>
                                 <input
                                     type="password" className="auth-form-control"
-                                    placeholder="Password" required
+                                    placeholder="Mật khẩu" required
                                     onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                                 />
                             </div>
                             <div className="text-center mt-4">
                                 <button type="submit" className="btn-auth-soft shadow">
-                                    SIGN UP
+                                    ĐĂNG KÝ
                                 </button>
                             </div>
                         </form>

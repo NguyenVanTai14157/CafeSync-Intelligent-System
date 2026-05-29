@@ -58,8 +58,22 @@ router.get('/facebook/callback',
         const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
 
         passport.authenticate('facebook', {
-            failureRedirect: `${FRONTEND_URL}/login?error=facebook_failed`,
             session: false
+        }, (err, user, info) => {
+            if (err) {
+                console.error("Custom Passport Facebook auth error:", err);
+                return res.status(500).json({
+                    message: "Passport Facebook Strategy error",
+                    error: err.message || err,
+                    stack: err.stack,
+                    info: info
+                });
+            }
+            if (!user) {
+                return res.redirect(`${FRONTEND_URL}/login?error=facebook_failed`);
+            }
+            req.user = user;
+            next();
         })(req, res, next);
     },
     async (req, res) => {

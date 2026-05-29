@@ -3,6 +3,12 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
 const crypto = require("crypto");
+const dns = require("dns");
+
+// Ép buộc Node.js ưu tiên phân giải IPv4 trước IPv6 để tránh lỗi ENETUNREACH trên Render
+if (typeof dns.setDefaultResultOrder === "function") {
+  dns.setDefaultResultOrder("ipv4first");
+}
 
 // Đăng nhập
 exports.login = async (req, res) => {

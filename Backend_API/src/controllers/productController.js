@@ -43,59 +43,59 @@ const createProduct = async (req, res) => {
 };
 
 const updateProduct = async (req, res) => {
-    try {
-        const updated = await Product.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true }
-        );
+  try {
+    const updated = await Product.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
 
-        if (!updated) {
-            return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
-        }
-
-        res.json(updated);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    if (!updated) {
+      return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
     }
+
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 // DELETE product
 const deleteProduct = async (req, res) => {
-    try {
-        const product = await Product.findByIdAndDelete(req.params.id);
-        if (!product) return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
+  try {
+    const product = await Product.findByIdAndDelete(req.params.id);
+    if (!product) return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
 
-        // Xóa file ảnh nếu có
-        if (product.image) {
-            const imagePath = path.join(__dirname, '../../public/images', product.image);
-            fs.unlink(imagePath, (err) => {
-                // Không cần trả lỗi nếu file không tồn tại
-            });
-        }
-
-        res.json({ message: "Đã xóa sản phẩm" });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    // Xóa file ảnh nếu có
+    if (product.image) {
+      const imagePath = path.join(__dirname, '../../public/images', product.image);
+      fs.unlink(imagePath, (err) => {
+        // Không cần trả lỗi nếu file không tồn tại
+      });
     }
+
+    res.json({ message: "Đã xóa sản phẩm" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 // GET single product by ID
 const getProductById = async (req, res) => {
-    try {
-        const product = await Product.findById(req.params.id).populate('category');
-        if (!product) {
-            return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
-        }
-        res.json(product);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+  try {
+    const product = await Product.findById(req.params.id).populate('category');
+    if (!product) {
+      return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
     }
+    res.json(product);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 module.exports = {
-    getProducts,
-    createProduct,
-    updateProduct,
-    deleteProduct,
-    getProductById
+  getProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  getProductById
 };

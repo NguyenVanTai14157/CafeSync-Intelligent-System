@@ -4,6 +4,9 @@ const authController = require("../controllers/authController");
 const passport = require('../config/passport');
 const jwt = require('jsonwebtoken');
 
+// Cache lưu trữ kết quả trao đổi mã code (OAuth code) ngắn hạn để ngăn chặn lỗi trùng lặp request từ trình duyệt
+const codeCache = new Map();
+
 // Route login gốc của Admin
 router.post("/login", authController.login);
 
@@ -53,10 +56,19 @@ router.get('/facebook', passport.authenticate('facebook', { scope: ['public_prof
 // Route callback nhận phản hồi từ Facebook
 router.get('/facebook/callback',
     (req, res, next) => {
+        const code = req.query.code;
         console.log(`[FB_CALLBACK] ➡️ Nhận yêu cầu callback từ Facebook: ${req.originalUrl} | IP: ${req.ip} | Thời gian: ${new Date().toISOString()}`);
+        
         const requestHost = req.get('host') || '';
         const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
         const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
+
+        // Nếu code đã được xử lý và lưu trong cache (do trình duyệt gửi nhiều yêu cầu đồng thời)
+        if (code && codeCache.has(code)) {
+            console.log(`[FB_CALLBACK] ⚡ Phát hiện yêu cầu trùng lặp cho code: ${code.substring(0, 15)}... Trả về kết quả từ Cache.`);
+            const cachedData = codeCache.get(code);
+            return res.redirect(`${FRONTEND_URL}/login?token=${cachedData.token}&name=${encodeURIComponent(cachedData.user.name)}&email=${encodeURIComponent(cachedData.user.email)}`);
+        }
 
         passport.authenticate('facebook', {
             session: false
@@ -78,6 +90,7 @@ router.get('/facebook/callback',
     async (req, res) => {
         try {
             const user = req.user;
+            const code = req.query.code;
             const token = jwt.sign(
                 { id: user._id, role: user.role },
                 process.env.JWT_SECRET || 'CAFE_SYNC_SECRET_KEY',
@@ -87,6 +100,14 @@ router.get('/facebook/callback',
             const requestHost = req.get('host') || '';
             const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
             const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
+
+            // Lưu kết quả thành công vào cache trong 15 giây để phòng hờ yêu cầu trùng lặp đến sau
+            if (code) {
+                codeCache.set(code, { token, user });
+                setTimeout(() => {
+                    codeCache.delete(code);
+                }, 15000);
+            }
 
             console.log(`[FB_CALLBACK] ✅ Đăng nhập thành công, chuyển hướng về frontend: ${user.email}`);
             res.redirect(`${FRONTEND_URL}/login?token=${token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}`);

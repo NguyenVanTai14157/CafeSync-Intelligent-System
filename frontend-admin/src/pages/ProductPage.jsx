@@ -22,6 +22,7 @@ import {
   uploadImages,
 } from "../api/productApi";
 import API_URL from "../config";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const { Title, Text } = Typography;
 
@@ -39,22 +40,22 @@ const removeAccents = (str) => {
 };
 
 const ProductPage = () => {
-  const [products, setProducts] = useState([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [categories, setCategories] = useState([]);
   const [searchText, setSearchText] = useState("");
+  const rqClient = useQueryClient();
 
-  // LOAD DATA
-  const fetchData = async () => {
-    const res = await getProducts();
-    setProducts(res.data);
-  };
+  // ⚡ React Query: Cache danh sách sản phẩm
+  const { data: productsRes } = useQuery({
+    queryKey: ["products"],
+    queryFn: () => getProducts(),
+  });
+  const products = productsRes?.data || [];
 
   useEffect(() => {
-    fetchData();
     getCategories().then(res => setCategories(Array.isArray(res) ? res : []));
   }, []);
 
@@ -110,7 +111,8 @@ const ProductPage = () => {
     }
 
     setOpen(false);
-    fetchData();
+    rqClient.invalidateQueries({ queryKey: ["products"] });
+    rqClient.invalidateQueries({ queryKey: ["dashboard"] });
   };
 
   // DELETE
@@ -123,7 +125,8 @@ const ProductPage = () => {
       onOk: async () => {
         await deleteProduct(id);
         message.success("Xóa thành công");
-        fetchData();
+        rqClient.invalidateQueries({ queryKey: ["products"] });
+        rqClient.invalidateQueries({ queryKey: ["dashboard"] });
       },
     });
   };

@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Table, Typography, Tag, Button, Modal, Select, message, Popconfirm, Input } from "antd";
 import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import axios from "axios";
 import API_URL from "../config";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const { Title, Text } = Typography;
 
@@ -21,36 +22,25 @@ const statusOptions = [
 ];
 
 const OrderManagementPage = () => {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [editingOrder, setEditingOrder] = useState(null);
   const [status, setStatus] = useState("");
   const [searchText, setSearchText] = useState("");
+  const rqClient = useQueryClient();
+
+  // ⚡ React Query: Cache + auto-polling mỗi 5s
+  const { data: orders = [], isLoading: loading } = useQuery({
+    queryKey: ["orders"],
+    queryFn: async () => {
+      const res = await axios.get(`${API_URL}/api/orders`);
+      return res.data;
+    },
+    refetchInterval: 5000, // Tự động refresh mỗi 5 giây (thay cho setInterval cũ)
+  });
 
   const filteredOrders = orders.filter((order) => {
     if (!searchText) return true;
     return order.orderID && order.orderID.toLowerCase().includes(searchText.toLowerCase().trim());
   });
-
-  // Load orders
-  const fetchOrders = (silent = false) => {
-    if (!silent) setLoading(true);
-    axios.get(`${API_URL}/api/orders`)
-      .then(res => setOrders(res.data))
-      .catch(() => { if (!silent) setOrders([]); })
-      .finally(() => { if (!silent) setLoading(false); });
-  };
-
-  useEffect(() => {
-    fetchOrders(); // load lần đầu
-
-    // Thiết lập Polling fetch ngầm mỗi 5 giây
-    const interval = setInterval(() => {
-      fetchOrders(true);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   // Open modal to update status
   const openStatusModal = (order) => {
@@ -64,7 +54,8 @@ const OrderManagementPage = () => {
       await axios.put(`${API_URL}/api/orders/${editingOrder._id}/status`, { status });
       message.success("Cập nhật trạng thái thành công!");
       setEditingOrder(null);
-      fetchOrders();
+      rqClient.invalidateQueries({ queryKey: ["orders"] });
+      rqClient.invalidateQueries({ queryKey: ["dashboard"] });
     } catch {
       message.error("Cập nhật thất bại!");
     }
@@ -75,7 +66,8 @@ const OrderManagementPage = () => {
     try {
       await axios.delete(`${API_URL}/api/orders/${id}`);
       message.success("Xóa đơn hàng thành công!");
-      fetchOrders();
+      rqClient.invalidateQueries({ queryKey: ["orders"] });
+      rqClient.invalidateQueries({ queryKey: ["dashboard"] });
     } catch {
       message.error("Xóa thất bại!");
     }

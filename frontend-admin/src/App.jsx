@@ -10,12 +10,26 @@ import ProductPage from "./pages/ProductPage";
 import UserManagementPage from "./pages/User";
 import OrderManagementPage from "./pages/OrderManagementPage";
 import RevenueReportPage from "./pages/RevenueReportPage";
-import POSPage from "./pages/POSPage"; // 👈 Import trang POS mới của Yến
+import POSPage from "./pages/POSPage";
 import ProfilePage from "./pages/ProfilePage";
 import TableManagementPage from "./pages/TableManagementPage";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+// ⚡ Cấu hình React Query - Cache 60s, giữ data 5 phút
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000,        // Data "tươi" trong 60s, không gọi API lại
+      gcTime: 5 * 60 * 1000,       // Giữ cache 5 phút kể cả khi rời trang
+      refetchOnWindowFocus: true,   // Tự cập nhật khi quay lại tab
+      retry: 1,                     // Thử lại 1 lần nếu lỗi
+    },
+  },
+});
 
 function App() {
   return (
+    <QueryClientProvider client={queryClient}>
     <ConfigProvider
       theme={{
         token: {
@@ -78,6 +92,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </ConfigProvider>
+    </QueryClientProvider>
   );
 }
 

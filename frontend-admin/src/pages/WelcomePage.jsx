@@ -26,6 +26,7 @@ import {
   Filler
 } from "chart.js";
 import { io } from "socket.io-client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 ChartJS.register(
   CategoryScale,
@@ -44,48 +45,74 @@ const { Title, Text } = Typography;
 
 const socket = io(API_URL);
 
+// ⚡ Hàm fetch dữ liệu cho Admin
+const fetchAdminData = async () => {
+  const [statsRes, usersRes] = await Promise.all([
+    axios.get(`${API_URL}/api/users/stats/count`),
+    axios.get(`${API_URL}/api/users`)
+  ]);
+  return { stats: { userStats: statsRes.data }, users: usersRes.data };
+};
+
+// ⚡ Hàm fetch dữ liệu cho Manager/Staff
+const fetchStaffData = async () => {
+  const [statsRes, ordersRes, chartRes] = await Promise.all([
+    axios.get(`${API_URL}/api/reports/stats`),
+    axios.get(`${API_URL}/api/orders`),
+    axios.get(`${API_URL}/api/reports/chart/week`)
+  ]);
+  return { stats: statsRes.data, orders: ordersRes.data, chart: chartRes.data };
+};
+
 const WelcomePage = () => {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [allOrders, setAllOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
-  const [chartData, setChartData] = useState(null);
   const [activeFilter, setActiveFilter] = useState("recent");
-  
-  const [allUsers, setAllUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [userFilter, setUserFilter] = useState("all");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const navigate = useNavigate();
+  const rqClient = useQueryClient();
 
-  const fetchData = async () => {
-    try {
-      if (user?.role === 'admin') {
-        const [statsRes, usersRes] = await Promise.all([
-          axios.get(`${API_URL}/api/users/stats/count`),
-          axios.get(`${API_URL}/api/users`)
-        ]);
-        setStats({ userStats: statsRes.data });
-        setAllUsers(usersRes.data);
-        setFilteredUsers(usersRes.data);
-      } else {
-        const [statsRes, ordersRes, chartRes] = await Promise.all([
-          axios.get(`${API_URL}/api/reports/stats`),
-          axios.get(`${API_URL}/api/orders`),
-          axios.get(`${API_URL}/api/reports/chart/week`)
-        ]);
-        setStats(statsRes.data);
-        setAllOrders(ordersRes.data);
-        const filtered = applyFilterLogic(ordersRes.data, activeFilter);
-        setFilteredOrders(filtered);
-        setChartData(chartRes.data);
-      }
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-    } finally {
-      setLoading(false);
+  const isAdmin = user?.role === 'admin';
+
+  // ⚡ React Query: Cache dữ liệu dashboard, tự động refresh ngầm
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ["dashboard", isAdmin ? "admin" : "staff"],
+    queryFn: isAdmin ? fetchAdminData : fetchStaffData,
+  });
+
+  // Khi data thay đổi, cập nhật lại filter
+  useEffect(() => {
+    if (!data) return;
+    if (isAdmin) {
+      setFilteredUsers(data.users);
+    } else {
+      const filtered = applyFilterLogic(data.orders, activeFilter);
+      setFilteredOrders(filtered);
     }
-  };
+  }, [data, activeFilter]);
+
+  // Socket real-time: khi có đơn mới, invalidate cache để refetch
+  useEffect(() => {
+    socket.on("new_order", (newOrder) => {
+      rqClient.invalidateQueries({ queryKey: ["dashboard"] });
+      notification.success({
+        message: "Đơn hàng mới!",
+        description: `Mã đơn: ${newOrder.orderID} vừa được tạo.`,
+        placement: "bottomRight",
+        icon: <ThunderboltOutlined style={{ color: '#1677ff' }} />
+      });
+    });
+
+    return () => {
+      socket.off("new_order");
+    };
+  }, []);
+
+  const stats = data?.stats || null;
+  const allOrders = data?.orders || [];
+  const chartData = data?.chart || null;
+  const allUsers = data?.users || [];
 
   const applyFilterLogic = (data, filterType) => {
     if (filterType === "today") {
@@ -96,24 +123,6 @@ const WelcomePage = () => {
     }
     return data.slice(0, 8);
   };
-
-  useEffect(() => {
-    fetchData();
-
-    socket.on("new_order", (newOrder) => {
-      fetchData();
-      notification.success({
-        message: "Tính năng mới!",
-        description: `Mã đơn: ${newOrder.orderID} vừa được tạo.`,
-        placement: "bottomRight",
-        icon: <ThunderboltOutlined style={{ color: '#1677ff' }} />
-      });
-    });
-
-    return () => {
-      socket.off("new_order");
-    };
-  }, [activeFilter]);
 
   const applyFilter = (filterType) => {
     setActiveFilter(filterType);

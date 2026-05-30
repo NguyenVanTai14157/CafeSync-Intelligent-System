@@ -43,7 +43,14 @@ const TrackOrder = () => {
             setOrder(data);
         } catch (err) {
             console.error("Lỗi cập nhật trạng thái:", err);
-            setOrder(null);
+            if (err.response && err.response.status === 404 && orderDBId && orderDBId !== "null") {
+                console.log("⚠️ Phát hiện đơn hàng ID lỗi thời (đã bị xóa). Đang dọn dẹp localStorage...");
+                localStorage.removeItem('lastOrderDBId');
+                // Gọi lại fetchStatus để tự động khôi phục từ email hoặc đơn mới nhất
+                setTimeout(fetchStatus, 100);
+            } else {
+                setOrder(null);
+            }
         } finally {
             setLoading(false);
         }

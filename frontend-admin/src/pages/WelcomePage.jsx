@@ -315,24 +315,26 @@ const WelcomePage = () => {
                 ? "Quản lý Nhân sự" 
                 : (user?.role === 'nhanvien' ? "Bắt đầu Bán hàng" : "Quản lý Đơn hàng")}
             </Button>
-            {user?.role !== 'admin' && (
-              <Button 
-                size="large" 
-                icon={<RiseOutlined />}
-                onClick={() => navigate("/reports")}
-                style={{ 
-                  height: 52, 
-                  padding: '0 24px', 
-                  borderRadius: 14, 
-                  fontWeight: 600,
-                  background: 'rgba(255,255,255,0.05)',
-                  color: '#fff',
-                  borderColor: 'rgba(255,255,255,0.2)'
-                }}
-              >
-                Xem báo cáo
-              </Button>
-            )}
+            
+            <Button 
+              size="large" 
+              icon={user?.role === 'nhanvien' ? <ShoppingCartOutlined /> : <RiseOutlined />}
+              onClick={() => {
+                if (user?.role === 'nhanvien') navigate("/orders");
+                else navigate("/reports");
+              }}
+              style={{ 
+                height: 52, 
+                padding: '0 24px', 
+                borderRadius: 14, 
+                fontWeight: 600,
+                background: 'rgba(255,255,255,0.05)',
+                color: '#fff',
+                borderColor: 'rgba(255,255,255,0.2)'
+              }}
+            >
+              {user?.role === 'nhanvien' ? "Xem đơn hàng" : "Xem báo cáo"}
+            </Button>
           </div>
         </div>
         
@@ -474,7 +476,7 @@ const WelcomePage = () => {
             </Card>
           </Col>
 
-          <Col xs={24} lg={16}>
+          <Col xs={24} lg={(user?.role === 'manager' || user?.role === 'quanly') ? 16 : 16}>
             <Card 
               className="premium-card"
               title={<Space><ShoppingCartOutlined style={{ color: '#1677ff' }} /><Title level={5} style={{ margin: 0 }}>{activeFilter === "pending" ? "Hàng đợi Chờ xử lý" : (activeFilter === "today" ? "Giao dịch trong ngày" : "Các đơn hàng gần đây")}</Title></Space>}

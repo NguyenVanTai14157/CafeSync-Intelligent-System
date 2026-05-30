@@ -1,31 +1,122 @@
 # ☕ CaféSync - Intelligent F&B Ecosystem
-**Đề tài:** Hệ thống quản lý và cá nhân hóa trải nghiệm khách hàng tối ưu vận hành.
 
-## 📖 Giới thiệu dự án
-**CaféSync** là một hệ sinh thái F&B hiện đại được xây dựng trên nền tảng **MERN Stack**. Dự án xóa bỏ khoảng cách giữa khách hàng và quản lý thông qua trải nghiệm **Premium Soft UI** và trợ lý ảo **Syncie AI**, giúp vận hành quán cà phê trở nên thông minh và tự động hóa.
+**Topic:** Operational Optimization & Customer Experience Personalization System for Coffee Shops.
 
-## 🚀 Công nghệ & Kỹ thuật trọng tâm
-Dự án ứng dụng các công nghệ hiện đại nhất để giải quyết bài toán thực tế:
-* **MERN Stack:** Sự kết hợp sức mạnh giữa MongoDB, Express.js, React.js và Node.js.
-* **Prompt Engineering (Syncie AI):** Kỹ thuật thiết kế câu lệnh chuyên sâu trên nền tảng **Groq Cloud (Llama 3.1)** giúp trợ lý ảo am hiểu thực đơn và tư vấn khách hàng.
-* **Premium UI/UX:** Ngôn ngữ thiết kế **Soft UI & Glassmorphism**, tối ưu hóa trải nghiệm chạm trên thiết bị di động (Mobile-first).
-* **Real-time State Management:** Quản lý giỏ hàng, danh sách yêu thích (Favorites) và trạng thái đơn hàng thời gian thực.
-* **RESTful API & Security:** Hệ thống API bảo mật với JWT (JSON Web Token), phân quyền rõ ràng giữa Khách hàng, Nhân viên và Quản lý.
+---
 
-## 📂 Cấu trúc phân hệ (Monorepo)
-* `📁 frontend-client/`: App React dành cho khách hàng (Order, Syncie AI, Tracking).
-* `📁 frontend-admin/`: Dashboard React quản lý vận hành (POS, Inventory, Reports).
-* `📁 Backend_API/`: Node.js Server trung tâm xử lý logic và Cơ sở dữ liệu MongoDB.
+## 📖 Project Overview
 
-## 👥 Đội ngũ phát triển (Fullstack Team)
-Dự án được thực hiện bởi nhóm sinh viên chuyên ngành **Hệ thống Thông tin - IUH**:
+**CaféSync** is a modern F&B ecosystem built on the **MERN Stack**. The project bridges the gap between customers and coffee shop operations through a **Premium Mobile-First Soft UI**, a **Smart Context-Aware Personalization Engine**, and a virtual assistant **Syncie AI** (leveraging Groq Llama 3.1). It automates and modernizes daily coffee shop operations while providing a highly tailored ordering experience for customers.
 
-1. **Lý Thị Yến** (Fullstack Developer)
-   * *Trọng tâm:* Phát triển toàn diện phân hệ **Client** (React). 
-   * *Kỹ thuật:* Xây dựng giao diện Premium, logic Giỏ hàng/Yêu thích, tích hợp Syncie AI và tối ưu hóa trải nghiệm khách hàng.
-2. **Nguyễn Văn Tài** (Fullstack Developer)
-   * *Trọng tâm:* Phát triển toàn diện phân hệ **Admin** & **Backend API**.
-   * *Kỹ thuật:* Xây dựng hệ thống quản trị, kiến trúc Server, quản lý Database và các API nghiệp vụ POS.
+---
+
+## ✨ Core Features
+
+### 1. Customer Ordering App (`frontend-client`)
+* **Context-Aware Recommendations**: 
+  - **"My Favorites" (Món tủ của bạn)**: Learns from completed order history to suggest a customer's most frequently ordered drinks.
+  - **"Try Something New?" (Thử chút vị mới?)**: Suggests products from the customer's favorite category that they have *not* purchased yet.
+  - **Time-based Prompts**: Recommends appropriate drinks based on the time of day (e.g., energizing Coffee in the morning, refreshing Tea/Smoothies in the afternoon, or healthy Juices in the evening).
+* **Beverage Preference Memory (Habits)**: Remembers the customer's size, sugar, ice, and topping choices from their last order, automatically pre-selecting them and highlighting choices with a clean, dashed gold border.
+* **Syncie AI Assistant**: Powered by **Groq Cloud (Llama 3.1)**, it is highly trained on the shop's menu to guide customers, take notes, and suggest custom beverage choices.
+* **Real-time Order Tracking & Receipts**: Fully transparent tracking showing order steps (Received, In Prep, Completed) along with detailed choices (size, sugar, ice, toppings, and notes).
+* **Payment Integration**: Supports online payment via **PayOS** QR codes with automatic real-time transaction reconciliation.
+
+### 2. Shop Management Dashboard (`frontend-admin`)
+* **POS & Order Management**: Real-time incoming order dashboard with audio/socket alerts, order status updates, and printing.
+* **Inventory Control & Menu Management**: Edit ingredients, menu items, prices, toppings, categories, and track stock usage.
+* **Table & QR Management**: Associate tables with custom QR codes that automatically parse table numbers in the customer app.
+* **Operational Reporting**: Generates sales charts, order counts, revenue statistics, and ingredient usage reports.
+
+---
+
+## 🚀 Technology Stack
+
+* **Frontend**: React.js, Vite, Bootstrap 5, CSS3 (Vanilla Custom Properties & Keyframes for animations), Socket.io-client.
+* **Backend**: Node.js, Express.js, Socket.io, Mongoose (MongoDB Atlas).
+* **Integrations & AI**:
+  - **AI Model**: Groq Cloud SDK (Llama 3.1-70b-versatile).
+  - **Payment Gateways**: PayOS API & Webhook verification.
+  - **Authentication**: JWT (JSON Web Tokens), Google OAuth, Facebook Login.
+
+---
+
+## 📂 Project Structure (Monorepo)
+
+* `📁 frontend-client/` - React frontend application for customer ordering, tracking, and chatbot interaction.
+* `📁 frontend-admin/` - Operational dashboard for shop managers (POS, inventory, reports, QR codes).
+* `📁 Backend_API/` - Central Node.js API server handling data modeling, AI chatbot endpoints, socket signals, and PayOS hooks.
+
+---
+
+## 🛠️ Installation & Setup
+
+### Prerequisites
+* [Node.js](https://nodejs.org/) (v16+)
+* [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account and database instance.
+
+### 1. Backend Server Configuration
+1. Navigate to the API folder:
+   ```bash
+   cd Backend_API
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file in the `Backend_API` root and configure the following variables:
+   ```env
+   PORT=5000
+   MONGO_URI=your_mongodb_connection_string
+   JWT_SECRET=your_jwt_secret
+   GROQ_API_KEY=your_groq_api_key
+   PAYOS_CLIENT_ID=your_payos_client_id
+   PAYOS_API_KEY=your_payos_api_key
+   PAYOS_CHECKSUM_KEY=your_payos_checksum_key
+   ```
+4. Start the backend development server:
+   ```bash
+   npm run dev
+   ```
+
+### 2. Frontend Client Setup
+1. Navigate to the client folder:
+   ```bash
+   cd ../frontend-client
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the client development server:
+   ```bash
+   npm run dev
+   ```
+
+### 3. Frontend Admin Setup
+1. Navigate to the admin folder:
+   ```bash
+   cd ../frontend-admin
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the admin development server:
+   ```bash
+   npm run dev
+   ```
+
+---
+
+## 👥 Development Team (Fullstack Team)
+
+This system was developed by Information Systems students at the **Industrial University of Ho Chi Minh City (IUH)**:
+
+1. **Ly Thi Yen** (Fullstack Developer)
+   * *Responsibilities*: Front-to-Back development of the Client module. Co-designed the RESTful API server, MongoDB schema mapping, real-time Socket.io notifications, and PayOS payment webhooks. Developed the Premium Soft UI design, Cart/Favorite state logic, and Syncie AI assistant integration.
+2. **Nguyen Van Tai** (Fullstack Developer)
+   * *Responsibilities*: Front-to-Back development of the Admin Management POS module. Co-designed the backend server architecture, MongoDB configuration, Socket.io event-driven infrastructure. Developed the inventory tracking, business reports, and table QR code management logic.
 
 ---
 *© 2026 CaféSync Project - Industrial University of Ho Chi Minh City.*

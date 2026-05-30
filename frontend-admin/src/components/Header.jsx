@@ -64,7 +64,6 @@ const Header = ({ collapsed, setCollapsed }) => {
     "/pos": "Bán hàng",
     "/CategoryPage": "Danh mục",
     "/products": "Sản phẩm",
-    "/ingredients": "Kho hàng",
     "/users": "Nhân sự",
     "/reports": "Báo cáo",
     "/profile": "Hồ sơ",
@@ -74,6 +73,7 @@ const Header = ({ collapsed, setCollapsed }) => {
 
   return (
     <AntHeader
+      theme="light"
       className="glass-effect"
       style={{
         padding: "0 24px",

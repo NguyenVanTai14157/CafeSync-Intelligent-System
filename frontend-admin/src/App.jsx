@@ -8,7 +8,6 @@ import AdminLayout from "./layouts/AdminLayout";
 import CategoryPage from "./pages/CategoryPage";
 import ProductPage from "./pages/ProductPage";
 import UserManagementPage from "./pages/User";
-import IngredientManagementPage from "./pages/IngredientManagementPage";
 import OrderManagementPage from "./pages/OrderManagementPage";
 import RevenueReportPage from "./pages/RevenueReportPage";
 import POSPage from "./pages/POSPage"; // 👈 Import trang POS mới của Yến
@@ -70,7 +69,6 @@ function App() {
                     <Route path="/CategoryPage" element={<RequireAdmin><CategoryPage /></RequireAdmin>} />
                     <Route path="/users" element={<RequireAdmin><UserManagementPage /></RequireAdmin>} />
                     <Route path="/products" element={<RequireAdmin><ProductPage /></RequireAdmin>} />
-                    <Route path="/ingredients" element={<RequireAdmin><IngredientManagementPage /></RequireAdmin>} />
                     <Route path="/reports" element={<RequireAdmin><RevenueReportPage /></RequireAdmin>} />
                   </Routes>
                 </AdminLayout>

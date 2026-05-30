@@ -3,6 +3,7 @@ import { Layout, notification, message } from "antd";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import axios from "axios";
+import API_URL from "../config";
 
 const { Content } = Layout;
 
@@ -14,7 +15,7 @@ const AdminLayout = ({ children }) => {
   useEffect(() => {
     const checkNewOrders = async () => {
       try {
-        const res = await axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/stats");
+        const res = await axios.get(`${API_URL}/api/reports/stats`);
         const currentCount = res.data.pendingOrdersCount;
         
         if (currentCount > prevPendingCount) {

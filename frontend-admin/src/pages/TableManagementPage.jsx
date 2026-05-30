@@ -2,7 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { QRCodeSVG } from 'qrcode.react';
 import API_URL from '../config';
-import {
+import { io } from "socket.io-client";
+import { notification, Modal, Form, InputNumber, Button, message, Space } from "antd";
+import { 
+  PlusOutlined,
   PrinterOutlined,
   ReloadOutlined,
   CoffeeOutlined,
@@ -11,8 +14,6 @@ import {
   ClockCircleFilled,
   CalendarFilled,
 } from '@ant-design/icons';
-import { io } from "socket.io-client";
-import { notification } from "antd";
 
 const socket = io(API_URL);
 
@@ -42,6 +43,23 @@ const TableManagementPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [form] = Form.useForm();
+
+  const handleAddTable = async () => {
+    try {
+      const values = await form.validateFields();
+      await axios.post(`${API_URL}/api/tables`, values);
+      message.success(`Thêm bàn số ${values.tableNumber} thành công!`);
+      setIsModalOpen(false);
+      form.resetFields();
+      fetchTables();
+    } catch (err) {
+      if (err.response) {
+        message.error(err.response.data.message || 'Lỗi khi thêm bàn');
+      }
+    }
+  };
 
   const clientBaseUrl = 'https://cafe-sync-intelligent-system.vercel.app';
 
@@ -325,11 +343,47 @@ const TableManagementPage = () => {
           <button className="icon-btn" onClick={fetchTables} title="Làm mới">
             <ReloadOutlined />
           </button>
+          <button 
+            className="print-btn" 
+            onClick={() => setIsModalOpen(true)}
+            style={{ background: '#1677ff', boxShadow: '0 4px 12px rgba(22, 119, 255, 0.2)' }}
+          >
+            <PlusOutlined style={{ fontSize: 18 }} /> THÊM BÀN MỚI
+          </button>
           <button className="print-btn" onClick={handlePrint}>
             <PrinterOutlined style={{ fontSize: 18 }} /> IN MÃ QR CỦA TẤT CẢ BÀN
           </button>
         </div>
       </div>
+
+      <Modal
+        title={
+          <Space>
+            <PlusOutlined style={{ color: '#1677ff' }} />
+            <span>Thêm bàn mới</span>
+          </Space>
+        }
+        open={isModalOpen}
+        onOk={handleAddTable}
+        onCancel={() => setIsModalOpen(false)}
+        okText="Thêm bàn"
+        cancelText="Hủy"
+        centered
+        overlayClassName="modern-modal"
+      >
+        <Form form={form} layout="vertical" style={{ marginTop: 20 }}>
+          <Form.Item
+            name="tableNumber"
+            label="Số hiệu bàn (Ví dụ: 51, 52...)"
+            rules={[
+              { required: true, message: 'Vui lòng nhập số bàn' },
+              { type: 'number', min: 1, message: 'Số bàn phải lớn hơn 0' }
+            ]}
+          >
+            <InputNumber style={{ width: '100%' }} placeholder="Nhập số bàn..." />
+          </Form.Item>
+        </Form>
+      </Modal>
 
       {/* ── Stat Row ── */}
       <div className="no-print animated-fade-in" style={{ display: 'flex', gap: 16, marginBottom: 32, flexWrap: 'wrap' }}>

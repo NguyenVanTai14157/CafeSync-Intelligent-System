@@ -10,6 +10,25 @@ exports.getAllTables = async (req, res) => {
   }
 };
 
+// Tạo bàn mới
+exports.createTable = async (req, res) => {
+  try {
+    const { tableNumber } = req.body;
+    
+    // Kiểm tra xem số bàn đã tồn tại chưa
+    const exists = await Table.findOne({ tableNumber });
+    if (exists) {
+      return res.status(400).json({ message: 'Số bàn này đã tồn tại.' });
+    }
+    
+    const newTable = new Table({ tableNumber, status: 'Trống' });
+    await newTable.save();
+    res.status(201).json(newTable);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
 // Khởi tạo 50 bàn nếu chưa có
 exports.initializeTables = async (req, res) => {
   try {

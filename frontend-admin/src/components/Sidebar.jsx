@@ -39,7 +39,6 @@ const Sidebar = ({ collapsed }) => {
         { key: "/orders", icon: <FileTextOutlined />, label: "Đơn hàng", onClick: () => navigate("/orders") },
         { key: "/CategoryPage", icon: <AppstoreOutlined />, label: "Danh mục", onClick: () => navigate("/CategoryPage") },
         { key: "/products", icon: <CoffeeOutlined />, label: "Sản phẩm", onClick: () => navigate("/products") },
-        { key: "/ingredients", icon: <DatabaseOutlined />, label: "Kho hàng", onClick: () => navigate("/ingredients") },
         { key: "/tables", icon: <AppstoreOutlined />, label: "Bàn & QR", onClick: () => navigate("/tables") },
       ]},
       { type: "divider" },

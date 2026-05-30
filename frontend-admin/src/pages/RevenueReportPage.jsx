@@ -17,6 +17,8 @@ import {
   Legend,
 } from "chart.js";
 
+import API_URL from "../config";
+
 ChartJS.register(CategoryScale, LinearScale, BarElement, ChartTitle, Tooltip, Legend);
 
 const { Title } = Typography;
@@ -31,10 +33,10 @@ const RevenueReportPage = () => {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/total"),
-      axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/today"),
-      axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/month"),
-      axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/reports/chart/week"),
+      axios.get(`${API_URL}/api/reports/total`),
+      axios.get(`${API_URL}/api/reports/today`),
+      axios.get(`${API_URL}/api/reports/month`),
+      axios.get(`${API_URL}/api/reports/chart/week`),
     ])
       .then(([total, today, month, chart]) => {
         setTotalRevenue(total.data.totalRevenue);

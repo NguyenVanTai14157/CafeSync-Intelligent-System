@@ -5,6 +5,9 @@ const tableController = require('../controllers/tableController');
 // Lấy danh sách tất cả bàn
 router.get('/', tableController.getAllTables);
 
+// Tạo bàn mới
+router.post('/', tableController.createTable);
+
 // Cập nhật trạng thái bàn (có thể bằng ObjectId hoặc tableNumber)
 router.put('/:id/status', tableController.updateTableStatus);
 

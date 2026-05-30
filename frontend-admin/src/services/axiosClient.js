@@ -1,7 +1,9 @@
 import axios from "axios";
 
+import API_URL from "../config";
+
 const axiosClient = axios.create({
-  baseURL: "https://cafesync-intelligent-system-sntf.onrender.com/api", // đổi nếu backend khác port
+  baseURL: `${API_URL}/api`, // đổi nếu backend khác port
   headers: {
     "Content-Type": "application/json",
   },

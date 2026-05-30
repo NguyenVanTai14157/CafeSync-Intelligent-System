@@ -63,7 +63,7 @@ app.use("/api/orders", require("./src/routes/orderRoutes"));
 app.use("/api/products", require("./src/routes/productRoutes"));
 app.use("/api/categories", require("./src/routes/category.routes"));
 app.use("/api/users", require("./src/routes/userRoutes"));
-app.use("/api/ingredients", require("./src/routes/ingredientRoutes"));
+// app.use("/api/ingredients", require("./src/routes/ingredientRoutes"));
 app.use("/api/reports", require("./src/routes/reportRoutes"));
 app.use("/api/tables", require("./src/routes/tableRoutes"));
 

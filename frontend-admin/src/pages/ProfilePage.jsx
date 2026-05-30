@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Form, Input, Button, Card, Typography, message } from "antd";
 import axios from "axios";
+import API_URL from "../config";
 
 const { Title } = Typography;
 
@@ -32,7 +33,7 @@ const ProfilePage = () => {
     
     // 1. Cập nhật thông tin cơ bản
     try {
-      const res = await axios.put(`https://cafesync-intelligent-system-sntf.onrender.com/api/users/${userId}`, {
+      const res = await axios.put(`${API_URL}/api/users/${userId}`, {
         name: values.name,
         role: currentUser.role
       });
@@ -48,7 +49,7 @@ const ProfilePage = () => {
     // 2. Cập nhật mật khẩu nếu có nhập mật khẩu cũ/mới
     if (values.oldPassword && values.newPassword) {
       try {
-        await axios.post(`https://cafesync-intelligent-system-sntf.onrender.com/api/users/${userId}/change-password`, {
+        await axios.post(`${API_URL}/api/users/${userId}/change-password`, {
           oldPassword: values.oldPassword,
           newPassword: values.newPassword
         });

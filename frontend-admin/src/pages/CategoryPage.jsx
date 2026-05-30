@@ -26,6 +26,7 @@ import {
 } from "../api/categoryApi";
 
 import { getProductsByCategory } from "../api/productApi";
+import API_URL from "../config";
 
 const { Title, Text } = Typography;
 
@@ -206,7 +207,7 @@ const CategoryPage = () => {
                 cover={
                   <div style={{ position: 'relative', height: 200, overflow: 'hidden' }}>
                     <img
-                      src={`https://cafesync-intelligent-system-sntf.onrender.com/images/${p.image}`}
+                      src={`${API_URL}/images/${p.image}`}
                       alt={p.name}
                       style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s" }}
                       className="product-img-hover"

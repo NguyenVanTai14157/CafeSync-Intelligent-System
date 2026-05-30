@@ -24,9 +24,26 @@ const Home = ({ cartCount }) => {
     const [isPersonalized, setIsPersonalized] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [recs, setRecs] = useState({ favorites: [], newFlavors: [] });
 
     const navigate = useNavigate();
     const location = useLocation();
+
+    // Lấy gợi ý món ngon cho thành viên đăng nhập
+    useEffect(() => {
+        const fetchRecs = async () => {
+            const email = localStorage.getItem('userEmail');
+            if (email && email !== 'Guest') {
+                try {
+                    const res = await axios.get(`${API_URL}/api/products/recommendations?email=${email}`);
+                    setRecs(res.data);
+                } catch (err) {
+                    console.error("Lỗi lấy gợi ý sản phẩm:", err);
+                }
+            }
+        };
+        fetchRecs();
+    }, [userName]);
 
     // Lắng nghe cuộn trang để kích hoạt hiệu ứng sticky thu nhỏ gọn
     useEffect(() => {
@@ -200,7 +217,6 @@ const Home = ({ cartCount }) => {
                                     {isPersonalized ? "Đang hiện Smart Menu" : "Xem ngay"}
                                 </button>
                             </div>
-                            <i className={`bi ${isPersonalized ? 'bi-cpu-fill' : 'bi-stars'} fs-1 opacity-50`}></i>
                         </div>
                     ) : (
                         <div className="promo-banner shadow-sm" style={{ marginBottom: '12px' }}>
@@ -239,9 +255,79 @@ const Home = ({ cartCount }) => {
             <div className="container">
                 {isPersonalized && (
                     <div className="alert bg-white border-0 shadow-sm rounded-4 mb-4 animate__animated animate__fadeIn">
-                        <small className="fw-bold text-brown"><i className="bi bi-lightning-charge-fill me-2"></i>{getContextMessage()}</small>
+                        <small className="fw-bold text-brown">{getContextMessage()}</small>
                     </div>
                 )}
+
+                {/* --- HAI SLIDER GỢI Ý CÁ NHÂN HÓA --- */}
+                {isPersonalized && userName && recs.favorites?.length > 0 && (
+                    <div className="mb-4 animate__animated animate__fadeIn">
+                        <div className="d-flex align-items-center gap-2 mb-2">
+                            <h5 className="fw-bold mb-0" style={{ fontFamily: 'Playfair Display', color: '#826644' }}>
+                                Món tủ của {getShortName()}
+                            </h5>
+                        </div>
+                        <div className="d-flex gap-3 overflow-auto pb-2 scrollbar-hidden" style={{ scrollSnapType: 'x mandatory' }}>
+                            {recs.favorites.map(p => (
+                                <div 
+                                    key={`fav-${p._id}`} 
+                                    className="card border-0 shadow-sm flex-shrink-0 position-relative premium-card" 
+                                    style={{ width: '160px', borderRadius: '20px', cursor: 'pointer', scrollSnapAlign: 'start', background: 'white' }}
+                                    onClick={() => navigate(`/product/${p._id}`)}
+                                >
+                                    <img 
+                                        src={`${API_URL}/images/${p.image}`} 
+                                        className="card-img-top" 
+                                        alt={p.name} 
+                                        style={{ height: '110px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', objectFit: 'cover' }}
+                                        onError={(e) => e.target.src = 'https://placehold.co/200x250?text=CaféSync'} 
+                                    />
+                                    <div className="card-body p-2 text-center">
+                                        <h6 className="card-title text-truncate fw-bold mb-1" style={{ fontSize: '0.85rem' }}>{p.name}</h6>
+                                        <span className="fw-bold text-muted" style={{ fontSize: '0.8rem', color: '#D9A673' }}>{p.price.toLocaleString()}đ</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {isPersonalized && userName && recs.newFlavors?.length > 0 && (
+                    <div className="mb-4 animate__animated animate__fadeIn">
+                        <div className="d-flex align-items-center gap-2 mb-2">
+                            <h5 className="fw-bold mb-0" style={{ fontFamily: 'Playfair Display', color: '#826644' }}>
+                                Thử chút vị mới?
+                            </h5>
+                        </div>
+                        <div className="d-flex gap-3 overflow-auto pb-2 scrollbar-hidden" style={{ scrollSnapType: 'x mandatory' }}>
+                            {recs.newFlavors.map(p => (
+                                <div 
+                                    key={`new-${p._id}`} 
+                                    className="card border-0 shadow-sm flex-shrink-0 position-relative premium-card" 
+                                    style={{ width: '160px', borderRadius: '20px', cursor: 'pointer', scrollSnapAlign: 'start', background: 'white' }}
+                                    onClick={() => navigate(`/product/${p._id}`)}
+                                >
+                                    <img 
+                                        src={`${API_URL}/images/${p.image}`} 
+                                        className="card-img-top" 
+                                        alt={p.name} 
+                                        style={{ height: '110px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', objectFit: 'cover' }}
+                                        onError={(e) => e.target.src = 'https://placehold.co/200x250?text=CaféSync'} 
+                                    />
+                                    <div className="card-body p-2 text-center">
+                                        <h6 className="card-title text-truncate fw-bold mb-1" style={{ fontSize: '0.85rem' }}>{p.name}</h6>
+                                        <span className="fw-bold text-muted" style={{ fontSize: '0.8rem', color: '#D9A673' }}>{p.price.toLocaleString()}đ</span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Tiêu đề phân biệt danh sách phía dưới */}
+                <h5 className="fw-bold mb-3 mt-4" style={{ fontFamily: 'Playfair Display', color: '#826644' }}>
+                    {isPersonalized ? "Gợi ý thêm cho bạn" : "Thực đơn chính"}
+                </h5>
 
                 <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
                     {loading ? (
@@ -281,30 +367,58 @@ const Home = ({ cartCount }) => {
                                 if (hour >= 12 && hour < 18) return p.category === categoryMap["Sinh tố"] || p.category === categoryMap["Trà"] || isSpecial;
                                 return p.category === categoryMap["Nước ép"] || isSpecial;
                             })
-                            .map((p, index) => (
-                                <div 
-                                    key={p._id} 
-                                    className="col mb-2 product-card-animate"
-                                    style={{ 
-                                        animationDelay: `${Math.min(index, 8) * 0.05}s`
-                                    }}
-                                >
-                                    <div className="card h-100 premium-card shadow-sm position-relative" onClick={() => navigate(`/product/${p._id}`)}>
-                                        <button className="btn-favorite-float" onClick={(e) => toggleFavorite(e, p)}>
-                                            <i className={`bi ${favorites.find(f => f._id === p._id) ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
-                                        </button>
-                                        <img src={`${API_URL}/images/${p.image}`} className="card-img-top" alt={p.name}
-                                            onError={(e) => e.target.src = 'https://placehold.co/200x250?text=CaféSync'} />
-                                        <div className="card-body p-3">
-                                            <h6 className="card-title text-truncate fw-bold">{p.name}</h6>
-                                            <div className="d-flex justify-content-between align-items-center mt-2">
-                                                <span className="fw-bold" style={{ color: '#D9A673' }}>{p.price.toLocaleString()}đ</span>
-                                                <button className="btn-cart-small shadow-sm" onClick={(e) => addToCart(e, p)}><i className="bi bi-plus"></i></button>
+                            .map((p, index) => {
+                                const isFav = favorites.some(f => f._id === p._id);
+                                const hour = new Date().getHours();
+                                const isSpecial = p.name.includes("đặc biệt") || p.name.includes("muối") || p.price > 55000;
+
+                                let badgeText = "";
+                                let badgeClass = "";
+                                if (isPersonalized) {
+                                    if (isFav) {
+                                        badgeText = "Đã yêu thích";
+                                        badgeClass = "badge-fav";
+                                    } else if (isSpecial) {
+                                        badgeText = "Món đặc trưng";
+                                        badgeClass = "badge-special";
+                                    } else {
+                                        if (hour >= 5 && hour < 12) badgeText = "Gợi ý sáng";
+                                        else if (hour >= 12 && hour < 18) badgeText = "Gợi ý chiều";
+                                        else badgeText = "Gợi ý tối";
+                                        badgeClass = "badge-time";
+                                    }
+                                }
+
+                                return (
+                                    <div 
+                                        key={p._id} 
+                                        className="col mb-2 product-card-animate"
+                                        style={{ 
+                                            animationDelay: `${Math.min(index, 8) * 0.05}s`
+                                        }}
+                                    >
+                                        <div className="card h-100 premium-card shadow-sm position-relative" onClick={() => navigate(`/product/${p._id}`)}>
+                                            {badgeText && (
+                                                <span className={`personalized-card-badge ${badgeClass}`}>
+                                                    {badgeText}
+                                                </span>
+                                            )}
+                                            <button className="btn-favorite-float" onClick={(e) => toggleFavorite(e, p)}>
+                                                <i className={`bi ${favorites.find(f => f._id === p._id) ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
+                                            </button>
+                                            <img src={`${API_URL}/images/${p.image}`} className="card-img-top" alt={p.name}
+                                                onError={(e) => e.target.src = 'https://placehold.co/200x250?text=CaféSync'} />
+                                            <div className="card-body p-3">
+                                                <h6 className="card-title text-truncate fw-bold">{p.name}</h6>
+                                                <div className="d-flex justify-content-between align-items-center mt-2">
+                                                    <span className="fw-bold" style={{ color: '#D9A673' }}>{p.price.toLocaleString()}đ</span>
+                                                    <button className="btn-cart-small shadow-sm" onClick={(e) => addToCart(e, p)}><i className="bi bi-plus"></i></button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                     )}
                 </div>
             </div>

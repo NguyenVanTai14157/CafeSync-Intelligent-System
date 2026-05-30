@@ -166,9 +166,21 @@ const TrackOrder = () => {
                                 <div className="d-flex justify-content-between">
                                     <div>
                                         <p className="item-name-track mb-0 fw-bold">{item.name} x{item.quantity}</p>
-                                        <small className="text-muted">
-                                            Size: {item.options?.size} | {item.options?.sugar} đường
+                                        <small className="text-muted d-block">
+                                            Size: {item.options?.size || 'M'}
+                                            {item.options?.sugar ? ` | Đường: ${item.options.sugar}` : ''}
+                                            {item.options?.ice ? ` | Đá: ${item.options.ice}` : ''}
                                         </small>
+                                        {item.options?.toppings && item.options.toppings.length > 0 && (
+                                            <small className="text-muted d-block" style={{ fontSize: '0.8rem' }}>
+                                                Toppings: {item.options.toppings.join(', ')}
+                                            </small>
+                                        )}
+                                        {item.note && (
+                                            <small className="text-danger d-block mt-1" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>
+                                                Ghi chú: {item.note}
+                                            </small>
+                                        )}
                                     </div>
                                     <p className="fw-bold">{(item.price * item.quantity).toLocaleString()}đ</p>
                                 </div>

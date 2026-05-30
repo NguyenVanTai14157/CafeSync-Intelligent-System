@@ -27,16 +27,24 @@ const Detail = () => {
     };
 
     useEffect(() => {
-        axios.get(`${API_URL}/api/products/${id}`)
+        const email = localStorage.getItem('userEmail') || 'Guest';
+        axios.get(`${API_URL}/api/products/${id}?email=${email}`)
             .then(res => {
                 const data = res.data;
                 setProduct(data);
                 checkFavoriteStatus(id);
+                
+                // Sử dụng thói quen cũ (habit) nếu có, nếu không thì lấy giá trị mặc định
+                const defaultSize = data.habit?.size || data.sizes?.[1] || data.sizes?.[0] || 'M';
+                const defaultSugar = data.habit?.sugar || data.sugarOptions?.[data.sugarOptions.length - 1] || '100%';
+                const defaultIce = data.habit?.ice || data.iceOptions?.[data.iceOptions.length - 1] || '100%';
+                const defaultToppings = data.habit?.toppings || [];
+
                 setOptions({
-                    size: data.sizes?.[1] || data.sizes?.[0] || 'M',
-                    sugar: data.sugarOptions?.[data.sugarOptions.length - 1] || '100%',
-                    ice: data.iceOptions?.[data.iceOptions.length - 1] || '100%',
-                    toppings: []
+                    size: defaultSize,
+                    sugar: defaultSugar,
+                    ice: defaultIce,
+                    toppings: defaultToppings
                 });
             })
             .catch(err => console.error(err));
@@ -174,18 +182,20 @@ const Detail = () => {
 
                     {/* Chỉ số calo giống như bản mẫu */}
                     <div className="calorie-badge">
-                        <i className="bi bi-fire me-1 text-danger"></i>
                         <span>{getCalories()} CALORIES</span>
                     </div>
 
                     {/* Chọn Size dạng viên thuốc rời */}
                     <div className="option-section mt-4">
-                        <span className="premium-section-title">Kích cỡ ly</span>
+                        <div className="d-flex align-items-center justify-content-between mb-2">
+                            <span className="premium-section-title mb-0">Kích cỡ ly</span>
+                            {product.habit?.size && <span className="habit-title-badge">Khẩu vị quen thuộc</span>}
+                        </div>
                         <div className="pill-selector-group">
                             {product.sizes?.map(s => (
                                 <button 
                                     key={s} 
-                                    className={`pill-selector-item ${options.size === s ? 'active' : ''}`} 
+                                    className={`pill-selector-item ${options.size === s ? 'active' : ''} ${product.habit?.size === s ? 'habit-item' : ''}`} 
                                     onClick={() => setOptions({ ...options, size: s })}
                                 >
                                     {sizeMap[s] || s}
@@ -196,12 +206,15 @@ const Detail = () => {
 
                     {/* Mức đường dạng viên thuốc rời */}
                     <div className="option-section mt-4">
-                        <span className="premium-section-title">Mức đường</span>
+                        <div className="d-flex align-items-center justify-content-between mb-2">
+                            <span className="premium-section-title mb-0">Mức đường</span>
+                            {product.habit?.sugar && <span className="habit-title-badge">Khẩu vị quen thuộc</span>}
+                        </div>
                         <div className="pill-selector-group">
                             {product.sugarOptions?.map(opt => (
                                 <button 
                                     key={opt} 
-                                    className={`pill-selector-item ${options.sugar === opt ? 'active' : ''}`} 
+                                    className={`pill-selector-item ${options.sugar === opt ? 'active' : ''} ${product.habit?.sugar === opt ? 'habit-item' : ''}`} 
                                     onClick={() => setOptions({ ...options, sugar: opt })}
                                 >
                                     {opt}
@@ -212,12 +225,15 @@ const Detail = () => {
 
                     {/* Mức đá dạng viên thuốc rời */}
                     <div className="option-section mt-4">
-                        <span className="premium-section-title">Mức đá</span>
+                        <div className="d-flex align-items-center justify-content-between mb-2">
+                            <span className="premium-section-title mb-0">Mức đá</span>
+                            {product.habit?.ice && <span className="habit-title-badge">Khẩu vị quen thuộc</span>}
+                        </div>
                         <div className="pill-selector-group">
                             {product.iceOptions?.map(opt => (
                                 <button 
                                     key={opt} 
-                                    className={`pill-selector-item ${options.ice === opt ? 'active' : ''}`} 
+                                    className={`pill-selector-item ${options.ice === opt ? 'active' : ''} ${product.habit?.ice === opt ? 'habit-item' : ''}`} 
                                     onClick={() => setOptions({ ...options, ice: opt })}
                                 >
                                     {iceMap[opt] || opt}
@@ -229,13 +245,21 @@ const Detail = () => {
                     {/* Topping dạng Checkbox list căn đều */}
                     {product.toppings?.length > 0 && (
                         <div className="option-section mt-4">
-                            <span className="premium-section-title">Topping yêu thích</span>
+                            <div className="d-flex align-items-center justify-content-between mb-2">
+                                <span className="premium-section-title mb-0">Topping yêu thích</span>
+                                {product.habit?.toppings?.length > 0 && <span className="habit-title-badge">Thường chọn</span>}
+                            </div>
                             <div className="topping-checkbox-list">
                                 {product.toppings.map(t => {
                                     const isSelected = options.toppings.includes(t);
                                     const toppingPrice = getToppingPrice(t);
+                                    const isHabitTopping = product.habit?.toppings?.includes(t);
                                     return (
-                                        <div key={t} className="topping-checkbox-row" onClick={() => handleToppingToggle(t)}>
+                                        <div 
+                                            key={t} 
+                                            className={`topping-checkbox-row ${isHabitTopping ? 'habit-item' : ''}`} 
+                                            onClick={() => handleToppingToggle(t)}
+                                        >
                                             <div className="d-flex align-items-center gap-2">
                                                 <span className="topping-checkbox-icon">
                                                     {isSelected ? (

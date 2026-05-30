@@ -369,6 +369,18 @@ body {
     transform: scale(0.98);
 }
 
+.habit-title-badge {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(217, 160, 91, 0.12);
+    color: #b8860b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.2px;
+}
+
 /* Media query for tablet and desktop viewports */
 @media (min-width: 768px) {
     .detail-page-premium {
@@ -450,4 +462,13 @@ body {
         background: var(--umber-dark);
         box-shadow: 0 8px 25px rgba(92, 64, 51, 0.25);
     }
+}
+
+/* Đường viền nét đứt màu vàng cát/gold cho các nút thói quen quen thuộc */
+.pill-selector-item.habit-item {
+    border: 1.5px dashed #b8860b !important;
+}
+
+.topping-checkbox-row.habit-item {
+    border: 1.5px dashed #b8860b !important;
 }

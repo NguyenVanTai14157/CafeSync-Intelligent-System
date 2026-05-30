@@ -8,7 +8,9 @@ export const getProductsByCategory = async (categoryId) => {
 
 import axios from "axios";
 
-const API = "https://cafesync-intelligent-system-sntf.onrender.com/api/products";
+import API_URL from "../config";
+
+const API = `${API_URL}/api/products`;
 
 // lấy danh sách món
 export const getProducts = () => axios.get(API);

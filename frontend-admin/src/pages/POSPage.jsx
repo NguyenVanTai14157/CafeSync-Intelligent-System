@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axiosClient from "../services/axiosClient";
+import API_URL from "../config";
 import { 
   Modal, 
   Form, 
@@ -159,7 +160,7 @@ const POSPage = () => {
                         <div style={{ position: 'relative', overflow: 'hidden', borderTopLeftRadius: 16, borderTopRightRadius: 16 }}>
                           <img
                             alt={product.name}
-                            src={product.image ? `https://cafesync-intelligent-system-sntf.onrender.com/images/${product.image}` : "https://via.placeholder.com/150"}
+                            src={product.image ? `${API_URL}/images/${product.image}` : "https://via.placeholder.com/150"}
                             style={{ height: 140, width: '100%', objectFit: "cover", transition: 'transform 0.5s ease' }}
                             className="product-img"
                           />
@@ -202,7 +203,7 @@ const POSPage = () => {
               {cart.map((item) => (
                 <div key={item.cartItemId} className="cart-item">
                   <img 
-                    src={item.image ? `https://cafesync-intelligent-system-sntf.onrender.com/images/${item.image}` : "https://via.placeholder.com/50"} 
+                    src={item.image ? `${API_URL}/images/${item.image}` : "https://via.placeholder.com/50"} 
                     className="cart-item-img"
                     alt={item.name}
                   />

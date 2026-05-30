@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Form, Input, Button, Card, Typography, message } from "antd";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import API_URL from "../config";
 
 const { Title } = Typography;
 
@@ -14,7 +15,7 @@ const LoginPage = () => {
 
     try {
       const res = await axios.post(
-        "https://cafesync-intelligent-system-sntf.onrender.com/api/auth/login",
+        `${API_URL}/api/auth/login`,
         values
       );
 

@@ -21,6 +21,7 @@ import {
   deleteProduct,
   uploadImages,
 } from "../api/productApi";
+import API_URL from "../config";
 
 const { Title, Text } = Typography;
 
@@ -142,7 +143,7 @@ const ProductPage = () => {
           border: '2px solid #fff' 
         }}>
           <img
-            src={`https://cafesync-intelligent-system-sntf.onrender.com/images/${img}`}
+            src={`${API_URL}/images/${img}`}
             style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Table, Typography, Spin, Button, Modal, Form, Input, Select, Popconfirm, message, Tag } from "antd";
 import { EditOutlined, DeleteOutlined, UserOutlined, PlusOutlined } from "@ant-design/icons";
 import axios from "axios";
+import API_URL from "../config";
 
 const { Title, Text } = Typography;
 
@@ -29,7 +30,7 @@ const UserManagementPage = () => {
   // Load users
   const fetchUsers = () => {
     setLoading(true);
-    axios.get("https://cafesync-intelligent-system-sntf.onrender.com/api/users")
+    axios.get(`${API_URL}/api/users`)
       .then(res => setUsers(res.data))
       .catch(() => setUsers([]))
       .finally(() => setLoading(false));
@@ -56,11 +57,11 @@ const UserManagementPage = () => {
       const values = await form.validateFields();
       if (editingUser) {
         // Update
-        await axios.put(`https://cafesync-intelligent-system-sntf.onrender.com/api/users/${editingUser._id}`, values);
+        await axios.put(`${API_URL}/api/users/${editingUser._id}`, values);
         message.success("Cập nhật thành công!");
       } else {
         // Add
-        await axios.post("https://cafesync-intelligent-system-sntf.onrender.com/api/users", values);
+        await axios.post(`${API_URL}/api/users`, values);
         message.success("Thêm mới thành công!");
       }
       setModalOpen(false);
@@ -73,7 +74,7 @@ const UserManagementPage = () => {
   // Delete user
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`https://cafesync-intelligent-system-sntf.onrender.com/api/users/${id}`);
+      await axios.delete(`${API_URL}/api/users/${id}`);
       message.success("Xóa thành công!");
       fetchUsers();
     } catch {

@@ -6,12 +6,21 @@ const storage = multer.diskStorage({
         cb(null, 'public/images');
     },
     filename: (req, file, cb) => {
-        // Lưu tên gốc + timestamp để tránh trùng
-        const ext = path.extname(file.originalname);
-        const baseName = path.basename(file.originalname, ext);
-        cb(null, `${baseName}-${Date.now()}${ext}`);
-        // Nếu muốn giữ nguyên tên gốc (có thể bị trùng):
-        // cb(null, file.originalname);
+        // Fix lỗi font tiếng Việt từ Buffer của Multer
+        const originalNameUtf8 = Buffer.from(file.originalname, 'latin1').toString('utf8');
+        
+        const ext = path.extname(originalNameUtf8);
+        const baseName = path.basename(originalNameUtf8, ext);
+        
+        // Hàm xóa dấu tiếng Việt và ký tự đặc biệt
+        const cleanName = baseName
+            .normalize('NFD') // Tách dấu
+            .replace(/[\u0300-\u036f]/g, '') // Xóa dấu
+            .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+            .replace(/\s+/g, '-') // Thay khoảng trắng bằng gạch ngang
+            .replace(/[^\w-]/g, ''); // Xóa ký tự lạ khác
+            
+        cb(null, `${cleanName}-${Date.now()}${ext}`);
     }
 });
 

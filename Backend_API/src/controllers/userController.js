@@ -46,7 +46,7 @@ exports.loginUser = async (req, res) => {
 };
 
 // ==========================================
-// PHẦN CỦA TÀI: DÀNH CHO QUẢN TRỊ (ADMIN)
+// PHẦN CỦA TÀI: DÀNH CHO QUẢN LÝ (MANAGER)
 // ==========================================
 
 // Lấy thống kê số lượng user theo vai trò

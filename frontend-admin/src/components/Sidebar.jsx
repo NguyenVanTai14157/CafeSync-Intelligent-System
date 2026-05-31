@@ -31,8 +31,8 @@ const Sidebar = ({ collapsed }) => {
     },
   ];
 
-  // 2. Chức năng QUẢN LÝ (Chỉ dành cho QUẢN LÝ)
-  if (role === "manager" || role === "quanly") {
+  // 2. Chức năng QUẢN LÝ (Dành cho vai trò Quản lý)
+  if (role === "manager" || role === "quanly" || role === "admin") {
     menuItems.push(
       { type: "divider" },
       { label: "QUẢN LÝ VẬN HÀNH", type: "group", children: [
@@ -40,20 +40,11 @@ const Sidebar = ({ collapsed }) => {
         { key: "/CategoryPage", icon: <AppstoreOutlined />, label: "Danh mục", onClick: () => navigate("/CategoryPage") },
         { key: "/products", icon: <CoffeeOutlined />, label: "Sản phẩm", onClick: () => navigate("/products") },
         { key: "/tables", icon: <AppstoreOutlined />, label: "Bàn & QR", onClick: () => navigate("/tables") },
+        { key: "/users", icon: <UserOutlined />, label: "Nhân sự", onClick: () => navigate("/users") },
       ]},
       { type: "divider" },
       { label: "PHÂN TÍCH", type: "group", children: [
         { key: "/reports", icon: <LineChartOutlined />, label: "Báo cáo", onClick: () => navigate("/reports") },
-      ]}
-    );
-  }
-
-  // 3. Chức năng QUẢN TRỊ (Chỉ dành cho ADMIN)
-  if (role === "admin") {
-    menuItems.push(
-      { type: "divider" },
-      { label: "QUẢN TRỊ", type: "group", children: [
-        { key: "/users", icon: <UserOutlined />, label: "Nhân sự", onClick: () => navigate("/users") },
       ]}
     );
   }

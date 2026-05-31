@@ -101,7 +101,7 @@ const UserManagementPage = () => {
       key: "role",
       render: (role) => {
         const roleConfig = {
-          'admin': { label: 'Quản trị viên', color: 'red', icon: <UserOutlined /> },
+          'admin': { label: 'Quản lý', color: 'red', icon: <UserOutlined /> },
           'manager': { label: 'Quản lý', color: 'purple', icon: <UserOutlined /> },
           'nhanvien': { label: 'Nhân viên', color: 'blue', icon: <UserOutlined /> },
           'customer': { label: 'Khách hàng', color: 'green', icon: <UserOutlined /> }
@@ -266,7 +266,6 @@ const UserManagementPage = () => {
             rules={[{ required: true, message: "Bắt buộc chọn vai trò" }]}
           >
             <Select>
-              <Select.Option value="admin">Quản trị</Select.Option>
               <Select.Option value="manager">Quản lý</Select.Option>
               <Select.Option value="nhanvien">Nhân viên</Select.Option>
               <Select.Option value="customer">Khách hàng</Select.Option>

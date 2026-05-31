@@ -24,7 +24,7 @@ const Header = ({ collapsed, setCollapsed }) => {
 
   const getRoleLabel = (role) => {
     const roles = {
-      'admin': 'Quản trị',
+      'admin': 'Quản lý',
       'manager': 'Quản lý',
       'quanly': 'Quản lý',
       'nhanvien': 'Nhân viên'

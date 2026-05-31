@@ -73,11 +73,11 @@ const WelcomePage = () => {
   const navigate = useNavigate();
   const rqClient = useQueryClient();
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'manager' || user?.role === 'quanly';
 
   // ⚡ React Query: Cache dữ liệu dashboard, tự động refresh ngầm
   const { data, isLoading: loading } = useQuery({
-    queryKey: ["dashboard", isAdmin ? "admin" : "staff"],
+    queryKey: ["dashboard", isAdmin ? "manager" : "staff"],
     queryFn: isAdmin ? fetchAdminData : fetchStaffData,
   });
 
@@ -257,7 +257,7 @@ const WelcomePage = () => {
       key: "role",
       render: (r) => {
         const labels = { 
-          'admin': ['Quản trị', '#1677ff', 'blue'], 
+          'admin': ['Quản lý', '#1677ff', 'blue'], 
           'manager': ['Quản lý', '#f59e0b', 'orange'], 
           'quanly': ['Quản lý', '#f59e0b', 'orange'], 
           'nhanvien': ['Nhân viên', '#10b981', 'green'],
@@ -305,7 +305,7 @@ const WelcomePage = () => {
               icon={<ThunderboltOutlined />}
               onClick={() => {
                 const role = user?.role?.toLowerCase();
-                if (role === 'admin') navigate("/users");
+                if (role === 'admin' || role === 'manager' || role === 'quanly') navigate("/users");
                 else if (role === 'nhanvien') navigate("/pos");
                 else navigate("/orders");
               }}
@@ -320,7 +320,7 @@ const WelcomePage = () => {
                 boxShadow: '0 8px 20px rgba(56, 189, 248, 0.3)'
               }}
             >
-              {user?.role === 'admin' 
+              {(user?.role === 'admin' || user?.role === 'manager' || user?.role === 'quanly')
                 ? "Quản lý Nhân sự" 
                 : (user?.role === 'nhanvien' ? "Bắt đầu Bán hàng" : "Quản lý Đơn hàng")}
             </Button>
@@ -378,12 +378,12 @@ const WelcomePage = () => {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <Card hoverable className="premium-card" onClick={() => applyUserFilter("admin")} style={{ borderLeft: userFilter === "admin" ? "6px solid #10b981" : "1px solid #f1f5f9" }}>
+            <Card hoverable className="premium-card" onClick={() => applyUserFilter("nhanvien")} style={{ borderLeft: userFilter === "nhanvien" ? "6px solid #10b981" : "1px solid #f1f5f9" }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <Text type="secondary" strong style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Quản trị hệ thống</Text>
-                  <Title level={2} style={{ margin: '8px 0 0', fontSize: 28, fontWeight: 800 }}>{stats?.userStats?.admins || 0}</Title>
-                  <Text style={{ fontSize: 12, color: '#64748b' }}>Toàn quyền truy cập</Text>
+                  <Text type="secondary" strong style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Nhân viên phục vụ</Text>
+                  <Title level={2} style={{ margin: '8px 0 0', fontSize: 28, fontWeight: 800 }}>{stats?.userStats?.staff || 0}</Title>
+                  <Text style={{ fontSize: 12, color: '#64748b' }}>Đội ngũ nhân sự</Text>
                 </div>
                 <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <SettingOutlined style={{ fontSize: 24, color: '#10b981' }} />
@@ -392,12 +392,12 @@ const WelcomePage = () => {
             </Card>
           </Col>
           <Col xs={24} sm={12} lg={6}>
-            <Card hoverable className="premium-card" onClick={() => applyUserFilter("nhanvien")} style={{ borderLeft: userFilter === "nhanvien" ? "6px solid #f59e0b" : "1px solid #f1f5f9" }}>
+            <Card hoverable className="premium-card" onClick={() => applyUserFilter("manager")} style={{ borderLeft: (userFilter === "manager" || userFilter === "admin") ? "6px solid #f59e0b" : "1px solid #f1f5f9" }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <Text type="secondary" strong style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Nhân viên</Text>
-                  <Title level={2} style={{ margin: '8px 0 0', fontSize: 28, fontWeight: 800 }}>{stats?.userStats?.staff || 0}</Title>
-                  <Text type="warning" style={{ fontSize: 12 }}>Đang trực tuyến: {Math.floor((stats?.userStats?.staff || 0) * 0.7)}</Text>
+                  <Text type="secondary" strong style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Quản lý</Text>
+                  <Title level={2} style={{ margin: '8px 0 0', fontSize: 28, fontWeight: 800 }}>{(stats?.userStats?.admins || 0) + (stats?.userStats?.managers || 0)}</Title>
+                  <Text type="warning" style={{ fontSize: 12 }}>Đang trực tuyến: {Math.floor(((stats?.userStats?.admins || 0) + (stats?.userStats?.managers || 0)) * 0.7)}</Text>
                 </div>
                 <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(245, 158, 11, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <RiseOutlined style={{ fontSize: 24, color: '#f59e0b' }} />

@@ -174,7 +174,6 @@ const OrderManagementPage = () => {
             onClick={() => openStatusModal(record)}
             icon={<EditOutlined />}
             style={{ borderRadius: 8 }}
-            disabled={(record.paymentMethod !== "Tiền mặt") && (record.status === "Hoàn thành" || record.status === "Đã thanh toán")}
           />
           <Popconfirm
             title="Xóa đơn hàng"
@@ -276,11 +275,7 @@ const OrderManagementPage = () => {
           value={status}
           onChange={setStatus}
           style={{ width: "100%" }}
-          options={
-            editingOrder?.status === "Đã thanh toán"
-              ? statusOptions.filter(opt => opt.value === "Đã thanh toán" || opt.value === "Hoàn thành")
-              : statusOptions
-          }
+          options={statusOptions}
         />
       </Modal>
     </div>

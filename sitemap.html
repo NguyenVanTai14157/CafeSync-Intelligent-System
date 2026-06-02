@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 50px; }
+        .flow-container { display: flex; align-items: center; gap: 40px; position: relative; }
+        
+        .node { width: 150px; padding: 20px; border-radius: 12px; text-align: center; font-weight: bold; color: white; position: relative; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 2px solid rgba(255,255,255,0.3); }
+        
+        /* Màu sắc các Node */
+        .staff { background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); }
+        .server { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); width: 180px; height: 180px; border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 2; }
+        .kitchen { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        
+        /* Mũi tên */
+        .arrow { height: 4px; background-color: #cbd5e0; position: relative; flex-grow: 1; min-width: 80px; }
+        .arrow::after { content: ''; position: absolute; right: -10px; top: -8px; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-left: 15px solid #cbd5e0; }
+        .arrow-text { position: absolute; top: -25px; width: 100%; text-align: center; font-size: 12px; color: #4a5568; font-style: italic; }
+
+        .label { position: absolute; bottom: -40px; color: #2d3748; width: 100%; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }
+
+        .db-icon { position: absolute; top: -60px; font-size: 12px; background: #fff; color: #333; padding: 5px 10px; border-radius: 20px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+
+    <div class="flow-container">
+        <!-- Node 1: Staff -->
+        <div class="node staff">
+            🖥️ Staff/Client
+            <div class="label">Người dùng</div>
+        </div>
+
+        <!-- Mũi tên 1 -->
+        <div class="arrow">
+            <div class="arrow-text">Emit: new-order</div>
+        </div>
+
+        <!-- Node 2: Server -->
+        <div class="node server">
+            <div>
+                <div class="db-icon">💾 SQL/MongoDB</div>
+                🚀 CAFE-SYNC <br> SERVER
+            </div>
+            <div class="label">Trung tâm điều phối</div>
+        </div>
+
+        <!-- Mũi tên 2 -->
+        <div class="arrow">
+            <div class="arrow-text">Broadcasting...</div>
+        </div>
+
+        <!-- Node 3: Kitchen -->
+        <div class="node kitchen">
+            👨‍🍳 Kitchen App
+            <div class="label">Bộ phận chế biến</div>
+        </div>
+    </div>
+
+</body>
+</html>

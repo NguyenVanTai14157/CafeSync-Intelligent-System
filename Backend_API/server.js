@@ -19,8 +19,20 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 let chatContext = [];
 
 // 4. MIDDLEWARE
+const allowedOrigins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:8081',
+    'http://localhost:8082',
+    'https://cafe-sync-intelligent-system.vercel.app',
+    'https://cafe-sync-intelligent-system-rdrl.vercel.app',
+    'https://cafe-sync-admin.vercel.app'
+];
+
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://localhost:3001', 'https://cafe-sync-intelligent-system.vercel.app', 'https://cafe-sync-intelligent-system-rdrl.vercel.app', 'https://cafe-sync-admin.vercel.app'],
+    origin: allowedOrigins,
     credentials: true
 }));
 app.use(express.json());
@@ -41,7 +53,7 @@ const { Server } = require("socket.io");
 
 const io = new Server(server, {
     cors: {
-        origin: ['http://localhost:3000', 'http://localhost:3001', 'https://cafe-sync-intelligent-system.vercel.app', 'https://cafe-sync-intelligent-system-rdrl.vercel.app', 'https://cafe-sync-admin.vercel.app'],
+        origin: allowedOrigins,
         credentials: true
     }
 });

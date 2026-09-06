@@ -6,7 +6,18 @@
 
 ## 📖 Project Overview
 
-**CaféSync** is a modern F&B ecosystem built on the **MERN Stack**. The project bridges the gap between customers and coffee shop operations through a **Premium Mobile-First Soft UI**, a **Smart Context-Aware Personalization Engine**, and a virtual assistant **Syncie AI** (leveraging Groq Llama 3.1). It automates and modernizes daily coffee shop operations while providing a highly tailored ordering experience for customers.
+**CaféSync** is a coffee shop management and ordering system with **React web applications and a React Native mobile app**. Customers can browse drinks, customize orders, and track their status, while staff manage orders, products, and tables through the web dashboard.
+
+The customer website, admin dashboard, and mobile app share an **Express REST API, Socket.IO server, and MongoDB database**. Mobile uses the same email/password accounts and order data as the website. The customer website also includes purchase-history recommendations and the **Syncie AI** menu assistant.
+
+| Application | Purpose | Main technologies |
+| --- | --- | --- |
+| `frontend-client` | Customer ordering website | React, Vite |
+| `frontend-admin` | Staff and manager dashboard | React, Vite |
+| `mobile-client` | Native customer ordering app | React Native, Expo, TypeScript |
+| `Backend_API` | Shared API, payments, and order events | Node.js, Express, MongoDB, Socket.IO |
+
+For mobile setup and architecture, see the [mobile README](mobile-client/README.md). Automated checks are defined in [Mobile CI](.github/workflows/mobile-ci.yml).
 
 ---
 
@@ -28,16 +39,24 @@
 * **Table & QR Management**: Associate tables with custom QR codes that automatically parse table numbers in the customer app.
 * **Operational Reporting**: Generates sales charts, order counts, revenue statistics, and ingredient usage reports.
 
+### 3. Native Customer App (`mobile-client`)
+* **Cross-platform Mobile Ordering**: Native Android/iOS customer experience built with Expo Router and TypeScript.
+* **Server State Management**: TanStack Query caching, retry, refresh, and network-aware synchronization. Previously fetched public menu data is persisted for up to 24 hours; offline checkout is not implemented.
+* **Real-time Tracking**: Socket.IO receives order status changes, with a 30-second REST refresh on the order detail screen until the order reaches a terminal status.
+* **Local Storage**: JWT stored in SecureStore on Android/iOS; cart and favorites persisted separately with AsyncStorage. Personalized queries and order history are excluded from the persisted query cache.
+* **Quality Pipeline**: Jest, React Native Testing Library, strict TypeScript, Expo bundle verification, and GitHub Actions.
+
 ---
 
 ## 🚀 Technology Stack
 
 * **Frontend**: React.js, Vite, Bootstrap 5, CSS3 (Vanilla Custom Properties & Keyframes for animations), Socket.io-client.
+* **Mobile**: React Native 0.86, Expo SDK 57, Expo Router, TypeScript 6, TanStack Query, Socket.IO, SecureStore, AsyncStorage.
 * **Backend**: Node.js, Express.js, Socket.io, Mongoose (MongoDB Atlas).
 * **Integrations & AI**:
-  - **AI Model**: Groq Cloud SDK (Llama 3.1-70b-versatile).
-  - **Payment Gateways**: PayOS API & Webhook verification.
-  - **Authentication**: JWT (JSON Web Tokens), Google OAuth, Facebook Login.
+  - **AI Model**: Groq Cloud SDK (`llama-3.1-8b-instant` in the current server configuration).
+  - **Payment Gateways**: PayOS payment links and webhook handling.
+  - **Authentication**: JWT and shared email/password accounts; Google/Facebook sign-in is currently a web flow.
 
 ---
 
@@ -46,14 +65,16 @@
 * `📁 frontend-client/` - React frontend application for customer ordering, tracking, and chatbot interaction.
 * `📁 frontend-admin/` - Operational dashboard for shop managers (POS, inventory, reports, QR codes).
 * `📁 Backend_API/` - Central Node.js API server handling data modeling, AI chatbot endpoints, socket signals, and PayOS hooks.
+* `📁 mobile-client/` - Expo/React Native customer app sharing the same API, accounts, products, orders, and payments.
 
 ---
 
 ## 🛠️ Installation & Setup
 
 ### Prerequisites
-* [Node.js](https://nodejs.org/) (v16+)
-* [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) account and database instance.
+* Node.js 22.13.1 or a newer compatible Node.js 22 release for the mobile toolchain; Mobile CI uses 22.13.1.
+* MongoDB connection and backend environment variables when running the API locally. Mobile uses the configured Render API by default.
+* For mobile testing: Expo Go on a compatible phone, or Android Studio with a running Android emulator. A local iOS Simulator requires macOS and Xcode.
 
 ### 1. Backend Server Configuration
 1. Navigate to the API folder:
@@ -107,6 +128,32 @@
    npm run dev
    ```
 
+### 4. Mobile Client Setup
+1. Install and start from the repository root:
+   ```bash
+   npm --prefix mobile-client ci
+   npm run mobile
+   ```
+2. With the laptop and phone on the same reachable local network, scan the current QR code with Expo Go. Press `a` to open the app on a running Android emulator. Both can connect to the same Metro server.
+3. Run lint, TypeScript checks, and unit/component tests from the repository root:
+   ```bash
+   npm run mobile:check
+   ```
+
+If your terminal is already inside `mobile-client`, use `npm start` to run the app
+and `npm run check` for local checks. `npm run mobile` is a root-level script.
+
+See [`mobile-client/README.md`](mobile-client/README.md) for API configuration,
+architecture, realtime behavior, and EAS preview builds.
+
+### Mobile Delivery Status
+
+* Android has been exercised on an emulator and a physical phone during development. Android/iOS/Web JavaScript bundle exports have been checked locally; this does not establish iOS device or App Store validation.
+* Mobile CI is configured to run lint, type checking, Jest tests, and bundle export for changes under `mobile-client`. Its actual results appear in GitHub Actions after a push or pull request.
+* `eas.json` defines development, preview APK, and production build profiles. No downloadable APK or store release is included yet; building requires linking an Expo account and configuring signing credentials.
+* PayOS currently returns to the website after payment. Mobile payment deep links, mobile social sign-in, push notifications, Sentry, and OTA updates are not implemented.
+* Realtime status changes require the updated backend to be deployed. The mobile app and admin website must point to the same backend to observe the same orders.
+
 ---
 
 ## 👥 Development Team (Fullstack Team)
@@ -116,7 +163,7 @@ This system was developed by Information Systems students at the **Industrial Un
 1. **Ly Thi Yen** (Fullstack Developer)
    * *Responsibilities*: Front-to-Back development of the Client module. Co-designed the RESTful API server, MongoDB schema mapping, real-time Socket.io notifications, and PayOS payment webhooks. Developed the Premium Soft UI design, Cart/Favorite state logic, and Syncie AI assistant integration.
 2. **Nguyen Van Tai** (Fullstack Developer)
-   * *Responsibilities*: Front-to-Back development of the Admin Management POS module. Co-designed the backend server architecture, MongoDB configuration, Socket.io event-driven infrastructure. Developed the inventory tracking, business reports, and table QR code management logic.
+   * *Responsibilities*: Front-to-Back development of the Admin Management POS module and React Native customer app. Co-designed the backend server architecture, MongoDB configuration, Socket.io event-driven infrastructure. Developed inventory tracking, business reports, table QR management, mobile ordering, secure session storage, query caching, and mobile CI.
 
 ---
 *© 2026 CaféSync Project - Industrial University of Ho Chi Minh City.*

@@ -141,6 +141,10 @@ const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
     const updated = await Order.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    if (!updated) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+
+    const io = req.app.get('io');
+    if (io) io.emit('order_updated', updated);
     res.json(updated);
   } catch (err) {
     res.status(500).json({ message: err.message });

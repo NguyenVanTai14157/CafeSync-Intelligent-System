@@ -1,4 +1,14 @@
 {
+  "scripts": {
+    "api": "npm --prefix Backend_API run dev",
+    "client": "npm --prefix frontend-client run dev",
+    "admin": "npm --prefix frontend-admin run dev",
+    "mobile": "npm --prefix mobile-client start",
+    "mobile:android": "npm --prefix mobile-client run android",
+    "mobile:web": "npm --prefix mobile-client run web",
+    "mobile:dev-client": "npm --prefix mobile-client run start:dev-client",
+    "mobile:check": "npm --prefix mobile-client run check"
+  },
   "dependencies": {
     "socket.io": "^4.8.3",
     "sweetalert2": "^11.26.24"

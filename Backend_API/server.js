@@ -149,17 +149,35 @@ QUY TẮC CỰC KỲ QUAN TRỌNG:
 Danh sách Thực đơn của quán CaféSync:
 ${menuText}`;
 
-        const chatCompletion = await groq.chat.completions.create({
-            messages: [
-                {
-                    role: "system",
-                    content: systemPrompt
-                },
-                ...chatContext
-            ],
-            model: "llama-3.1-8b-instant",
-            temperature: 0.6,
-        });
+        const candidateModels = ["groq/compound-mini", "qwen/qwen3.8-27b", "groq/compound"];
+        let chatCompletion = null;
+        let lastError = null;
+
+        for (const modelName of candidateModels) {
+            try {
+                chatCompletion = await groq.chat.completions.create({
+                    messages: [
+                        {
+                            role: "system",
+                            content: systemPrompt
+                        },
+                        ...chatContext
+                    ],
+                    model: modelName,
+                    temperature: 0.6,
+                });
+                if (chatCompletion && chatCompletion.choices?.[0]?.message?.content) {
+                    break;
+                }
+            } catch (err) {
+                console.warn(`Groq model ${modelName} call failed:`, err.message);
+                lastError = err;
+            }
+        }
+
+        if (!chatCompletion || !chatCompletion.choices?.[0]?.message?.content) {
+            throw lastError || new Error("Không thể kết nối với mô hình AI.");
+        }
 
         const reply = chatCompletion.choices[0]?.message?.content || "";
         chatContext.push({ role: "assistant", content: reply });

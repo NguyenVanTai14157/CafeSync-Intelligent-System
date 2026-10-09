@@ -14,6 +14,7 @@
 // module.exports = mongoose.model("Product", ProductSchema);
 
 const mongoose = require("mongoose");
+require('./Topping');
 
 const ProductSchema = new mongoose.Schema({
   name: String,
@@ -25,7 +26,7 @@ const ProductSchema = new mongoose.Schema({
   image: String,
   description: String,
   sizes: [String],           // ["S", "M", "L"]
-  toppings: [String],        // ["Trân châu", "Thạch", ...]
+  toppings: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Topping' }],
   sugarOptions: [String],    // ["0%", "30%", "50%", "70%", "100%"]
   iceOptions: [String]       // ["0%", "30%", "50%", "70%", "100%"]
 });

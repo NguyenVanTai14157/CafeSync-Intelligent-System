@@ -86,10 +86,13 @@ const POSPage = () => {
   };
 
   const openEditModal = (item) => {
-    setOptionModal({ open: true, product: item, editMode: true, cartItemId: item.cartItemId });
+    // item.price already includes options; always start from current catalog price.
+    const product = products.find(p => p._id === item._id);
+    if (!product) return message.warning('Món này không còn trong thực đơn');
+    setOptionModal({ open: true, product, editMode: true, cartItemId: item.cartItemId });
     optionForm.setFieldsValue({
       size: item.options?.size,
-      topping: item.options?.toppings,
+      topping: (item.options?.toppings || []).filter(name => product.toppings?.some(t => t.status === 'active' && t.name === name)),
       sugar: item.options?.sugar,
       ice: item.options?.ice,
       note: item.note
@@ -281,12 +284,14 @@ const POSPage = () => {
           optionForm.validateFields().then(values => {
             const { size, topping, sugar, ice, note } = values;
             const product = optionModal.product;
-            const finalPrice = product.price + getSizeExtraPrice(size);
+            const selectedToppings = (product.toppings || []).filter(t => t.status === 'active' && (topping || []).includes(t.name));
+            const toppingNames = selectedToppings.map(t => t.name);
+            const finalPrice = product.price + getSizeExtraPrice(size) + selectedToppings.reduce((sum, t) => sum + t.price, 0);
             
             if (optionModal.editMode) {
               setCart(prev => prev.map(item => 
                 item.cartItemId === optionModal.cartItemId 
-                  ? { ...item, options: { size, toppings: topping || [], sugar, ice }, note, price: finalPrice }
+                  ? { ...item, options: { size, toppings: toppingNames, sugar, ice }, note, price: finalPrice }
                   : item
               ));
             } else {
@@ -294,7 +299,7 @@ const POSPage = () => {
                 ...product,
                 cartItemId: Date.now() + Math.random().toString(),
                 quantity: 1,
-                options: { size, toppings: topping || [], sugar, ice },
+                options: { size, toppings: toppingNames, sugar, ice },
                 note,
                 price: finalPrice
               }]);
@@ -328,20 +333,17 @@ const POSPage = () => {
               </Form.Item>
             </Col>
           </Row>
-          <Form.Item name="topping" label={<Text strong>Chọn thêm Toppings</Text>}>
+          {optionModal.product?.toppings?.some(t => t.status === 'active') && <Form.Item name="topping" label={<Text strong>Chọn thêm Toppings</Text>}>
             <Checkbox.Group style={{ width: '100%', padding: '12px', background: '#f8fafc', borderRadius: 12 }}>
               <Row>
-                {optionModal.product?.toppings?.map(t => (
-                  <Col span={8} key={t} style={{ marginBottom: 8 }}>
-                    <Checkbox value={t}>{t}</Checkbox>
+                {optionModal.product.toppings.filter(t => t.status === 'active').map(t => (
+                  <Col span={12} key={t._id} style={{ marginBottom: 8 }}>
+                    <Checkbox value={t.name}>{t.name} (+{t.price.toLocaleString()}đ)</Checkbox>
                   </Col>
                 ))}
-                {(!optionModal.product?.toppings || optionModal.product.toppings.length === 0) && (
-                  <Col span={24}><Text type="secondary" italic>Món này không có topping kèm theo</Text></Col>
-                )}
               </Row>
             </Checkbox.Group>
-          </Form.Item>
+          </Form.Item>}
           <Form.Item name="note" label={<Text strong>Ghi chú phục vụ</Text>}>
             <Input.TextArea rows={3} placeholder="Ví dụ: Ít sữa, không lấy muỗng nhựa..." style={{ borderRadius: 10 }} />
           </Form.Item>

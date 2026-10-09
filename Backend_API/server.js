@@ -73,6 +73,7 @@ app.set('io', io);
 app.use("/api/auth", require("./src/routes/authRoutes"));
 app.use("/api/orders", require("./src/routes/orderRoutes"));
 app.use("/api/products", require("./src/routes/productRoutes"));
+app.use("/api/toppings", require("./src/routes/toppingRoutes"));
 app.use("/api/categories", require("./src/routes/category.routes"));
 app.use("/api/users", require("./src/routes/userRoutes"));
 // app.use("/api/ingredients", require("./src/routes/ingredientRoutes"));
@@ -193,7 +194,7 @@ ${menuText}`;
         let recommendedProducts = [];
         if (recommendedIds.length > 0) {
             const uniqueIds = [...new Set(recommendedIds)];
-            recommendedProducts = await Product.find({ _id: { $in: uniqueIds } });
+            recommendedProducts = await Product.find({ _id: { $in: uniqueIds } }).populate({ path: 'toppings', match: { status: 'active' } });
         }
 
         // Loại bỏ các tag [Product:id] trong nội dung phản hồi hiển thị

@@ -10,6 +10,13 @@ export type ProductOptions = {
   toppings: string[];
 };
 
+export type Topping = {
+  _id: string;
+  name: string;
+  price: number;
+  status: 'active' | 'inactive';
+};
+
 export type Product = {
   _id: string;
   name: string;
@@ -18,7 +25,7 @@ export type Product = {
   description?: string;
   category?: Category | string;
   sizes?: string[];
-  toppings?: string[];
+  toppings?: Topping[];
   sugarOptions?: string[];
   iceOptions?: string[];
   habit?: Partial<ProductOptions> | null;

@@ -38,7 +38,8 @@ const Detail = () => {
                 const defaultSize = data.habit?.size || data.sizes?.[1] || data.sizes?.[0] || 'M';
                 const defaultSugar = data.habit?.sugar || data.sugarOptions?.[data.sugarOptions.length - 1] || '100%';
                 const defaultIce = data.habit?.ice || data.iceOptions?.[data.iceOptions.length - 1] || '100%';
-                const defaultToppings = data.habit?.toppings || [];
+                const defaultToppings = (data.habit?.toppings || []).filter(name =>
+                    data.toppings?.some(t => t.status === 'active' && t.name === name));
 
                 setOptions({
                     size: defaultSize,
@@ -53,13 +54,11 @@ const Detail = () => {
 
     if (!product) return <div className="loading-state"> Đang pha chế...</div>;
 
-    // Định nghĩa giá tiền của từng topping
+    const availableToppings = (product.toppings || []).filter(t => t.status === 'active');
+
+    // Giá được quản lý trong collection toppings, không suy đoán theo tên.
     const getToppingPrice = (toppingName) => {
-        const nameLower = toppingName.toLowerCase();
-        if (nameLower.includes("kem phô mai") || nameLower.includes("cream cheese") || nameLower.includes("cheese") || nameLower.includes("macchiato")) return 10000;
-        if (nameLower.includes("trân châu") || nameLower.includes("thạch") || nameLower.includes("pudding")) return 5000;
-        if (nameLower.includes("hạt chia") || nameLower.includes("basil")) return 3000;
-        return 5000; // Mặc định
+        return availableToppings.find(t => t.name === toppingName)?.price || 0;
     };
 
     // Giả lập lượng Calo dựa trên tên sản phẩm
@@ -243,22 +242,22 @@ const Detail = () => {
                     </div>
 
                     {/* Topping dạng Checkbox list căn đều */}
-                    {product.toppings?.length > 0 && (
+                    {availableToppings.length > 0 && (
                         <div className="option-section mt-4">
                             <div className="d-flex align-items-center justify-content-between mb-2">
                                 <span className="premium-section-title mb-0">Topping yêu thích</span>
                                 {product.habit?.toppings?.length > 0 && <span className="habit-title-badge">Thường chọn</span>}
                             </div>
                             <div className="topping-checkbox-list">
-                                {product.toppings.map(t => {
-                                    const isSelected = options.toppings.includes(t);
-                                    const toppingPrice = getToppingPrice(t);
-                                    const isHabitTopping = product.habit?.toppings?.includes(t);
+                                {availableToppings.map(t => {
+                                    const isSelected = options.toppings.includes(t.name);
+                                    const toppingPrice = t.price;
+                                    const isHabitTopping = product.habit?.toppings?.includes(t.name);
                                     return (
                                         <div 
-                                            key={t} 
+                                            key={t._id}
                                             className={`topping-checkbox-row ${isHabitTopping ? 'habit-item' : ''}`} 
-                                            onClick={() => handleToppingToggle(t)}
+                                            onClick={() => handleToppingToggle(t.name)}
                                         >
                                             <div className="d-flex align-items-center gap-2">
                                                 <span className="topping-checkbox-icon">
@@ -268,7 +267,7 @@ const Detail = () => {
                                                         <i className="bi bi-square fs-5" style={{ color: '#ccc' }}></i>
                                                     )}
                                                 </span>
-                                                <span className="topping-name text-dark fw-semibold">{t}</span>
+                                                <span className="topping-name text-dark fw-semibold">{t.name}</span>
                                             </div>
                                             <span className="topping-price text-muted fw-bold">+{toppingPrice.toLocaleString()}đ</span>
                                         </div>

@@ -22,6 +22,7 @@ import {
   uploadImages,
 } from "../api/productApi";
 import API_URL from "../config";
+import axiosClient from '../services/axiosClient';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const { Title, Text } = Typography;
@@ -45,6 +46,7 @@ const ProductPage = () => {
   const [form] = Form.useForm();
   const [fileList, setFileList] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [toppings, setToppings] = useState([]);
   const [searchText, setSearchText] = useState("");
   const rqClient = useQueryClient();
 
@@ -57,6 +59,8 @@ const ProductPage = () => {
 
   useEffect(() => {
     getCategories().then(res => setCategories(Array.isArray(res) ? res : []));
+    axiosClient.get('/toppings').then(res => setToppings(res.data))
+      .catch(() => message.error('Không lấy được danh sách topping'));
   }, []);
 
   // OPEN MODAL
@@ -67,7 +71,8 @@ const ProductPage = () => {
     if (item) {
       form.setFieldsValue({
         ...item,
-        category: item.category?._id || item.category // lấy _id nếu là object, còn không thì lấy luôn
+        category: item.category?._id || item.category,
+        toppings: (item.toppings || []).map(t => t._id)
       });
     } else {
       form.resetFields();
@@ -320,16 +325,10 @@ const ProductPage = () => {
 
           <Form.Item name="toppings" label="Topping">
             <Select
-              mode="tags"
+              mode="multiple"
               style={{ width: '100%' }}
-              placeholder="Nhập hoặc chọn topping"
-              options={[
-                { label: "Trân châu", value: "Trân châu" },
-                { label: "Sữa", value: "Sữa" },
-                { label: "Thạch", value: "Thạch" },
-                { label: "Pudding", value: "Pudding" },
-                { label: "Kem cheese", value: "Kem cheese" }
-              ]}
+              placeholder="Chọn topping cho món"
+              options={toppings.map(t => ({ label: `${t.name} (+${t.price.toLocaleString()}đ)`, value: t._id }))}
             />
           </Form.Item>
 

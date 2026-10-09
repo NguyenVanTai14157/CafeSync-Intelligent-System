@@ -27,7 +27,7 @@ export function AppQueryProvider({ children }: PropsWithChildren) {
     <PersistQueryClientProvider
       client={queryClient}
       persistOptions={{
-        buster: 'catalog-v1',
+        buster: 'catalog-v2-toppings',
         maxAge: 24 * 60 * 60 * 1000,
         persister: catalogPersister,
         dehydrateOptions: {

@@ -2,6 +2,20 @@ const fs = require('fs');
 const path = require('path');
 const Product = require('../models/Product');
 const Order = require('../models/Order');
+const Topping = require('../models/Topping');
+const mongoose = require('mongoose');
+const toppingPopulation = { path: 'toppings', match: { status: 'active' } };
+
+async function validateToppings(data) {
+  if (!Object.hasOwn(data, 'toppings')) return;
+  if (!Array.isArray(data.toppings) || data.toppings.some(id => typeof id !== 'string' || !mongoose.isObjectIdOrHexString(id))) {
+    throw new Error('Topping phải là mảng ObjectId hợp lệ');
+  }
+  const ids = [...new Set(data.toppings.map(id => id.toLowerCase()))];
+  const count = await Topping.countDocuments({ _id: { $in: ids }, status: 'active' });
+  if (count !== ids.length) throw new Error('Topping không tồn tại hoặc đã ngừng bán');
+  data.toppings = ids;
+}
 
 // GET /api/products
 const getProducts = async (req, res) => {
@@ -15,7 +29,7 @@ const getProducts = async (req, res) => {
       filter.category = category;
     }
 
-    const products = await Product.find(filter).populate('category');
+    const products = await Product.find(filter).populate('category').populate(toppingPopulation);
 
     res.json(products);
   } catch (err) {
@@ -30,13 +44,19 @@ const createProduct = async (req, res) => {
   try {
     const data = req.body;
 
+    try {
+      for (const item of (Array.isArray(data) ? data : [data])) await validateToppings(item);
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
+
     if (Array.isArray(data)) {
       const products = await Product.insertMany(data);
-      return res.status(201).json(products);
+      return res.status(201).json(await Product.populate(products, [ { path: 'category' }, toppingPopulation ]));
     } else {
       const product = new Product(data);
       await product.save();
-      return res.status(201).json(product);
+      return res.status(201).json(await product.populate([ { path: 'category' }, toppingPopulation ]));
     }
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -45,11 +65,20 @@ const createProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
   try {
+    // Accept ordinary fields only, so update operators cannot bypass reference validation.
+    if (Object.keys(req.body).some(key => key.startsWith('$') || key.includes('.'))) {
+      return res.status(400).json({ message: 'Dữ liệu cập nhật không hợp lệ' });
+    }
+    try {
+      await validateToppings(req.body);
+    } catch (error) {
+      return res.status(400).json({ message: error.message });
+    }
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true }
-    );
+      { $set: req.body },
+      { new: true, runValidators: true }
+    ).populate('category').populate(toppingPopulation);
 
     if (!updated) {
       return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
@@ -83,7 +112,7 @@ const deleteProduct = async (req, res) => {
 // GET single product by ID
 const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate('category');
+    const product = await Product.findById(req.params.id).populate('category').populate(toppingPopulation);
     if (!product) {
       return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
     }
@@ -109,6 +138,10 @@ const getProductById = async (req, res) => {
     }
 
     const productObj = product.toObject();
+    if (habit) {
+      const allowed = new Set(productObj.toppings.map(t => t.name));
+      habit = { ...(habit.toObject?.() || habit), toppings: (habit.toppings || []).filter(name => allowed.has(name)) };
+    }
     res.json({
       ...productObj,
       habit
@@ -161,7 +194,7 @@ const getRecommendations = async (req, res) => {
     const favoriteProductIds = sortedProductIds.slice(0, 4);
 
     // Lấy chi tiết sản phẩm món tủ
-    const favoriteProducts = await Product.find({ _id: { $in: favoriteProductIds } }).populate('category');
+    const favoriteProducts = await Product.find({ _id: { $in: favoriteProductIds } }).populate('category').populate(toppingPopulation);
     const sortedFavorites = favoriteProducts.sort((a, b) => {
       return favoriteProductIds.indexOf(a._id.toString()) - favoriteProductIds.indexOf(b._id.toString());
     });
@@ -185,7 +218,7 @@ const getRecommendations = async (req, res) => {
       newFlavors = await Product.find({
         category: favoriteCategoryId,
         _id: { $nin: Array.from(purchasedProductIds) }
-      }).populate('category').limit(4);
+      }).populate('category').populate(toppingPopulation).limit(4);
     }
 
     res.json({

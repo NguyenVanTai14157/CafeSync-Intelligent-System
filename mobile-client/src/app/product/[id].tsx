@@ -47,13 +47,13 @@ export default function ProductDetailScreen() {
       size: product.habit?.size || (product.sizes?.includes('M') ? 'M' : product.sizes?.[0]) || 'M',
       sugar: product.habit?.sugar || product.sugarOptions?.at(-1) || '100%',
       ice: product.habit?.ice || product.iceOptions?.at(-1) || '100%',
-      toppings: product.habit?.toppings || [],
+      toppings: (product.habit?.toppings || []).filter(name => product.toppings?.some(t => t.status === 'active' && t.name === name)),
     });
   }, [product]);
 
   const unitPrice = useMemo(() => {
     if (!product) return 0;
-    return product.price + getSizePrice(options.size) + options.toppings.reduce((sum, topping) => sum + getToppingPrice(topping), 0);
+    return product.price + getSizePrice(options.size) + options.toppings.reduce((sum, topping) => sum + getToppingPrice(topping, product.toppings), 0);
   }, [options.size, options.toppings, product]);
 
   if (productQuery.isPending) return <SafeAreaView style={styles.screen}><StatePanel loading title="Đang chuẩn bị thông tin món" /></SafeAreaView>;
@@ -101,17 +101,17 @@ export default function ProductDetailScreen() {
           <OptionSection title="Mức đường" options={product.sugarOptions?.length ? product.sugarOptions : ['0%', '50%', '100%']} value={options.sugar} onChange={(sugar) => setOptions({ ...options, sugar })} habit={product.habit?.sugar} />
           <OptionSection title="Mức đá" options={product.iceOptions?.length ? product.iceOptions : ['0%', '50%', '100%']} value={options.ice} onChange={(ice) => setOptions({ ...options, ice })} habit={product.habit?.ice} />
 
-          {product.toppings?.length ? (
+          {product.toppings?.some(t => t.status === 'active') ? (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Topping</Text>
               <View style={styles.toppingList}>
-                {product.toppings.map((topping) => {
-                  const selected = options.toppings.includes(topping);
+                {product.toppings.filter(t => t.status === 'active').map((topping) => {
+                  const selected = options.toppings.includes(topping.name);
                   return (
-                    <Pressable key={topping} onPress={() => toggleTopping(topping)} style={[styles.toppingRow, selected && styles.toppingSelected]}>
+                    <Pressable key={topping._id} onPress={() => toggleTopping(topping.name)} style={[styles.toppingRow, selected && styles.toppingSelected]}>
                       <Ionicons name={selected ? 'checkbox' : 'square-outline'} size={21} color={selected ? Colors.primary : Colors.textMuted} />
-                      <Text style={styles.toppingName}>{topping}</Text>
-                      <Text style={styles.toppingPrice}>+{formatCurrency(getToppingPrice(topping))}</Text>
+                      <Text style={styles.toppingName}>{topping.name}</Text>
+                      <Text style={styles.toppingPrice}>+{formatCurrency(topping.price)}</Text>
                     </Pressable>
                   );
                 })}

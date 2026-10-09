@@ -20,12 +20,8 @@ export function removeAccents(value: string) {
     .replace(/Đ/g, 'D');
 }
 
-export function getToppingPrice(name: string) {
-  const normalized = removeAccents(name).toLowerCase();
-  if (/kem pho mai|cream cheese|cheese|macchiato/.test(normalized)) return 10000;
-  if (/tran chau|thach|pudding/.test(normalized)) return 5000;
-  if (/hat chia|basil/.test(normalized)) return 3000;
-  return 5000;
+export function getToppingPrice(name: string, toppings: import('../types/product').Topping[] = []) {
+  return toppings.find(t => t.status === 'active' && t.name === name)?.price || 0;
 }
 
 export function getSizePrice(size: string) {

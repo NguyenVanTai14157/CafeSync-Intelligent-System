@@ -117,8 +117,9 @@ const POSPage = () => {
       totalPrice,
       location: "Tại quầy",
       paymentMethod: "Tiền mặt",
+      source: 'pos', paymentConfirmed: true,
     };
-    axiosClient.post("/orders", orderData)
+    axiosClient.post("/orders", orderData, { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } })
       .then(() => {
         message.success("Đặt món thành công!");
         setCart([]);
@@ -257,7 +258,7 @@ const POSPage = () => {
                 type="primary" 
                 block 
                 size="large" 
-                onClick={handleOrder} 
+                onClick={() => Modal.confirm({ title: "Đã thu đủ tiền từ khách?", content: "Xác nhận sẽ gửi đơn xuống quầy pha chế.", okText: "Đã thu tiền", cancelText: "Chưa thu", onOk: handleOrder })}
                 className="checkout-btn"
                 disabled={cart.length === 0}
               >

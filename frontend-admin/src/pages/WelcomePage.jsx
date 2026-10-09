@@ -1,3 +1,4 @@
+import OperationalCharts from '../components/OperationalCharts';
 import { useEffect, useState } from "react";
 import { Typography, Row, Col, Card, Statistic, Table, Tag, Empty, Spin, Button, Space, notification, Avatar } from "antd";
 import { 
@@ -104,7 +105,10 @@ const WelcomePage = () => {
       });
     });
 
+    const onUpdate = () => rqClient.invalidateQueries({ queryKey: ["dashboard"] });
+    socket.on("order_updated", onUpdate);
     return () => {
+      socket.off("order_updated", onUpdate);
       socket.off("new_order");
     };
   }, []);
@@ -119,7 +123,7 @@ const WelcomePage = () => {
       const todayStr = new Date().toISOString().split("T")[0];
       return data.filter(o => new Date(o.createdAt).toISOString().split("T")[0] === todayStr);
     } else if (filterType === "pending") {
-      return data.filter(o => o.status === "Chờ xác nhận");
+      return data.filter(o => o.paymentStatus === "paid" && o.status === "Chờ pha chế");
     }
     return data.slice(0, 8);
   };
@@ -478,7 +482,7 @@ const WelcomePage = () => {
                   <ClockCircleOutlined style={{ fontSize: 28, color: stats?.pendingOrdersCount > 0 ? '#fff' : '#94a3b8' }} />
                 </div>
                 <div>
-                  <Text type="secondary" strong style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Bàn chờ xác nhận</Text>
+                  <Text type="secondary" strong style={{ fontSize: 13, textTransform: 'uppercase', letterSpacing: 1 }}>Đơn chờ pha chế</Text>
                   <Title level={2} style={{ margin: 0, fontSize: 32, fontWeight: 850, color: stats?.pendingOrdersCount > 0 ? '#ef4444' : 'inherit' }}>{stats?.pendingOrdersCount || 0}</Title>
                 </div>
               </div>
@@ -510,6 +514,8 @@ const WelcomePage = () => {
           </Col>
         </Row>
       )}
+
+      {!isAdmin && <OperationalCharts />}
 
       {/* FOOTER INFO */}
       <div style={{ marginTop: 48, padding: '24px', textAlign: 'center' }}>

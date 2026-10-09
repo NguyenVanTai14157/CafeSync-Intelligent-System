@@ -22,6 +22,9 @@ const orderSchema = mongoose.Schema({
   tableNumber: { type: Number, default: null }, // Mới thêm: theo dõi theo bàn
   customerEmail: { type: String, default: 'Guest' }, // Trường để lọc lịch sử
   paymentMethod: { type: String, default: 'Tiền mặt' },
+  paymentStatus: { type: String, enum: ['pending', 'paid'], default: 'pending' },
+  paidAt: Date,
+  payosOrderCode: Number,
   status: { type: String, default: 'Chờ xác nhận' },
   createdAt: { type: Date, default: Date.now }
 });

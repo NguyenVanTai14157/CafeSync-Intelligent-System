@@ -10,7 +10,8 @@ const {
     getOrdersByEmail,
     cancelOrder,
     receiveWebhook, // <--- PHẢI CÓ hàm này để xử lý tín hiệu "Đã thanh toán"
-    paymentSuccess
+    paymentSuccess,
+    confirmCashPayment
 } = require("../controllers/orderController");
 
 // 1. Nhận đơn hàng
@@ -33,6 +34,7 @@ router.get('/cancel/:orderId', cancelOrder);
 // 5. Chi tiết & Cập nhật
 router.get("/:id", getOrderById);
 router.put("/:id/status", updateOrderStatus);
+router.post('/:id/confirm-cash', confirmCashPayment);
 router.delete("/:id", deleteOrder);
 
 module.exports = router;

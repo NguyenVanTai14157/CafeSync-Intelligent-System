@@ -1,29 +1,15 @@
-import { useState } from "react";
-import { Table, Typography, Tag, Button, Modal, Select, message, Popconfirm, Input } from "antd";
-import { EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import { useEffect, useState } from "react";
+import { Table, Typography, Tag, Button, message, Input, Tabs, Badge, Modal } from "antd";
+import { io } from "socket.io-client";
 import axios from "axios";
 import API_URL from "../config";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const { Title, Text } = Typography;
 
-const statusColors = {
-  "Chờ xác nhận": "orange",
-  "Đang pha chế": "blue",
-  "Hoàn thành": "cyan",
-  "Đã thanh toán": "green",
-};
-
-const statusOptions = [
-  { value: "Chờ xác nhận", label: "Chờ xác nhận" },
-  { value: "Đang pha chế", label: "Đang pha chế" },
-  { value: "Hoàn thành", label: "Hoàn thành" },
-  { value: "Đã thanh toán", label: "Đã thanh toán" },
-];
-
 const OrderManagementPage = () => {
-  const [editingOrder, setEditingOrder] = useState(null);
-  const [status, setStatus] = useState("");
+  const [activeTab, setActiveTab] = useState("active");
+  const [busy, setBusy] = useState({});
   const [searchText, setSearchText] = useState("");
   const rqClient = useQueryClient();
 
@@ -37,41 +23,51 @@ const OrderManagementPage = () => {
     refetchInterval: 5000, // Tự động refresh mỗi 5 giây (thay cho setInterval cũ)
   });
 
-  const filteredOrders = orders.filter((order) => {
-    if (!searchText) return true;
-    return order.orderID && order.orderID.toLowerCase().includes(searchText.toLowerCase().trim());
+  useEffect(() => {
+    const socket = io(API_URL);
+    const merge = (order) => {
+      rqClient.setQueryData(['orders'], (old = []) => [order, ...old.filter(o => o._id !== order._id)].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      rqClient.invalidateQueries({ queryKey: ['dashboard'] });
+    };
+    const reconnect = () => rqClient.invalidateQueries({ queryKey: ['orders'] });
+    socket.on('new_order', merge); socket.on('order_updated', merge); socket.on('connect', reconnect);
+    return () => socket.disconnect();
+  }, [rqClient]);
+  const matchesTab = (order, tab) => {
+    if (tab === 'all') return true;
+    if (tab === 'history') return order.status === 'Hoàn thành' || order.status === 'Đã xong';
+    if (order.paymentStatus !== 'paid') return false;
+    if (tab === 'waiting') return order.status === 'Chờ pha chế';
+    if (tab === 'making') return order.status === 'Đang pha chế';
+    return ['Chờ pha chế', 'Đang pha chế'].includes(order.status);
+  };
+  const tabs = [['active','🔥 Đang phục vụ'],['waiting','⏳ Chờ pha chế'],['making','☕ Đang làm'],['history','✅ Lịch sử hoàn thành'],['all','📋 Tất cả']];
+  const filteredOrders = orders.filter(o => matchesTab(o, activeTab) && (!searchText.trim() || o.orderID?.toLowerCase().includes(searchText.trim().toLowerCase())));
+  const advance = async (order) => {
+    if (busy[order._id]) return;
+    setBusy(old => ({ ...old, [order._id]: true }));
+    try {
+      const status = order.status === 'Chờ pha chế' ? 'Đang pha chế' : 'Hoàn thành';
+      const { data } = await axios.put(API_URL + '/api/orders/' + order._id + '/status', { status }, { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
+      rqClient.setQueryData(['orders'], (old = []) => old.map(o => o._id === data._id ? data : o));
+      rqClient.invalidateQueries({ queryKey: ['dashboard'] });
+      message.success('Đã cập nhật trạng thái');
+    } catch (error) {
+      message.error(error.response?.data?.message || 'Cập nhật thất bại');
+      rqClient.invalidateQueries({ queryKey: ['orders'] });
+    } finally { setBusy(old => ({ ...old, [order._id]: false })); }
+  };
+  const confirmCash = (order) => Modal.confirm({
+    title: 'Đã thu đủ tiền mặt từ khách?',
+    content: `Đơn ${order.orderID} sẽ được gửi xuống quầy pha chế.`,
+    okText: 'Đã thu tiền', cancelText: 'Chưa thu',
+    onOk: async () => {
+      try {
+        await axios.post(`${API_URL}/api/orders/${order._id}/confirm-cash`, {}, { headers: { Authorization: 'Bearer ' + localStorage.getItem('token') } });
+        await rqClient.invalidateQueries({ queryKey: ['orders'] });
+      } catch (error) { message.error(error.response?.data?.message || 'Xác nhận thất bại'); throw error; }
+    }
   });
-
-  // Open modal to update status
-  const openStatusModal = (order) => {
-    setEditingOrder(order);
-    setStatus(order.status);
-  };
-
-  // Update order status
-  const handleUpdateStatus = async () => {
-    try {
-      await axios.put(`${API_URL}/api/orders/${editingOrder._id}/status`, { status });
-      message.success("Cập nhật trạng thái thành công!");
-      setEditingOrder(null);
-      rqClient.invalidateQueries({ queryKey: ["orders"] });
-      rqClient.invalidateQueries({ queryKey: ["dashboard"] });
-    } catch {
-      message.error("Cập nhật thất bại!");
-    }
-  };
-
-  // Delete order
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`${API_URL}/api/orders/${id}`);
-      message.success("Xóa đơn hàng thành công!");
-      rqClient.invalidateQueries({ queryKey: ["orders"] });
-      rqClient.invalidateQueries({ queryKey: ["dashboard"] });
-    } catch {
-      message.error("Xóa thất bại!");
-    }
-  };
 
   const columns = [
     { 
@@ -153,7 +149,8 @@ const OrderManagementPage = () => {
       key: "status",
       render: (status) => {
         const config = {
-          "Chờ xác nhận": { color: "orange", label: "Chờ xác nhận" },
+          "Chờ pha chế": { color: "orange", label: "Chờ pha chế" },
+          "Chờ thanh toán": { color: "gold", label: "Chờ thanh toán" },
           "Đang pha chế": { color: "blue", label: "Đang pha chế" },
           "Hoàn thành": { color: "cyan", label: "Hoàn thành" },
           "Đã thanh toán": { color: "green", label: "Đã thanh toán" },
@@ -165,28 +162,12 @@ const OrderManagementPage = () => {
     {
       title: "Thao tác",
       key: "actions",
-      width: 140,
-      render: (_, record) => (
-        <div style={{ display: "flex", gap: 10 }}>
-          <Button 
-            type="primary"
-            ghost
-            onClick={() => openStatusModal(record)}
-            icon={<EditOutlined />}
-            style={{ borderRadius: 8 }}
-          />
-          <Popconfirm
-            title="Xóa đơn hàng"
-            description="Bạn có chắc chắn muốn xóa đơn hàng này?"
-            onConfirm={() => handleDelete(record._id)}
-            okText="Xóa"
-            cancelText="Hủy"
-            okButtonProps={{ danger: true }}
-          >
-            <Button danger icon={<DeleteOutlined />} style={{ borderRadius: 8 }} />
-          </Popconfirm>
-        </div>
-      ),
+      width: 180,
+      render: (_, order) => order.paymentStatus === 'paid' && ['Chờ pha chế','Đang pha chế'].includes(order.status)
+        ? <Button type="primary" loading={busy[order._id]} onClick={() => advance(order)}>{order.status === 'Chờ pha chế' ? 'Bắt đầu làm' : 'Hoàn thành'}</Button>
+        : activeTab === 'all' && order.paymentMethod === 'Tiền mặt' && order.paymentStatus !== 'paid' && ['Chờ thanh toán','Chờ xác nhận'].includes(order.status)
+          ? <Button onClick={() => confirmCash(order)}>Xác nhận thu tiền</Button>
+          : <Text type="secondary">{order.status === 'Hoàn thành' ? 'Đã hoàn thành' : 'Không có thao tác'}</Text>,
     },
   ];
 
@@ -207,8 +188,8 @@ const OrderManagementPage = () => {
             color: '#fff'
           }}>🧾</div>
           <div>
-            <Title level={2} style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Danh sách Đơn hàng</Title>
-            <Text type="secondary">Theo dõi và cập nhật trạng thái phục vụ khách hàng</Text>
+            <Title level={2} style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Điều phối pha chế</Title>
+            <Text type="secondary">Chỉ đơn đã thanh toán được đưa vào hàng đợi pha chế</Text>
           </div>
         </div>
         
@@ -222,6 +203,7 @@ const OrderManagementPage = () => {
         />
       </div>
 
+      <Tabs activeKey={activeTab} onChange={setActiveTab} items={tabs.map(([key,label]) => ({ key, label: <span>{label} <Badge count={orders.filter(o => matchesTab(o,key)).length} showZero /></span> }))} />
       <Table
         dataSource={filteredOrders}
         columns={columns}
@@ -259,25 +241,7 @@ const OrderManagementPage = () => {
         }
       `}</style>
 
-      <Modal
-        open={!!editingOrder}
-        title="Cập nhật trạng thái đơn hàng"
-        onCancel={() => setEditingOrder(null)}
-        onOk={handleUpdateStatus}
-        okText="Cập nhật"
-      >
-        {editingOrder?.status === "Đã thanh toán" && (
-          <div style={{ marginBottom: 16, color: "#16a34a", fontWeight: "bold" }}>
-            ✓ Đơn hàng này đã được thanh toán trực tuyến.
-          </div>
-        )}
-        <Select
-          value={status}
-          onChange={setStatus}
-          style={{ width: "100%" }}
-          options={statusOptions}
-        />
-      </Modal>
+
     </div>
   );
 };

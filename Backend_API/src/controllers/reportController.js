@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const Ingredient = require("../models/Ingredient");
+const revenueFilter = { $or: [{ paymentStatus: 'paid' }, { status: { $in: ['Hoàn thành', 'Đã thanh toán'] } }] };
 
 function formatVNDate(date) {
   const vn = new Date(date.getTime() + 7 * 60 * 60 * 1000); // +7h
@@ -9,7 +10,7 @@ function formatVNDate(date) {
 // 💰 1. Tổng doanh thu
 const getTotalRevenue = async (req, res) => {
   try {
-    const orders = await Order.find({ status: { $in: ["Hoàn thành", "Đã thanh toán"] } });
+    const orders = await Order.find({ ...revenueFilter });
 
     const totalRevenue = orders.reduce((sum, order) => {
       return sum + order.totalPrice;
@@ -36,7 +37,7 @@ const getTodayRevenue = async (req, res) => {
     end.setUTCHours(end.getUTCHours() + 23, 59, 59, 999);
 
     const orders = await Order.find({
-      status: { $in: ["Hoàn thành", "Đã thanh toán"] },
+      ...revenueFilter,
       createdAt: { $gte: start, $lte: end },
     });
 
@@ -57,7 +58,7 @@ const getMonthRevenue = async (req, res) => {
     const endMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
     const orders = await Order.find({
-      status: { $in: ["Hoàn thành", "Đã thanh toán"] },
+      ...revenueFilter,
       createdAt: { $gte: startMonth, $lte: endMonth },
     });
 
@@ -87,7 +88,7 @@ const getRevenueByDay = async (req, res) => {
       end.setUTCHours(end.getUTCHours() + 23, 59, 59, 999);
 
       const orders = await Order.find({
-        status: { $in: ["Hoàn thành", "Đã thanh toán"] },
+        ...revenueFilter,
         createdAt: { $gte: start, $lte: end },
       });
 
@@ -116,15 +117,15 @@ const getDashboardStats = async (req, res) => {
 
     // Run parallel queries
     const [totalRevenueData, todayOrders, pendingOrders, lowStockIngredients] = await Promise.all([
-      Order.find({ status: { $in: ["Hoàn thành", "Đã thanh toán"] } }),
+      Order.find({ ...revenueFilter }),
       Order.find({ createdAt: { $gte: startToday } }),
-      Order.find({ status: "Chờ xác nhận" }),
+      Order.find({ paymentStatus: 'paid', status: 'Chờ pha chế' }),
       Ingredient.find({ $expr: { $lte: ["$quantity", "$minStock"] } })
     ]);
 
     const totalRevenue = totalRevenueData.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
     const todayRevenue = todayOrders
-      .filter(o => ["Hoàn thành", "Đã thanh toán"].includes(o.status))
+      .filter(o => (o.paymentStatus === "paid" || ["Hoàn thành", "Đã thanh toán"].includes(o.status)))
       .reduce((sum, o) => sum + (o.totalPrice || 0), 0);
 
     res.json({

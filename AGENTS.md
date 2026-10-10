@@ -36,6 +36,10 @@
 - Không chạy `git reset --hard`, `git clean`, force push hoặc xóa file không liên quan. Không tự commit, push hoặc deploy nếu người dùng chưa yêu cầu.
 - Sửa tối thiểu, giữ phong cách code hiện tại, kiểm tra các ứng dụng dùng chung API khi thay đổi kiểu dữ liệu. Chạy kiểm tra phù hợp và báo lỗi/giới hạn còn lại trung thực.
 
+## Quy ước giao diện
+
+- Không thêm icon hoặc emoji vào giao diện mới/chỉnh sửa (tiêu đề, tab, nút, trạng thái rỗng và hình trang trí), trừ khi người dùng yêu cầu rõ. Ưu tiên nhãn chữ; giữ badge số khi cần đếm dữ liệu.
+
 ## Báo cáo
 
 - Trước thao tác ghi quan trọng, thông báo ngắn gọn mục tiêu và phạm vi.

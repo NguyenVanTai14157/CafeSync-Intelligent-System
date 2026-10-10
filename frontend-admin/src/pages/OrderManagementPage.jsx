@@ -41,7 +41,7 @@ const OrderManagementPage = () => {
     if (tab === 'making') return order.status === 'Đang pha chế';
     return ['Chờ pha chế', 'Đang pha chế'].includes(order.status);
   };
-  const tabs = [['active','🔥 Đang phục vụ'],['waiting','⏳ Chờ pha chế'],['making','☕ Đang làm'],['history','✅ Lịch sử hoàn thành'],['all','📋 Tất cả']];
+  const tabs = [['active','Đang phục vụ'],['waiting','Chờ pha chế'],['making','Đang làm'],['history','Lịch sử hoàn thành'],['all','Tất cả']];
   const filteredOrders = orders.filter(o => matchesTab(o, activeTab) && (!searchText.trim() || o.orderID?.toLowerCase().includes(searchText.trim().toLowerCase())));
   const advance = async (order) => {
     if (busy[order._id]) return;
@@ -58,6 +58,7 @@ const OrderManagementPage = () => {
     } finally { setBusy(old => ({ ...old, [order._id]: false })); }
   };
   const confirmCash = (order) => Modal.confirm({
+    icon: null,
     title: 'Đã thu đủ tiền mặt từ khách?',
     content: `Đơn ${order.orderID} sẽ được gửi xuống quầy pha chế.`,
     okText: 'Đã thu tiền', cancelText: 'Chưa thu',
@@ -98,7 +99,6 @@ const OrderManagementPage = () => {
       key: "customerName",
       render: (text) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>👤</div>
           <Text strong>{text || "Khách vãn lai"}</Text>
         </div>
       )
@@ -175,27 +175,14 @@ const OrderManagementPage = () => {
     <div className="modern-card animated-fade-in">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 32, flexWrap: 'wrap', gap: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <div style={{ 
-            width: 48, 
-            height: 48, 
-            borderRadius: 12, 
-            background: "linear-gradient(135deg, #1677ff 0%, #722ed1 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 24,
-            boxShadow: "0 4px 12px rgba(114, 46, 209, 0.2)",
-            color: '#fff'
-          }}>🧾</div>
           <div>
             <Title level={2} style={{ margin: 0, fontSize: 24, fontWeight: 700 }}>Điều phối pha chế</Title>
             <Text type="secondary">Chỉ đơn đã thanh toán được đưa vào hàng đợi pha chế</Text>
           </div>
         </div>
         
-        <Input.Search
+        <Input
           placeholder="Tìm theo mã đơn (vd: CS123)..."
-          allowClear
           size="large"
           onChange={(e) => setSearchText(e.target.value)}
           style={{ width: 350 }}
@@ -209,6 +196,7 @@ const OrderManagementPage = () => {
         columns={columns}
         rowKey="_id"
         loading={loading}
+        locale={{ emptyText: 'Không có đơn hàng' }}
         pagination={{ 
           pageSize: 10,
           showTotal: (total) => `Tổng cộng ${total} đơn hàng`,

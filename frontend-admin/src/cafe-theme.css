@@ -1,0 +1,50 @@
+/* CaféSync visual theme. Scoped to the application shell; data and routes unchanged. */
+.cafe-admin { background: #f5f3ee !important; }
+.cafe-admin .ant-layout { background: #f5f3ee; }
+.cafe-admin .ant-layout-sider {
+  background: #25392f !important;
+  box-shadow: none !important;
+  border-right: 1px solid #31463a;
+}
+.cafe-admin .ant-layout-sider > .ant-layout-sider-children > div:first-child { height: 72px !important; padding: 0 18px !important; }
+.cafe-admin .cafe-brand-mark { background: #d8c5a7 !important; color: #25392f; box-shadow: none !important; font-size: 14px !important; font-weight: 800; }
+.cafe-admin .ant-menu-dark { color: #c7d2cb; }
+.cafe-admin .ant-menu-item { height: 44px; margin: 4px 0 !important; width: 100%; font-weight: 500; }
+.cafe-admin .ant-menu-item-selected { background: #e9dfcd !important; color: #25392f !important; }
+.cafe-admin .ant-menu-item:hover { background: #344b3d !important; color: #fff !important; }
+.cafe-admin .ant-menu-item-selected:hover { background: #e9dfcd !important; color: #25392f !important; }
+.cafe-admin .ant-layout-header { background: #fffdf9 !important; border-bottom: 1px solid #e5e0d7 !important; box-shadow: none !important; }
+.cafe-admin .ant-layout-header .anticon,
+.cafe-admin .ant-layout-header .ant-badge,
+.cafe-admin .ant-layout-header .ant-avatar { display: none; }
+.cafe-admin .header-user-dropdown { background: #f1eee6 !important; border: 1px solid #e5e0d7; }
+.cafe-admin .premium-card,
+.cafe-admin .ant-card,
+.cafe-admin .modern-card { border-radius: 12px !important; border: 1px solid #e5e0d7 !important; box-shadow: 0 2px 6px #302e2a04 !important; background: #fffdf9; }
+.cafe-admin .modern-card { padding: 24px; }
+.cafe-admin .premium-card { padding: 0 !important; }
+.cafe-admin .premium-card:hover { transform: none !important; }
+.cafe-admin .ant-card-head { min-height: 56px; border-bottom-color: #ede8de; }
+.cafe-admin .ant-card-head-title { font-size: 15px; font-weight: 650; }
+.cafe-admin .ant-card-body { padding: 20px !important; }
+.cafe-admin .ant-typography { letter-spacing: -.015em; }
+.cafe-admin .ant-table-wrapper { border-radius: 10px; padding: 0; background: transparent; }
+.cafe-admin .ant-table-thead > tr > th { background: #f2efe7 !important; color: #787366 !important; border-bottom: 1px solid #e5e0d7 !important; }
+.cafe-admin .ant-table-tbody > tr > td { padding: 13px 16px !important; border-bottom-color: #eee9e0 !important; }
+.cafe-admin .ant-table-row:hover > td { background: #f7f4ed !important; }
+.cafe-admin .ant-tabs-ink-bar { background: #795c43; }
+.cafe-admin .ant-badge-count { background: #795c43; box-shadow: none; }
+.cafe-admin .ant-btn { box-shadow: none !important; font-weight: 500; }
+.cafe-admin .ant-btn-primary { background: #795c43; border-color: #795c43; }
+.cafe-admin .ant-input-affix-wrapper { background: #fffdf9 !important; }
+.cafe-admin .animate-fade-in > div:first-child { background: #e9dfcd !important; padding: 28px !important; border-radius: 14px !important; box-shadow: none !important; margin-bottom: 24px !important; }
+.cafe-admin .animate-fade-in > div:first-child .ant-typography { color: #302e2a !important; }
+.cafe-admin .animate-fade-in > div:first-child .ant-btn { color: #302e2a !important; background: #fffdf9 !important; border-color: #d5cbb9 !important; height: 42px !important; }
+.cafe-admin .animate-fade-in .anticon { display: none; }
+.cafe-admin .premium-card .ant-card-body > div > div[style*="width: 64"],
+.cafe-admin .premium-card .ant-card-body > div > div[style*="width: 56"] { display: none !important; }
+.cafe-admin .ant-card canvas { max-width: 100%; }
+@media (max-width: 900px) {
+  .cafe-admin .ant-card-body { padding: 14px !important; }
+  .cafe-admin .modern-card { padding: 16px; }
+}

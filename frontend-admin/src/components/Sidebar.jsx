@@ -67,7 +67,7 @@ const Sidebar = ({ collapsed }) => {
       trigger={null}
       collapsible
       collapsed={collapsed}
-      width={260}
+      width={220}
       theme="dark"
       style={{
         overflow: "auto",
@@ -102,7 +102,7 @@ const Sidebar = ({ collapsed }) => {
           boxShadow: "0 4px 12px rgba(22, 119, 255, 0.3)",
           marginRight: collapsed ? 0 : 12,
           flexShrink: 0
-        }}>☕</div>
+        }} className="cafe-brand-mark">CS</div>
         {!collapsed && (
           <div style={{ display: "flex", flexDirection: "column" }}>
             <Text style={{ color: "#fff", fontWeight: 700, fontSize: 20, letterSpacing: 0.5, lineHeight: 1.2 }}>
@@ -128,10 +128,12 @@ const Sidebar = ({ collapsed }) => {
           if (item.type === 'group') {
             return {
               ...item,
-              label: <span style={{ fontSize: 11, color: "rgba(255,255,255,0.35)", fontWeight: 600, letterSpacing: 1.5 }}>{item.label}</span>
+              children: item.children.map(({ icon, ...entry }) => entry),
+              label: <span style={{ fontSize: 12, color: "#d8e0db", fontWeight: 650, letterSpacing: 1 }}>{item.label}</span>
             };
           }
-          return item;
+          const { icon, ...entry } = item;
+          return entry;
         })}
       />
       

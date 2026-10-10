@@ -87,25 +87,25 @@ const Header = ({ collapsed, setCollapsed }) => {
         height: 72,
         zIndex: 1000,
         transition: "all 0.2s",
-        marginLeft: collapsed ? 80 : 260,
-        width: collapsed ? "calc(100% - 80px)" : "calc(100% - 260px)",
+        marginLeft: collapsed ? 80 : 220,
+        width: collapsed ? "calc(100% - 80px)" : "calc(100% - 220px)",
       }}
     >
       <div style={{ display: "flex", alignItems: "center" }}>
         <Button
           type="text"
-          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          aria-label={collapsed ? 'Mở menu' : 'Thu gọn menu'}
           onClick={() => setCollapsed(!collapsed)}
           style={{ 
             fontSize: "18px", 
-            width: 40, 
+            width: 64,
             height: 40, 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
             borderRadius: '8px'
           }}
-        />
+        >Menu</Button>
         <Breadcrumb 
           style={{ marginLeft: 24 }}
           items={[

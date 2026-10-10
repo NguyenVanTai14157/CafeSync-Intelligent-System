@@ -14,5 +14,6 @@ router.get("/today", getTodayRevenue);
 router.get("/month", getMonthRevenue);
 router.get("/chart/week", getRevenueByDay);
 router.get("/stats", getDashboardStats);
+router.get('/operations', require('../controllers/operationalController').getOperationalStats);
 
 module.exports = router;

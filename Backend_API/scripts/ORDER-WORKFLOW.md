@@ -1,4 +1,4 @@
-# Điều phối pha chế
+﻿# Điều phối pha chế
 
 Trang admin `/orders` mặc định mở Đang phục vụ. Đơn mới có `paymentStatus: paid` mới vào hàng đợi Chờ pha chế → Đang pha chế → Hoàn thành. Socket `new_order` chỉ phát sau thanh toán; `order_updated` đồng bộ thao tác. Frontend cập nhật cache trực tiếp, tải lại khi kết nối lại và polling dự phòng mỗi 5 giây.
 
@@ -8,7 +8,11 @@ Webhook PayOS phải có chữ ký hợp lệ và code thành công. Return URL 
 
 Không migration dữ liệu cũ. Đơn cũ không có paymentStatus không tự vào hàng đợi; tra cứu ở Tất cả, đơn hoàn thành cũ ở Lịch sử. Các đơn tiền mặt cũ còn Chờ xác nhận có thể xác nhận thu tiền bằng thao tác nhân viên. Client/mobile tiếp tục nhận các chuỗi Đang pha chế và Hoàn thành hiện có; Chờ pha chế là bước chờ ban đầu. Phát hành backend và admin cùng phiên bản.
 
-Dashboard quản lý/nhân viên thêm ba biểu đồ dưới khu vực doanh thu: lượt dùng bàn, khách mới/quay lại, top 5 bán chạy/chậm. Đây là mock data được ghi nhãn rõ, chưa nối API. Dashboard tài khoản admin hiện là quản lý nhân sự, giữ bố cục hiện có.
+Dashboard quản lý/nhân viên có ba biểu đồ dưới khu vực doanh thu, lấy dữ liệu qua `GET /api/reports/operations`, không còn số mock cố định. Thống kê 7 ngày lịch gồm hôm nay theo UTC+7. Đơn đủ điều kiện là đơn có paymentStatus paid hoặc đơn cũ chưa có field này ở trạng thái Hoàn thành/Đã thanh toán/Đã xong; loại đơn hủy và tương lai. Không sửa dữ liệu cũ.
+
+Tần suất bàn tính một đơn tại bàn là một lượt, nhóm 10 bàn và bao gồm nhóm chưa được sử dụng. Biểu đồ khách hàng đếm lượt mua, gồm 3 nhóm riêng: mới, quay lại, vãng lai. Đối chiếu toàn bộ lịch sử đơn đủ điều kiện theo email: lần đầu là mới, lần thứ hai trở đi là quay lại, kể cả cùng ngày hoặc sau một tháng. Mỗi đơn Guest/thiếu email là một lượt vãng lai. Khoảng 7 ngày chỉ lọc lượt mua hiển thị; tổng 3 nhóm bằng số đơn đủ điều kiện trong kỳ. Không coi lượt mua là số người riêng biệt. Menu tính tổng quantity, ưu tiên ID sản phẩm, fallback tên chính xác đã chuẩn hóa nếu ID cũ không khớp; top/bottom gồm cả món 0 ly trong menu hiện tại. Đây là thống kê dữ liệu trong Atlas, bao gồm dữ liệu mẫu do nhóm đã nạp; không chứng minh đó là giao dịch thực tế.
+
+Biểu đồ refetch qua Socket new_order/order_updated, khi kết nối lại, mỗi 30 giây và nút Cập nhật; có trạng thái tải, lỗi, rỗng. Dashboard role admin vẫn là nhân sự. Kiểm thử thống kê: `node --test Backend_API/tests/operational-stats.test.js`.
 
 Kiểm thử không kết nối Atlas hoặc thanh toán thật:
 
@@ -18,3 +22,4 @@ npm.cmd --prefix frontend-admin run build
 ```
 
 Kiểm tra thủ công ở localhost:3000/orders: 5 tab, mặc định Đang phục vụ; đơn chưa thanh toán không có Bắt đầu làm. Chỉ thử chuyển trạng thái trên dữ liệu test trong môi trường riêng, không đổi đơn thật để kiểm thử. Dashboard cho quản lý/nhân viên có 3 biểu đồ minh họa. Không thay đổi dữ liệu Atlas hoặc tạo đơn trong quá trình kiểm thử tự động.
+

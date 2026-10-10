@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Layout, notification, message } from "antd";
+import { Layout, notification, ConfigProvider } from "antd";
+import '../cafe-theme.css';
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 import axios from "axios";
@@ -38,27 +39,29 @@ const AdminLayout = ({ children }) => {
   }, [prevPendingCount]);
 
   return (
-    <Layout style={{ minHeight: "100vh" }}>
+    <ConfigProvider theme={{ token: { colorPrimary: '#795c43', colorInfo: '#795c43', colorSuccess: '#587b68', colorText: '#302e2a', colorTextSecondary: '#827d73', colorBgLayout: '#f5f3ee', colorBorder: '#e5e0d7', borderRadius: 10, fontFamily: 'Inter, Segoe UI, system-ui, sans-serif' } }}>
+    <Layout className="cafe-admin" style={{ minHeight: "100vh" }}>
       <Sidebar collapsed={collapsed} />
       <Layout>
         <Header collapsed={collapsed} setCollapsed={setCollapsed} />
         <Content
           style={{
-            margin: "96px 24px 24px",
-            padding: 24,
+            margin: "88px 24px 24px",
+            padding: 0,
             minHeight: "calc(100vh - 120px)",
-            background: "#ffffff",
+            background: "transparent",
             borderRadius: 16,
-            marginLeft: collapsed ? 104 : 284,
+            marginLeft: collapsed ? 104 : 244,
             transition: "all 0.2s",
-            boxShadow: "0 4px 24px rgba(0,0,0,0.02)",
-            border: "1px solid #f1f5f9"
+            boxShadow: "none",
+            border: "none"
           }}
         >
           {children}
         </Content>
       </Layout>
     </Layout>
+    </ConfigProvider>
   );
 };
 

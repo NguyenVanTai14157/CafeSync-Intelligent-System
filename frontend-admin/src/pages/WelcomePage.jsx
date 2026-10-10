@@ -1,4 +1,4 @@
-import OperationalCharts from '../components/OperationalCharts';
+import OperationalCharts from '../components/LiveOperationalCharts';
 import { useEffect, useState } from "react";
 import { Typography, Row, Col, Card, Statistic, Table, Tag, Empty, Spin, Button, Space, notification, Avatar } from "antd";
 import { 

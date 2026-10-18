@@ -79,6 +79,7 @@ app.use("/api/users", require("./src/routes/userRoutes"));
 // app.use("/api/ingredients", require("./src/routes/ingredientRoutes"));
 app.use("/api/reports", require("./src/routes/reportRoutes"));
 app.use("/api/tables", require("./src/routes/tableRoutes"));
+app.use("/api/recommendations", require("./src/routes/recommendationRoutes"));
 
 // --- 7. CHỨC NĂNG AUTH CUSTOM ---
 const User = require('./src/models/User');

@@ -123,14 +123,59 @@ const getOrders = async (req, res) => {
   }
 };
 
-// 📌 3. Lấy lịch sử theo Email
+// 📌 3. Lấy lịch sử theo Email (Dành cho Customer Web)
 const getOrdersByEmail = async (req, res) => {
   try {
-    const identifier = req.params.email;
-    const orders = await Order.find({ customerEmail: identifier }).sort({ createdAt: -1 });
-    res.status(200).json(orders);
+    const rawEmail = req.params.email;
+    if (!rawEmail || typeof rawEmail !== 'string' || rawEmail.trim() === '') {
+      return res.status(400).json({ message: "Thiếu thông tin email!" });
+    }
+    const targetEmail = rawEmail.trim().toLowerCase();
+
+    // 1. Kiểm tra JWT: Không có Authorization header -> HTTP 401
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: "Vui lòng đăng nhập để xem lịch sử đơn hàng." });
+    }
+
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    const jwt = require('jsonwebtoken');
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'CAFE_SYNC_SECRET_KEY');
+    } catch (tokenErr) {
+      return res.status(401).json({ message: "Token xác thực không hợp lệ." });
+    }
+
+    // 2. Kiểm tra role trong token: Staff/admin không được sử dụng endpoint lịch sử Customer Web
+    const { isStaffRole } = require('../utils/orderWorkflow');
+    if (!decoded.role || decoded.role !== 'customer' || isStaffRole(decoded.role)) {
+      return res.status(403).json({ message: "Tài khoản nhân viên không sử dụng chức năng lịch sử trên Customer Web." });
+    }
+
+    // 3. Customer chỉ được xem lịch sử của chính email trong token (so sánh case-insensitive, trimmed)
+    const tokenEmail = (decoded.email || '').trim().toLowerCase();
+    if (!tokenEmail || tokenEmail !== targetEmail) {
+      return res.status(403).json({ message: "Bạn chỉ có thể xem lịch sử đơn hàng của chính mình." });
+    }
+
+    // 4. Kiểm tra tài khoản đích trong DB: không phục vụ nếu email thuộc tài khoản staff/admin
+    const User = require('../models/User');
+    const targetUser = await User.findOne({ email: targetEmail }).select('role').lean();
+    if (targetUser && (targetUser.role !== 'customer' || isStaffRole(targetUser.role))) {
+      return res.status(403).json({ message: "Không thể xem lịch sử của tài khoản nhân viên trên Customer Web." });
+    }
+
+    // 5. Sau khi qua toàn bộ bước xác thực quyền hạn, mới truy vấn Order
+    const orders = await Order.find({
+      $or: [
+        { customerEmail: targetEmail },
+        { customerEmail: rawEmail.trim() }
+      ]
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json(orders);
   } catch (err) {
-    res.status(500).json({ message: "Lỗi lấy lịch sử!", error: err.message });
   }
 };
 

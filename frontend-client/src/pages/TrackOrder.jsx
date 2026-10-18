@@ -3,12 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../config';
 import '../assets/css/track.css';
-import '../assets/css/style.css'; // Đảm bảo import để có style cho bottom-nav
+import '../assets/css/style.css';
+import BottomNav from '../components/BottomNav';
+import PageHeader from '../components/PageHeader';
+import EmptyState from '../components/EmptyState';
+import PriceDisplay from '../components/PriceDisplay';
 
 const TrackOrder = () => {
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [cartCount, setCartCount] = useState(0); // Thêm state để giữ số lượng giỏ hàng
+    const [cartCount, setCartCount] = useState(0);
     const navigate = useNavigate();
 
     const savedEmail = localStorage.getItem('userEmail');
@@ -18,39 +22,24 @@ const TrackOrder = () => {
 
     const fetchStatus = async () => {
         const orderDBId = localStorage.getItem('lastOrderDBId');
-        // Lấy cartCount từ localStorage
         const cart = JSON.parse(localStorage.getItem('cart')) || [];
         setCartCount(cart.reduce((sum, item) => sum + item.quantity, 0));
 
-        let url = "";
-        if (orderDBId && orderDBId !== "null") {
-            url = `${API_URL}/api/orders/${orderDBId}`;
-        } else if (isMember) {
-            url = `${API_URL}/api/orders/email/${identifier}`;
-        } else {
-            url = `${API_URL}/api/orders/latest`;
+        if (!orderDBId || orderDBId === "null") {
+            setOrder(null);
+            setLoading(false);
+            return;
         }
+
+        const url = `${API_URL}/api/orders/track/${orderDBId}`;
 
         try {
             const res = await axios.get(url);
-            let data = null;
-            if (Array.isArray(res.data)) {
-                data = res.data.find(o => o.status !== 'Hoàn thành' && o.status !== 'Đã xong');
-                if (!data) data = res.data[0];
-            } else {
-                data = res.data.order || res.data;
-            }
+            const data = res.data?.order || res.data;
             setOrder(data);
         } catch (err) {
-            console.error("Lỗi cập nhật trạng thái:", err);
-            if (err.response && err.response.status === 404 && orderDBId && orderDBId !== "null") {
-                console.log("⚠️ Phát hiện đơn hàng ID lỗi thời (đã bị xóa). Đang dọn dẹp localStorage...");
-                localStorage.removeItem('lastOrderDBId');
-                // Gọi lại fetchStatus để tự động khôi phục từ email hoặc đơn mới nhất
-                setTimeout(fetchStatus, 100);
-            } else {
-                setOrder(null);
-            }
+            console.error("Lỗi cập nhật trạng thái đơn hàng:", err);
+            setOrder(null);
         } finally {
             setLoading(false);
         }
@@ -60,7 +49,7 @@ const TrackOrder = () => {
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
         const orderCode = urlParams.get('orderCode');
-        
+
         if (code === '00' && orderCode) {
             axios.post(`${API_URL}/api/orders/payment-success`, { orderCode })
                 .then(() => {
@@ -88,55 +77,59 @@ const TrackOrder = () => {
     };
 
     if (loading) return (
-        <div className="d-flex flex-column align-items-center justify-content-center min-vh-100 bg-creme">
+        <div className="d-flex flex-column align-items-center justify-content-center min-vh-100" style={{ background: 'var(--cafe-cream)' }}>
             <div className="spinner-coffee mb-3"></div>
-            <p className="text-muted fw-bold">Đang tải thông tin đơn hàng...</p>
+            <p className="text-muted fw-semibold">Đang tải thông tin đơn hàng...</p>
         </div>
     );
 
     if (!order) {
         return (
-            <div className="container mt-5 text-center py-5">
-                <div className="empty-state-icon mb-4"><i className="bi bi-clock-history fs-1 text-muted"></i></div>
-                <h5 className="fw-bold">Bạn không có đơn hàng nào</h5>
-                <button onClick={() => navigate('/history')} className="btn btn-dark rounded-pill px-5 py-3 mt-3 shadow-sm">
-                    XEM LỊCH SỬ ĐƠN HÀNG
-                </button>
+            <div className="cafe-app-container px-3 pt-5">
+                <EmptyState
+                    icon="bi bi-clock-history"
+                    title="Bạn chưa có đơn hàng nào"
+                    description="Hãy chọn thức uống từ thực đơn để CaféSync phục vụ bạn nhé!"
+                    actionText="Khám phá thực đơn"
+                    actionHref="/"
+                />
+                <BottomNav cartCount={cartCount} />
             </div>
         );
     }
 
-    return (
-        <div className="track-page min-vh-100 pb-5 mb-5">
-            <div className="container pt-4 d-flex align-items-center mb-4">
-                <button
-                    onClick={() => {
-                        if (window.history.length > 1) {
-                            navigate(-1);
-                        } else {
-                            navigate('/');
-                        }
-                    }}
-                    className="btn-back-circle me-3"
-                >
-                    <i className="bi bi-chevron-left"></i>
-                </button>
-                <h4 className="fw-bold mb-0">
-                    {order.status === 'Hoàn thành' ? "Chi tiết đơn hàng" : "Theo dõi đơn hàng"}
-                </h4>
-            </div>
+    const isCompleted = order.status === 'Hoàn thành' || order.status === 'Đã xong';
 
-            <div className="container">
-                <div className="card-premium mb-4 shadow-sm">
+    return (
+        <div className="cafe-app-container track-page">
+            <PageHeader
+                title={isCompleted ? "Chi tiết đơn hàng" : "Theo dõi đơn hàng"}
+                subtitle="Cập nhật trạng thái trực tiếp"
+                onBack={() => {
+                    if (window.history.length > 1) {
+                        navigate(-1);
+                    } else {
+                        navigate('/');
+                    }
+                }}
+            />
+
+            <div className="px-3" style={{ paddingBottom: '90px' }}>
+                {/* Status card */}
+                <div className="card-premium mb-3">
                     <div className="d-flex justify-content-between align-items-center mb-4">
                         <span className="badge-id">Mã đơn: #{order.orderID}</span>
-                        <div className="status-label" style={{ color: order.status === 'Hoàn thành' ? '#198754' : '#A47551' }}>
-                            <span className="dot"></span> {order.status || 'Đang xử lý'}
+                        <div
+                            className="status-label"
+                            style={{ color: isCompleted ? 'var(--cafe-success)' : 'var(--cafe-caramel)' }}
+                        >
+                            <span className="dot"></span>
+                            {order.status || 'Đang xử lý'}
                         </div>
                     </div>
 
-                    {order.status !== 'Hoàn thành' ? (
-                        <div className="progress-track-container mb-5">
+                    {!isCompleted ? (
+                        <div className="progress-track-container mb-2">
                             <div className="track-line">
                                 <div className="track-line-fill" style={{ width: getProgressWidth(order.status) }}></div>
                             </div>
@@ -151,75 +144,83 @@ const TrackOrder = () => {
                                 </div>
                                 <div className={`track-step ${getProgressWidth(order.status) === '100%' ? 'active' : ''}`}>
                                     <div className="step-blob"><i className="bi bi-check-lg"></i></div>
-                                    <span>Hoàn thành</span>
+                                    <span>Hoàn tất</span>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="text-center py-4 animate__animated animate__zoomIn">
-                            <div className="d-inline-block p-3 rounded-circle bg-success-light mb-3">
-                                <i className="bi bi-check2-all text-success fs-1"></i>
+                        <div className="text-center py-3">
+                            <div className="d-inline-flex p-3 rounded-circle mb-2" style={{ background: 'rgba(113, 130, 102, 0.15)', color: 'var(--cafe-success)' }}>
+                                <i className="bi bi-check2-all fs-2"></i>
                             </div>
-                            <h6 className="fw-bold text-success">Đơn hàng đã hoàn thành!</h6>
+                            <h2 className="fs-6 fw-bold" style={{ color: 'var(--cafe-success)' }}>
+                                Đơn hàng đã hoàn tất!
+                            </h2>
+                            <small className="text-muted">Chúc bạn thưởng thức đồ uống ngon miệng.</small>
                         </div>
                     )}
                 </div>
 
-                <div className="card-premium shadow-sm mb-4">
-                    <h6 className="fw-bold mb-4 border-bottom pb-2">Món đã chọn</h6>
-                    <div className="item-list">
+                {/* Items card */}
+                <div className="card-premium mb-3">
+                    <h2 className="fs-6 fw-bold mb-3 pb-2 border-bottom" style={{ color: 'var(--cafe-brown-dark)', borderColor: 'var(--cafe-border)' }}>
+                        Món đã chọn
+                    </h2>
+                    <div>
                         {order.items?.map((item, index) => (
-                            <div key={index} className="item-row-track mb-3 border-bottom-dashed pb-2">
-                                <div className="d-flex justify-content-between">
+                            <div key={index} className="item-row-track">
+                                <div className="d-flex justify-content-between align-items-start gap-2">
                                     <div>
-                                        <p className="item-name-track mb-0 fw-bold">{item.name} x{item.quantity}</p>
+                                        <div className="item-name-track">
+                                            {item.name} <span className="text-muted small">x{item.quantity}</span>
+                                        </div>
                                         <small className="text-muted d-block">
-                                            Size: {item.options?.size || 'M'}
-                                            {item.options?.sugar ? ` | Đường: ${item.options.sugar}` : ''}
-                                            {item.options?.ice ? ` | Đá: ${item.options.ice}` : ''}
+                                            Size {item.options?.size || 'M'}
+                                            {item.options?.sugar ? ` | ${item.options.sugar} đường` : ''}
+                                            {item.options?.ice ? ` | ${item.options.ice} đá` : ''}
                                         </small>
                                         {item.options?.toppings && item.options.toppings.length > 0 && (
-                                            <small className="text-muted d-block" style={{ fontSize: '0.8rem' }}>
-                                                Toppings: {item.options.toppings.join(', ')}
+                                            <small className="d-block mt-1" style={{ color: 'var(--cafe-caramel)', fontWeight: 500 }}>
+                                                + {item.options.toppings.join(', ')}
                                             </small>
                                         )}
                                         {item.note && (
-                                            <small className="text-danger d-block mt-1" style={{ fontSize: '0.8rem', fontStyle: 'italic' }}>
-                                                Ghi chú: {item.note}
-                                            </small>
+                                            <div className="cafe-cart-note mt-1">
+                                                "{item.note}"
+                                            </div>
                                         )}
                                     </div>
-                                    <p className="fw-bold">{(item.price * item.quantity).toLocaleString()}đ</p>
+                                    <div className="fw-bold" style={{ color: 'var(--cafe-brown-dark)', whiteSpace: 'nowrap' }}>
+                                        <PriceDisplay amount={item.price * item.quantity} />
+                                    </div>
                                 </div>
                             </div>
                         ))}
                     </div>
-                    <div className="total-section-track mt-3 d-flex justify-content-between">
-                        <span className="fw-bold fs-5">Tổng cộng</span>
-                        <span className="total-amount-track fs-5 fw-bold" style={{ color: '#826644' }}>
-                            {(order.totalPrice || 0).toLocaleString()}đ
+
+                    <div className="d-flex justify-content-between align-items-center mt-3 pt-3 border-top" style={{ borderColor: 'var(--cafe-border)' }}>
+                        <span className="fw-bold" style={{ color: 'var(--cafe-brown-dark)' }}>Tổng cộng</span>
+                        <span className="total-amount-track">
+                            <PriceDisplay amount={order.totalPrice || 0} />
                         </span>
                     </div>
                 </div>
 
                 {isMember && (
-                    <div className="text-center mt-4 mb-5">
-                        <button className="btn btn-outline-dark rounded-pill px-4 shadow-sm" onClick={() => navigate('/history')}>
-                            <i className="bi bi-arrow-left-right me-2"></i>Xem toàn bộ lịch sử
+                    <div className="text-center mt-3 mb-4">
+                        <button
+                            className="btn btn-outline-secondary rounded-pill px-4"
+                            style={{ borderColor: 'var(--cafe-border)', color: 'var(--cafe-brown)', fontSize: '0.88rem' }}
+                            onClick={() => navigate('/history')}
+                        >
+                            <i className="bi bi-clock-history me-2"></i>
+                            Xem tất cả lịch sử
                         </button>
                     </div>
                 )}
             </div>
 
-            <div className="bottom-nav shadow-lg d-flex justify-content-around align-items-center">
-                <i className="bi bi-house-door" onClick={() => navigate('/')}></i>
-                <div className="position-relative" onClick={() => navigate('/cart')} style={{ cursor: 'pointer' }}>
-                    <i className="bi bi-cart3 fs-4"></i>
-                    {cartCount > 0 && <span className="badge-cart">{cartCount}</span>}
-                </div>
-                <i className="bi bi-heart" onClick={() => navigate('/favorites')}></i>
-                <i className="bi bi-person-circle" onClick={() => navigate('/profile')}></i>
-            </div>
+            <BottomNav cartCount={cartCount} />
         </div>
     );
 };

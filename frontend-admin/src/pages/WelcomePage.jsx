@@ -118,7 +118,7 @@ const WelcomePage = () => {
   const chartData = data?.chart || null;
   const allUsers = data?.users || [];
 
-  const applyFilterLogic = (data, filterType) => {
+  function applyFilterLogic(data, filterType) {
     if (filterType === "today") {
       const todayStr = new Date().toISOString().split("T")[0];
       return data.filter(o => new Date(o.createdAt).toISOString().split("T")[0] === todayStr);
@@ -126,7 +126,7 @@ const WelcomePage = () => {
       return data.filter(o => o.paymentStatus === "paid" && o.status === "Chờ pha chế");
     }
     return data.slice(0, 8);
-  };
+  }
 
   const applyFilter = (filterType) => {
     setActiveFilter(filterType);
@@ -267,7 +267,7 @@ const WelcomePage = () => {
           'nhanvien': ['Nhân viên', '#10b981', 'green'],
           'customer': ['Khách hàng', '#8b5cf6', 'purple'] 
         };
-        const [text, color, theme] = labels[r] || [r, '#94a3b8', 'default'];
+        const [text, , theme] = labels[r] || [r, '#94a3b8', 'default'];
         return <Tag color={theme} style={{ borderRadius: 6, fontWeight: 500 }}>{text}</Tag>;
       }
     },

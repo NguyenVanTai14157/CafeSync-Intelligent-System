@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../config';
 import '../assets/css/detail.css';
-import { showToast } from '../utils/toast'; // Import bộ thông báo xịn
+import { showToast } from '../utils/toast';
+import PriceDisplay from '../components/PriceDisplay';
+import QuantityStepper from '../components/QuantityStepper';
 
 const Detail = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [product, setProduct] = useState(null);
     const [quantity, setQuantity] = useState(1);
@@ -34,10 +37,21 @@ const Detail = () => {
                 setProduct(data);
                 checkFavoriteStatus(id);
                 
-                // Sử dụng thói quen cũ (habit) nếu có, nếu không thì lấy giá trị mặc định
+                // Ưu tiên:
+                // 1. Gợi ý cá nhân hóa (preferredSugar/preferredIce từ Layer 2 navigation state) nếu hợp lệ
+                // 2. Thói quen cũ của món này (data.habit)
+                // 3. Mặc định từ product options
+                const navPrefSugar = location.state?.preferredSugar;
+                const defaultSugar = (navPrefSugar && Array.isArray(data.sugarOptions) && data.sugarOptions.includes(navPrefSugar))
+                    ? navPrefSugar
+                    : (data.habit?.sugar || data.sugarOptions?.[data.sugarOptions.length - 1] || '100%');
+
+                const navPrefIce = location.state?.preferredIce;
+                const defaultIce = (navPrefIce && Array.isArray(data.iceOptions) && data.iceOptions.includes(navPrefIce))
+                    ? navPrefIce
+                    : (data.habit?.ice || data.iceOptions?.[data.iceOptions.length - 1] || '100%');
+
                 const defaultSize = data.habit?.size || data.sizes?.[1] || data.sizes?.[0] || 'M';
-                const defaultSugar = data.habit?.sugar || data.sugarOptions?.[data.sugarOptions.length - 1] || '100%';
-                const defaultIce = data.habit?.ice || data.iceOptions?.[data.iceOptions.length - 1] || '100%';
                 const defaultToppings = (data.habit?.toppings || []).filter(name =>
                     data.toppings?.some(t => t.status === 'active' && t.name === name));
 
@@ -149,52 +163,97 @@ const Detail = () => {
         '100%': 'Bình thường'
     };
 
+    const categoryName = typeof product.category === 'object' ? product.category?.name : product.category;
+
     return (
-        <div className="detail-page-premium">
-            <div className="hero-image-wrapper">
-                <img src={`${API_URL}/images/${product.image}`} className="product-hero-image-new" alt={product.name} />
-                
-                {/* Các nút điều hướng nổi đè trên ảnh */}
-                <button className="floating-back-btn" onClick={() => navigate(-1)}>
+        <div className="cafe-detail-page">
+            <div className="cafe-detail-hero">
+                <img
+                    src={`${API_URL}/images/${product.image}`}
+                    className="cafe-detail-image"
+                    alt={product.name}
+                    onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/fallback-product.svg';
+                    }}
+                />
+
+                {/* Floating header controls */}
+                <button
+                    className="cafe-hero-btn cafe-hero-btn-back"
+                    onClick={() => navigate(-1)}
+                    aria-label="Quay lại"
+                >
                     <i className="bi bi-chevron-left"></i>
                 </button>
-                <div className="floating-right-actions">
-                    <button className="floating-action-btn me-2" onClick={toggleFavorite}>
+
+                <div className="cafe-hero-actions">
+                    <button
+                        className="cafe-hero-btn"
+                        onClick={toggleFavorite}
+                        aria-label="Yêu thích món"
+                    >
                         <i className={`bi ${isFavorite ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
                     </button>
-                    <button className="floating-action-btn position-relative" onClick={() => navigate('/cart')}>
-                        <i className="bi bi-bag-heart"></i>
-                        {cartCount > 0 && <span className="cart-badge-dot-new">{cartCount}</span>}
+                    <button
+                        className="cafe-hero-btn position-relative"
+                        onClick={() => navigate('/cart')}
+                        aria-label="Xem giỏ hàng"
+                    >
+                        <i className="bi bi-bag"></i>
+                        {cartCount > 0 && <span className="cafe-hero-badge">{cartCount}</span>}
                     </button>
                 </div>
 
-                {/* Huy hiệu Phổ biến */}
-                <span className="popular-badge-float">Phổ biến</span>
+                <span className="cafe-hero-tag">Tùy chỉnh món</span>
             </div>
 
-            <div className="detail-info-wrapper-new">
-                <div className="detail-content-sheet-new">
-                    <div className="name-price-row">
-                        <h1 className="premium-item-name-new">{product.name}</h1>
-                        <span className="premium-item-price-new">{(product.price + getExtraPrice()).toLocaleString()}đ</span>
-                    </div>
-
-                    {/* Chỉ số calo giống như bản mẫu */}
-                    <div className="calorie-badge">
-                        <span>{getCalories()} CALORIES</span>
-                    </div>
-
-                    {/* Chọn Size dạng viên thuốc rời */}
-                    <div className="option-section mt-4">
-                        <div className="d-flex align-items-center justify-content-between mb-2">
-                            <span className="premium-section-title mb-0">Kích cỡ ly</span>
-                            {product.habit?.size && <span className="habit-title-badge">Khẩu vị quen thuộc</span>}
+            <div className="cafe-detail-container">
+                <div className="cafe-detail-sheet">
+                    {/* Category & Name & Price */}
+                    <div className="cafe-detail-header-block">
+                        {categoryName && (
+                            <span className="cafe-detail-cat-badge">{categoryName}</span>
+                        )}
+                        <div className="cafe-detail-title-row">
+                            <h1 className="cafe-detail-name">{product.name}</h1>
+                            <PriceDisplay
+                                price={product.price + getExtraPrice()}
+                                className="cafe-detail-price"
+                            />
                         </div>
-                        <div className="pill-selector-group">
+
+                        {product.description && (
+                            <p className="cafe-detail-desc">{product.description}</p>
+                        )}
+
+                        <div className="d-flex align-items-center gap-2 flex-wrap mt-2">
+                            <div className="cafe-calorie-pill">
+                                <span>{getCalories()} kcal</span>
+                            </div>
+                            {product.habit && (
+                                <div className="cafe-habit-pill">
+                                    <i className="bi bi-clock-history me-1"></i>
+                                    Đã chọn theo lựa chọn gần đây của bạn
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Kích cỡ */}
+                    <div className="cafe-option-group">
+                        <div className="d-flex align-items-center justify-content-between mb-2">
+                            <span className="cafe-option-label">Kích cỡ</span>
+                            {product.habit?.size && (
+                                <span className="cafe-habit-tag">Quen thuộc</span>
+                            )}
+                        </div>
+                        <div className="cafe-pill-group">
                             {product.sizes?.map(s => (
-                                <button 
-                                    key={s} 
-                                    className={`pill-selector-item ${options.size === s ? 'active' : ''} ${product.habit?.size === s ? 'habit-item' : ''}`} 
+                                <button
+                                    key={s}
+                                    type="button"
+                                    className={`cafe-pill-btn ${options.size === s ? 'active' : ''} ${product.habit?.size === s ? 'is-habit' : ''}`}
                                     onClick={() => setOptions({ ...options, size: s })}
                                 >
                                     {sizeMap[s] || s}
@@ -203,17 +262,20 @@ const Detail = () => {
                         </div>
                     </div>
 
-                    {/* Mức đường dạng viên thuốc rời */}
-                    <div className="option-section mt-4">
+                    {/* Độ ngọt */}
+                    <div className="cafe-option-group">
                         <div className="d-flex align-items-center justify-content-between mb-2">
-                            <span className="premium-section-title mb-0">Mức đường</span>
-                            {product.habit?.sugar && <span className="habit-title-badge">Khẩu vị quen thuộc</span>}
+                            <span className="cafe-option-label">Độ ngọt</span>
+                            {product.habit?.sugar && (
+                                <span className="cafe-habit-tag">Quen thuộc</span>
+                            )}
                         </div>
-                        <div className="pill-selector-group">
+                        <div className="cafe-pill-group">
                             {product.sugarOptions?.map(opt => (
-                                <button 
-                                    key={opt} 
-                                    className={`pill-selector-item ${options.sugar === opt ? 'active' : ''} ${product.habit?.sugar === opt ? 'habit-item' : ''}`} 
+                                <button
+                                    key={opt}
+                                    type="button"
+                                    className={`cafe-pill-btn ${options.sugar === opt ? 'active' : ''} ${product.habit?.sugar === opt ? 'is-habit' : ''}`}
                                     onClick={() => setOptions({ ...options, sugar: opt })}
                                 >
                                     {opt}
@@ -222,17 +284,20 @@ const Detail = () => {
                         </div>
                     </div>
 
-                    {/* Mức đá dạng viên thuốc rời */}
-                    <div className="option-section mt-4">
+                    {/* Lượng đá */}
+                    <div className="cafe-option-group">
                         <div className="d-flex align-items-center justify-content-between mb-2">
-                            <span className="premium-section-title mb-0">Mức đá</span>
-                            {product.habit?.ice && <span className="habit-title-badge">Khẩu vị quen thuộc</span>}
+                            <span className="cafe-option-label">Lượng đá</span>
+                            {product.habit?.ice && (
+                                <span className="cafe-habit-tag">Quen thuộc</span>
+                            )}
                         </div>
-                        <div className="pill-selector-group">
+                        <div className="cafe-pill-group">
                             {product.iceOptions?.map(opt => (
-                                <button 
-                                    key={opt} 
-                                    className={`pill-selector-item ${options.ice === opt ? 'active' : ''} ${product.habit?.ice === opt ? 'habit-item' : ''}`} 
+                                <button
+                                    key={opt}
+                                    type="button"
+                                    className={`cafe-pill-btn ${options.ice === opt ? 'active' : ''} ${product.habit?.ice === opt ? 'is-habit' : ''}`}
                                     onClick={() => setOptions({ ...options, ice: opt })}
                                 >
                                     {iceMap[opt] || opt}
@@ -241,35 +306,35 @@ const Detail = () => {
                         </div>
                     </div>
 
-                    {/* Topping dạng Checkbox list căn đều */}
+                    {/* Topping */}
                     {availableToppings.length > 0 && (
-                        <div className="option-section mt-4">
+                        <div className="cafe-option-group">
                             <div className="d-flex align-items-center justify-content-between mb-2">
-                                <span className="premium-section-title mb-0">Topping yêu thích</span>
-                                {product.habit?.toppings?.length > 0 && <span className="habit-title-badge">Thường chọn</span>}
+                                <span className="cafe-option-label">Topping</span>
+                                {product.habit?.toppings?.length > 0 && (
+                                    <span className="cafe-habit-tag">Thường chọn</span>
+                                )}
                             </div>
-                            <div className="topping-checkbox-list">
+                            <div className="cafe-topping-list">
                                 {availableToppings.map(t => {
                                     const isSelected = options.toppings.includes(t.name);
                                     const toppingPrice = t.price;
                                     const isHabitTopping = product.habit?.toppings?.includes(t.name);
                                     return (
-                                        <div 
+                                        <div
                                             key={t._id}
-                                            className={`topping-checkbox-row ${isHabitTopping ? 'habit-item' : ''}`} 
+                                            className={`cafe-topping-row ${isSelected ? 'selected' : ''} ${isHabitTopping ? 'is-habit' : ''}`}
                                             onClick={() => handleToppingToggle(t.name)}
+                                            role="button"
+                                            tabIndex={0}
                                         >
                                             <div className="d-flex align-items-center gap-2">
-                                                <span className="topping-checkbox-icon">
-                                                    {isSelected ? (
-                                                        <i className="bi bi-check-square-fill text-dark fs-5"></i>
-                                                    ) : (
-                                                        <i className="bi bi-square fs-5" style={{ color: '#ccc' }}></i>
-                                                    )}
+                                                <span className="cafe-topping-check">
+                                                    <i className={`bi ${isSelected ? 'bi-check-circle-fill text-caramel' : 'bi-circle text-muted'}`}></i>
                                                 </span>
-                                                <span className="topping-name text-dark fw-semibold">{t.name}</span>
+                                                <span className="cafe-topping-name">{t.name}</span>
                                             </div>
-                                            <span className="topping-price text-muted fw-bold">+{toppingPrice.toLocaleString()}đ</span>
+                                            <span className="cafe-topping-price">+{toppingPrice.toLocaleString()}đ</span>
                                         </div>
                                     );
                                 })}
@@ -278,27 +343,33 @@ const Detail = () => {
                     )}
 
                     {/* Ghi chú */}
-                    <div className="option-section mt-4 mb-5 pb-5">
-                        <span className="premium-section-title">Ghi chú đặc biệt</span>
-                        <textarea 
-                            className="premium-note-input" 
-                            rows="2" 
-                            placeholder="Ví dụ: Ít ngọt, không lấy ống hút, dị ứng hạt..." 
-                            value={note} 
+                    <div className="cafe-option-group cafe-note-group">
+                        <span className="cafe-option-label">Ghi chú đặc biệt</span>
+                        <textarea
+                            className="cafe-note-textarea"
+                            rows="2"
+                            placeholder="Ví dụ: Ít ngọt, không lấy ống hút, mang đi..."
+                            value={note}
                             onChange={(e) => setNote(e.target.value)}
                         ></textarea>
                     </div>
                 </div>
 
-                {/* Footer dạng thanh đơn mỏng gọn giống thiết kế */}
-                <div className="premium-footer-container-new">
-                    <div className="footer-layout-new">
-                        <div className="premium-quantity-stepper-new">
-                            <button onClick={() => quantity > 1 && setQuantity(quantity - 1)}>−</button>
-                            <span className="quantity-num-new">{quantity}</span>
-                            <button onClick={() => setQuantity(quantity + 1)}>+</button>
-                        </div>
-                        <button className="btn-add-order-now-new" onClick={handleAddToCart}>
+                {/* Footer sticky bar */}
+                <div className="cafe-detail-footer">
+                    <div className="cafe-detail-footer-inner">
+                        <QuantityStepper
+                            quantity={quantity}
+                            onIncrease={() => setQuantity(quantity + 1)}
+                            onDecrease={() => quantity > 1 && setQuantity(quantity - 1)}
+                            size="lg"
+                            ariaLabelPrefix="ly"
+                        />
+                        <button
+                            type="button"
+                            className="cafe-btn-add-cart"
+                            onClick={handleAddToCart}
+                        >
                             Thêm vào giỏ | {totalPrice.toLocaleString()}đ
                         </button>
                     </div>

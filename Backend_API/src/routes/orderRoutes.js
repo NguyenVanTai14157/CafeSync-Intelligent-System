@@ -5,6 +5,7 @@ const {
     createOrder,
     getOrders,
     getOrderById,
+    trackOrderById,
     updateOrderStatus,
     deleteOrder,
     getOrdersByEmail,
@@ -32,6 +33,7 @@ router.get("/user/:email", getOrdersByEmail);
 router.get('/cancel/:orderId', cancelOrder);
 
 // 5. Chi tiết & Cập nhật
+router.get("/track/:id", trackOrderById);
 router.get("/:id", getOrderById);
 router.put("/:id/status", updateOrderStatus);
 router.post('/:id/confirm-cash', confirmCashPayment);

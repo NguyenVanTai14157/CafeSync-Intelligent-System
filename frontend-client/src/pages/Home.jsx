@@ -1,441 +1,381 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import API_URL from '../config';
 import '../assets/css/style.css';
-import Chatbot from '../components/ChatBot';
+import SlotRecommendationSection from '../components/SlotRecommendationSection';
+import BottomNav from '../components/BottomNav';
+import ProductCard from '../components/ProductCard';
+import EmptyState from '../components/EmptyState';
+import LoginPersonalizationCard from '../components/LoginPersonalizationCard';
 import { showToast, showConfirm } from '../utils/toast';
+import { getTableContext, processUrlTableParams } from '../utils/tableContext';
+
+const FALLBACK_IMAGE = '/fallback-product.svg';
+
 // Hàm loại bỏ dấu tiếng Việt để phục vụ tìm kiếm không dấu
 const removeAccents = (str) => {
-    if (!str) return '';
-    return str
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/đ/g, "d")
-        .replace(/Đ/g, "D");
+  if (!str) return '';
+  return str
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/đ/g, "d")
+    .replace(/Đ/g, "D");
 };
 
-const Home = ({ cartCount }) => {
-    const [products, setProducts] = useState([]);
-    const [category, setCategory] = useState('all');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [userName, setUserName] = useState(localStorage.getItem('userName') || '');
-    const [favorites, setFavorites] = useState(JSON.parse(localStorage.getItem('favorites')) || []);
-    const [isPersonalized, setIsPersonalized] = useState(false);
-    const [scrolled, setScrolled] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [recs, setRecs] = useState({ favorites: [], newFlavors: [] });
+const Home = () => {
+  const [products, setProducts] = useState([]);
+  const [category, setCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [userName, setUserName] = useState(localStorage.getItem('userName') || '');
+  const [favorites, setFavorites] = useState(JSON.parse(localStorage.getItem('favorites')) || []);
+  const [isPersonalized, setIsPersonalized] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [recs, setRecs] = useState({ favorites: [], newFlavors: [] });
+  const [tableNumber, setTableNumber] = useState(() => {
+    const ctx = getTableContext();
+    return ctx.hasValidContext ? ctx.tableNumber : null;
+  });
 
-    const navigate = useNavigate();
-    const location = useLocation();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-    // Lấy gợi ý món ngon cho thành viên đăng nhập
-    useEffect(() => {
-        const fetchRecs = async () => {
-            const email = localStorage.getItem('userEmail');
-            if (email && email !== 'Guest') {
-                try {
-                    const res = await axios.get(`${API_URL}/api/products/recommendations?email=${email}`);
-                    setRecs(res.data);
-                } catch (err) {
-                    console.error("Lỗi lấy gợi ý sản phẩm:", err);
-                }
-            }
-        };
-        fetchRecs();
-    }, [userName]);
-
-    // Lắng nghe cuộn trang để kích hoạt hiệu ứng sticky thu nhỏ gọn
-    useEffect(() => {
-        const handleScroll = () => {
-            if (window.scrollY > 15) {
-                setScrolled(true);
-            } else {
-                setScrolled(false);
-            }
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-    
-    // Đọc số bàn từ URL sau khi quét QR (ví dụ: ?table=1)
-    useEffect(() => {
-        const queryParams = new URLSearchParams(location.search);
-        const table = queryParams.get('table');
-        if (table) {
-            localStorage.setItem('tableNumber', table);
-            console.log("📍 Đã nhận diện số bàn từ QR:", table);
-            showToast(`Chào mừng bạn tại Bàn ${table}!`);
+  // Lấy gợi ý món ngon cho thành viên đăng nhập
+  useEffect(() => {
+    const fetchRecs = async () => {
+      const email = localStorage.getItem('userEmail');
+      if (email && email !== 'Guest') {
+        try {
+          const res = await axios.get(`${API_URL}/api/products/recommendations?email=${email}`);
+          setRecs(res.data);
+        } catch (err) {
+          console.error("Lỗi lấy gợi ý sản phẩm:", err);
         }
-    }, [location]);
-    
+      }
+    };
+    fetchRecs();
+  }, [userName]);
 
-    // Danh mục tương ứng với ID trong Database của Yến
-    const categoryMap = {
-        "Cà Phê": "69d362f64faad13bdcfb2de2",
-        "Sinh tố": "69ce855ce29634cdd7933c0b",
-        "Trà": "69ce856be29634cdd7933c0f",
-        "Nước ép": "69ce8560e29634cdd7933c0d"
+  // Xử lý thông tin số bàn và mã QR từ URL (ví dụ: ?table=12&tableToken=...)
+  useEffect(() => {
+    const result = processUrlTableParams(location.search);
+    if (result.processed) {
+      if (result.status === 'CONTEXT_SAVED') {
+        showToast(result.message || `Đã kết nối Bàn ${result.tableNumber}`);
+      } else if (result.status === 'PREVENTED_SWITCH') {
+        showToast(result.message);
+      } else if (result.status === 'MISSING_TOKEN' || result.status === 'INVALID_TABLE_NUMBER') {
+        showToast(result.message);
+      }
+    }
+
+    const ctx = getTableContext();
+    setTableNumber(ctx.hasValidContext ? ctx.tableNumber : null);
+
+    const handleContextUpdate = (e) => {
+      const num = e.detail?.tableNumber;
+      const tok = e.detail?.tableToken;
+      setTableNumber(num && tok ? num : null);
     };
 
-    // Tự động bóc tách tên gọi thân mật (Lý Thị Yến -> Yến)
-    const getShortName = () => {
-        if (!userName) return "bạn";
-        return userName.trim().split(' ').pop();
+    window.addEventListener('tableContextUpdated', handleContextUpdate);
+    return () => {
+      window.removeEventListener('tableContextUpdated', handleContextUpdate);
     };
+  }, [location]);
 
-    // --- HÀM AI GỢI Ý THEO THỜI GIAN (CONTEXT-AWARE) ---
-    const getContextMessage = () => {
-        const hour = new Date().getHours();
-        const name = getShortName();
-        if (hour >= 5 && hour < 12) return `Sáng sớm tỉnh táo với Cà phê nhé ${name}!`;
-        if (hour >= 12 && hour < 18) return `Chiều năng lượng với Trà & Sinh tố nhé ${name}!`;
-        return `Tối nhẹ nhàng với Nước ép thanh mát nhé ${name}!`;
-    };
+  // Danh mục tương ứng với ID trong Database
+  const categoryMap = {
+    "Cà phê": "69d362f64faad13bdcfb2de2",
+    "Sinh tố": "69ce855ce29634cdd7933c0b",
+    "Trà": "69ce856be29634cdd7933c0f",
+    "Nước ép": "69ce8560e29634cdd7933c0d"
+  };
 
-    const handleLogout = async () => {
-        const result = await showConfirm(
-            `${getShortName()} ơi...`,
-            "Bạn muốn đăng xuất khỏi CaféSync sao?"
-        );
-        if (result.isConfirmed) {
-            localStorage.removeItem('userToken');
-            localStorage.removeItem('userName');
-            localStorage.removeItem('userEmail');
-            setUserName('');
-            showToast("Hẹn gặp lại bạn nhé!");
-            setTimeout(() => window.location.reload(), 1000);
-        }
-    };
+  const getShortName = () => {
+    if (!userName) return "bạn";
+    return userName.trim().split(' ').pop();
+  };
 
-    const handleStatusClick = () => {
-        const lastOrderId = localStorage.getItem('lastOrderDBId');
-        if (lastOrderId && lastOrderId !== "null") {
-            navigate('/track-order');
-        } else {
-            navigate('/history');
-        }
-    };
-
-    const handleShowPersonalized = () => {
-        setIsPersonalized(!isPersonalized);
-        if (!isPersonalized) {
-            setCategory('all');
-            setSearchTerm('');
-        }
-    };
-
-    useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            try {
-                let url = `${API_URL}/api/products`;
-                // Logic lọc theo danh mục chuẩn xác
-                if (category !== 'all') {
-                    const catId = categoryMap[category];
-                    if (catId) url += `?category=${catId}`;
-                }
-                const res = await axios.get(url);
-                setProducts(res.data);
-            } catch (err) {
-                console.error("Lỗi lấy dữ liệu:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchData();
-    }, [category]);
-
-    const toggleFavorite = (e, product) => {
-        e.stopPropagation();
-        let currentFavs = JSON.parse(localStorage.getItem('favorites')) || [];
-        const isExist = currentFavs.find(item => item._id === product._id);
-        let updatedFavs = isExist
-            ? currentFavs.filter(item => item._id !== product._id)
-            : [...currentFavs, product];
-
-        setFavorites(updatedFavs);
-        localStorage.setItem('favorites', JSON.stringify(updatedFavs));
-
-        if (!isExist) showToast(`Đã thích ${product.name}`);
-    };
-
-    const addToCart = (e, product) => {
-        e.stopPropagation();
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        const existingItem = cart.find(item => item._id === product._id);
-
-        if (existingItem) {
-            existingItem.quantity += 1;
-        } else {
-            cart.push({ ...product, quantity: 1, options: { size: "M", sugar: "100%", ice: "100%" } });
-        }
-
-        localStorage.setItem('cart', JSON.stringify(cart));
-        window.dispatchEvent(new Event('cartUpdated'));
-        showToast(`Đã thêm ${product.name} vào giỏ!`);
-    };
-
-    return (
-        <div className="home-container pb-5 mb-5 animate__animated animate__fadeIn">
-            {/* Sticky Wrapper cho toàn bộ Header + Banner + Search + Categories */}
-            <div className={`sticky-top-wrapper ${scrolled ? 'scrolled' : ''}`}>
-                {/* Header */}
-                <div className="container d-flex justify-content-between align-items-center mb-1 home-header-wrapper">
-                    <div>
-                        <h4 className="fw-bold mb-0 home-header-title" style={{ fontFamily: 'Playfair Display', color: '#826644' }}>CaféSync</h4>
-                        <small className="text-muted home-header-subtitle">{userName ? `Chào ${userName} ` : "Chào bạn "}</small>
-                    </div>
-                    <div className="d-flex gap-2">
-                        {(userName || localStorage.getItem('lastOrderDBId')) && (
-                            <div className="icon-circle bg-white shadow-sm p-2 rounded-circle"
-                                style={{ cursor: 'pointer', color: '#826644' }}
-                                onClick={handleStatusClick} title="Lịch sử & Theo dõi">
-                                <i className="bi bi-clock-history fs-5"></i>
-                            </div>
-                        )}
-                        <div className="icon-circle bg-white shadow-sm p-2 rounded-circle text-danger"
-                            style={{ cursor: 'pointer' }} onClick={userName ? handleLogout : () => navigate('/login')}>
-                            <i className={userName ? "bi bi-box-arrow-right fs-5" : "bi bi-person fs-5"}></i>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Smart Promo Banner */}
-                <div className="container mt-2 promo-banner-wrapper">
-                    {userName ? (
-                        <div className="promo-banner shadow-sm" style={{ background: 'linear-gradient(135deg, #826644 0%, #a47551 100%)', color: 'white', marginBottom: '12px' }}>
-                            <div>
-                                <span className="badge bg-white text-dark rounded-pill mb-2 px-3 py-2 small">
-                                    {isPersonalized ? `Gu riêng của ${getShortName()}` : "Gợi ý riêng cho bạn"}
-                                </span>
-                                <h3 className="fw-bold mb-0">{isPersonalized ? "THỰC ĐƠN SMART" : "MÓN 'RUỘT' HÔM NAY"}</h3>
-                                <button
-                                    className={`btn btn-sm rounded-pill mt-2 px-4 fw-bold ${isPersonalized ? 'btn-warning text-dark shadow' : 'btn-light'}`}
-                                    onClick={handleShowPersonalized}
-                                >
-                                    {isPersonalized ? "Đang hiện Smart Menu" : "Xem ngay"}
-                                </button>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="promo-banner shadow-sm" style={{ marginBottom: '12px' }}>
-                            <div>
-                                <span className="badge bg-white text-dark rounded-pill mb-2 px-3 py-2 small">Ưu đãi hôm nay</span>
-                                <h3 className="fw-bold mb-0">GIẢM 50%</h3>
-                                <button className="btn btn-dark btn-sm rounded-pill mt-2 px-4" onClick={() => navigate('/login')}>Đặt Ngay</button>
-                            </div>
-                            <img src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200&q=80"
-                                className="rounded-circle shadow" style={{ width: '90px', height: '90px', objectFit: 'cover' }} alt="promo" />
-                        </div>
-                    )}
-                </div>
-
-                {/* Search */}
-                <div className="container mb-3 search-container-wrapper">
-                    <div className="input-group shadow-sm rounded-pill overflow-hidden bg-white border-0">
-                        <span className="input-group-text bg-white border-0 ps-3"><i className="bi bi-search text-muted"></i></span>
-                        <input type="text" value={searchTerm} className="form-control border-0 py-3 shadow-none text-dark" placeholder="Tìm món ngon..."
-                            onChange={(e) => setSearchTerm(e.target.value)} />
-                    </div>
-                </div>
-
-                {/* Categories */}
-                <div className="container overflow-auto d-flex gap-2 scrollbar-hidden">
-                    {['all', 'Cà Phê', 'Sinh tố', 'Nước ép', 'Trà'].map(cat => (
-                        <button key={cat} onClick={() => { setCategory(cat); setIsPersonalized(false); }}
-                            className={`btn rounded-pill px-4 fw-bold text-nowrap border-0 ${category === cat && !isPersonalized ? 'btn-dark' : 'bg-white shadow-sm'}`}>
-                            {cat === 'all' ? 'Tất cả' : cat}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Product List with Intelligence */}
-            <div className="container">
-                {isPersonalized && (
-                    <div className="alert bg-white border-0 shadow-sm rounded-4 mb-4 animate__animated animate__fadeIn">
-                        <small className="fw-bold text-brown">{getContextMessage()}</small>
-                    </div>
-                )}
-
-                {/* --- HAI SLIDER GỢI Ý CÁ NHÂN HÓA --- */}
-                {isPersonalized && userName && recs.favorites?.length > 0 && (
-                    <div className="mb-4 animate__animated animate__fadeIn">
-                        <div className="d-flex align-items-center gap-2 mb-2">
-                            <h5 className="fw-bold mb-0" style={{ fontFamily: 'Playfair Display', color: '#826644' }}>
-                                Món tủ của {getShortName()}
-                            </h5>
-                        </div>
-                        <div className="d-flex gap-3 overflow-auto pb-2 scrollbar-hidden" style={{ scrollSnapType: 'x mandatory' }}>
-                            {recs.favorites.map(p => (
-                                <div 
-                                    key={`fav-${p._id}`} 
-                                    className="card border-0 shadow-sm flex-shrink-0 position-relative premium-card" 
-                                    style={{ width: '160px', borderRadius: '20px', cursor: 'pointer', scrollSnapAlign: 'start', background: 'white' }}
-                                    onClick={() => navigate(`/product/${p._id}`)}
-                                >
-                                    <img 
-                                        src={`${API_URL}/images/${p.image}`} 
-                                        className="card-img-top" 
-                                        alt={p.name} 
-                                        style={{ height: '110px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', objectFit: 'cover' }}
-                                        onError={(e) => e.target.src = 'https://placehold.co/200x250?text=CaféSync'} 
-                                    />
-                                    <div className="card-body p-2 text-center">
-                                        <h6 className="card-title text-truncate fw-bold mb-1" style={{ fontSize: '0.85rem' }}>{p.name}</h6>
-                                        <span className="fw-bold text-muted" style={{ fontSize: '0.8rem', color: '#D9A673' }}>{p.price.toLocaleString()}đ</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {isPersonalized && userName && recs.newFlavors?.length > 0 && (
-                    <div className="mb-4 animate__animated animate__fadeIn">
-                        <div className="d-flex align-items-center gap-2 mb-2">
-                            <h5 className="fw-bold mb-0" style={{ fontFamily: 'Playfair Display', color: '#826644' }}>
-                                Thử chút vị mới?
-                            </h5>
-                        </div>
-                        <div className="d-flex gap-3 overflow-auto pb-2 scrollbar-hidden" style={{ scrollSnapType: 'x mandatory' }}>
-                            {recs.newFlavors.map(p => (
-                                <div 
-                                    key={`new-${p._id}`} 
-                                    className="card border-0 shadow-sm flex-shrink-0 position-relative premium-card" 
-                                    style={{ width: '160px', borderRadius: '20px', cursor: 'pointer', scrollSnapAlign: 'start', background: 'white' }}
-                                    onClick={() => navigate(`/product/${p._id}`)}
-                                >
-                                    <img 
-                                        src={`${API_URL}/images/${p.image}`} 
-                                        className="card-img-top" 
-                                        alt={p.name} 
-                                        style={{ height: '110px', borderTopLeftRadius: '20px', borderTopRightRadius: '20px', objectFit: 'cover' }}
-                                        onError={(e) => e.target.src = 'https://placehold.co/200x250?text=CaféSync'} 
-                                    />
-                                    <div className="card-body p-2 text-center">
-                                        <h6 className="card-title text-truncate fw-bold mb-1" style={{ fontSize: '0.85rem' }}>{p.name}</h6>
-                                        <span className="fw-bold text-muted" style={{ fontSize: '0.8rem', color: '#D9A673' }}>{p.price.toLocaleString()}đ</span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Tiêu đề phân biệt danh sách phía dưới */}
-                <h5 className="fw-bold mb-3 mt-4" style={{ fontFamily: 'Playfair Display', color: '#826644' }}>
-                    {isPersonalized ? "Gợi ý thêm cho bạn" : "Thực đơn chính"}
-                </h5>
-
-                <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
-                    {loading ? (
-                        Array.from({ length: 4 }).map((_, idx) => (
-                            <div key={`skeleton-${idx}`} className="col mb-2">
-                                <div className="skeleton-card p-0">
-                                    <div className="skeleton-img skeleton-pulse"></div>
-                                    <div className="p-3">
-                                        <div className="skeleton-text skeleton-title skeleton-pulse" style={{ height: '16px', borderRadius: '4px', marginBottom: '10px', width: '70%' }}></div>
-                                        <div className="d-flex justify-content-between align-items-center mt-3">
-                                            <div className="skeleton-text skeleton-pulse mb-0" style={{ height: '20px', borderRadius: '4px', width: '40%' }}></div>
-                                            <div className="skeleton-btn skeleton-pulse" style={{ width: '35px', height: '35px', borderRadius: '12px' }}></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        products
-                            .filter(p => {
-                                const nameNormalized = removeAccents(p.name.toLowerCase());
-                                const searchNormalized = removeAccents(searchTerm.toLowerCase());
-                                return nameNormalized.includes(searchNormalized);
-                            })
-                            .filter(p => {
-                                if (!isPersonalized) return true;
-                                const hour = new Date().getHours();
-                                const isFav = favorites.some(f => f._id === p._id);
-
-                                // 1. Món đã thả tim luôn hiện
-                                if (isFav) return true;
-
-                                // 2. Logic dự phòng: Hiện Best Seller hoặc món giá cao
-                                const isSpecial = p.name.includes("đặc biệt") || p.name.includes("muối") || p.price > 55000;
-
-                                if (hour >= 5 && hour < 12) return p.category === categoryMap["Cà Phê"] || isSpecial;
-                                if (hour >= 12 && hour < 18) return p.category === categoryMap["Sinh tố"] || p.category === categoryMap["Trà"] || isSpecial;
-                                return p.category === categoryMap["Nước ép"] || isSpecial;
-                            })
-                            .map((p, index) => {
-                                const isFav = favorites.some(f => f._id === p._id);
-                                const hour = new Date().getHours();
-                                const isSpecial = p.name.includes("đặc biệt") || p.name.includes("muối") || p.price > 55000;
-
-                                let badgeText = "";
-                                let badgeClass = "";
-                                if (isPersonalized) {
-                                    if (isFav) {
-                                        badgeText = "Đã yêu thích";
-                                        badgeClass = "badge-fav";
-                                    } else if (isSpecial) {
-                                        badgeText = "Món đặc trưng";
-                                        badgeClass = "badge-special";
-                                    } else {
-                                        if (hour >= 5 && hour < 12) badgeText = "Gợi ý sáng";
-                                        else if (hour >= 12 && hour < 18) badgeText = "Gợi ý chiều";
-                                        else badgeText = "Gợi ý tối";
-                                        badgeClass = "badge-time";
-                                    }
-                                }
-
-                                return (
-                                    <div 
-                                        key={p._id} 
-                                        className="col mb-2 product-card-animate"
-                                        style={{ 
-                                            animationDelay: `${Math.min(index, 8) * 0.05}s`
-                                        }}
-                                    >
-                                        <div className="card h-100 premium-card shadow-sm position-relative" onClick={() => navigate(`/product/${p._id}`)}>
-                                            {badgeText && (
-                                                <span className={`personalized-card-badge ${badgeClass}`}>
-                                                    {badgeText}
-                                                </span>
-                                            )}
-                                            <button className="btn-favorite-float" onClick={(e) => toggleFavorite(e, p)}>
-                                                <i className={`bi ${favorites.find(f => f._id === p._id) ? 'bi-heart-fill text-danger' : 'bi-heart'}`}></i>
-                                            </button>
-                                            <img src={`${API_URL}/images/${p.image}`} className="card-img-top" alt={p.name}
-                                                onError={(e) => e.target.src = 'https://placehold.co/200x250?text=CaféSync'} />
-                                            <div className="card-body p-3">
-                                                <h6 className="card-title text-truncate fw-bold">{p.name}</h6>
-                                                <div className="d-flex justify-content-between align-items-center mt-2">
-                                                    <span className="fw-bold" style={{ color: '#D9A673' }}>{p.price.toLocaleString()}đ</span>
-                                                    <button className="btn-cart-small shadow-sm" onClick={(e) => addToCart(e, p)}><i className="bi bi-plus"></i></button>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })
-                    )}
-                </div>
-            </div>
-
-            {/* Bottom Navigation */}
-            <div className="bottom-nav shadow-lg d-flex justify-content-around align-items-center">
-                <i className="bi bi-house-door-fill active" onClick={() => navigate('/')}></i>
-                <div className="position-relative" onClick={() => navigate('/cart')} style={{ cursor: 'pointer' }}>
-                    <i className="bi bi-cart3 fs-4"></i>
-                    {cartCount > 0 && <span className="badge-cart">{cartCount}</span>}
-                </div>
-                <i className="bi bi-heart" onClick={() => navigate('/favorites')}></i>
-                <i className="bi bi-person-circle" onClick={() => navigate('/profile')}></i>
-            </div>
-            <Chatbot />
-        </div>
+  const handleLogout = async () => {
+    const result = await showConfirm(
+      `${getShortName()} ơi...`,
+      "Bạn muốn đăng xuất khỏi CaféSync sao?"
     );
+    if (result.isConfirmed) {
+      localStorage.removeItem('userToken');
+      localStorage.removeItem('userName');
+      localStorage.removeItem('userEmail');
+      localStorage.removeItem('userRole');
+      setUserName('');
+      showToast("Hẹn gặp lại bạn nhé!");
+      setTimeout(() => window.location.reload(), 800);
+    }
+  };
+
+  const handleStatusClick = () => {
+    const lastOrderId = localStorage.getItem('lastOrderDBId');
+    if (lastOrderId && lastOrderId !== "null") {
+      navigate('/track-order');
+    } else {
+      navigate('/history');
+    }
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        let url = `${API_URL}/api/products`;
+        if (category !== 'all') {
+          const catId = categoryMap[category];
+          if (catId) url += `?category=${catId}`;
+        }
+        const res = await axios.get(url);
+        setProducts(res.data);
+      } catch (err) {
+        console.error("Lỗi lấy dữ liệu món:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [category]);
+
+  const toggleFavorite = (firstArg, secondArg) => {
+    const e = secondArg ? firstArg : null;
+    const product = secondArg || firstArg;
+    if (e && typeof e.stopPropagation === 'function') {
+      e.stopPropagation();
+    }
+    if (!product || !product._id) return;
+
+    let currentFavs = JSON.parse(localStorage.getItem('favorites')) || [];
+    const isExist = currentFavs.find(item => item._id === product._id);
+    let updatedFavs = isExist
+      ? currentFavs.filter(item => item._id !== product._id)
+      : [...currentFavs, product];
+
+    setFavorites(updatedFavs);
+    localStorage.setItem('favorites', JSON.stringify(updatedFavs));
+    showToast(isExist ? `Đã bỏ thích ${product.name}` : `Đã thích ${product.name}`);
+  };
+
+  const addToCart = (firstArg, secondArg) => {
+    const e = secondArg ? firstArg : null;
+    const product = secondArg || firstArg;
+    if (e && typeof e.stopPropagation === 'function') {
+      e.stopPropagation();
+    }
+    if (!product || !product._id) return;
+
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
+    const existingItem = cart.find(item => item._id === product._id);
+
+    if (existingItem) {
+      existingItem.quantity += 1;
+    } else {
+      cart.push({ ...product, quantity: 1, options: { size: "M", sugar: "100%", ice: "100%" } });
+    }
+
+    localStorage.setItem('cart', JSON.stringify(cart));
+    window.dispatchEvent(new Event('cartUpdated'));
+    showToast(`Đã thêm ${product.name} vào giỏ!`);
+  };
+
+  const categoriesList = ['all', 'Cà phê', 'Trà', 'Sinh tố', 'Nước ép'];
+
+  return (
+    <div className="cafe-app-container animate__animated animate__fadeIn">
+      {/* 1. Header & Table Context */}
+      <header className="cafe-header-wrapper d-flex justify-content-between align-items-start">
+        <div>
+          <h1 className="cafe-brand-title">CaféSync</h1>
+          <p className="cafe-greeting-text">
+            {userName ? `Chào ${getShortName()}, bạn muốn uống gì hôm nay?` : 'Xin chào, bạn muốn uống gì hôm nay?'}
+          </p>
+          {tableNumber && (
+            <div className="cafe-table-chip">
+              <i className="bi bi-geo-alt-fill text-muted"></i>
+              <span>Đang gọi món tại Bàn {tableNumber}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="d-flex gap-2 align-items-center">
+          {(userName || localStorage.getItem('lastOrderDBId')) && (
+            <button
+              type="button"
+              className="cafe-header-action-btn"
+              onClick={handleStatusClick}
+              aria-label="Theo dõi đơn hàng"
+            >
+              <i className="bi bi-clock-history fs-5"></i>
+            </button>
+          )}
+          <button
+            type="button"
+            className="cafe-header-action-btn"
+            onClick={userName ? handleLogout : () => navigate('/login')}
+            aria-label={userName ? "Đăng xuất" : "Đăng nhập"}
+          >
+            <i className={`bi ${userName ? 'bi-box-arrow-right text-danger' : 'bi-person'} fs-5`}></i>
+          </button>
+        </div>
+      </header>
+
+      {/* 2. Search */}
+      <div className="cafe-search-container">
+        <div className="cafe-search-box">
+          <i className="bi bi-search"></i>
+          <input
+            type="text"
+            className="cafe-search-input"
+            value={searchTerm}
+            placeholder="Tìm món, topping hoặc danh mục..."
+            aria-label="Tìm món ngon"
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              className="btn btn-sm text-muted p-0 border-0"
+              onClick={() => setSearchTerm('')}
+              aria-label="Xóa tìm kiếm"
+            >
+              <i className="bi bi-x-circle-fill"></i>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 3. Category Navigation Chips */}
+      <nav className="cafe-category-bar" aria-label="Danh mục thực đơn">
+        {categoriesList.map(cat => (
+          <button
+            key={cat}
+            type="button"
+            onClick={() => { setCategory(cat); setIsPersonalized(false); }}
+            className={`cafe-category-chip ${category === cat && !isPersonalized ? 'active' : ''}`}
+          >
+            {cat === 'all' ? 'Tất cả' : cat}
+          </button>
+        ))}
+      </nav>
+
+      {/* 4. Layer 1 Recommendation Section (Rule-based Time-slot Popularity) */}
+      {(!isPersonalized && category === 'all' && !searchTerm) && (
+        <SlotRecommendationSection onAddToCart={addToCart} />
+      )}
+
+      {/* 5. Login Personalization CTA Card */}
+      {(!isPersonalized && category === 'all' && !searchTerm) && (
+        <LoginPersonalizationCard isLoggedIn={!!userName} />
+      )}
+
+      {/* 6. Personalized Sliders (Khi thành viên bật Gu riêng) */}
+      {isPersonalized && userName && recs.favorites?.length > 0 && (
+        <section className="mb-4 px-3 animate__animated animate__fadeIn">
+          <h5 className="cafe-section-title">
+            Món tủ của {getShortName()}
+          </h5>
+          <div className="d-flex gap-3 overflow-auto pb-2 scrollbar-hidden" style={{ scrollSnapType: 'x mandatory' }}>
+            {recs.favorites.map(p => (
+              <div
+                key={`fav-${p._id}`}
+                className="slot-rec-card"
+                style={{ flex: '0 0 170px', minWidth: '170px' }}
+                onClick={() => navigate(`/product/${p._id}`)}
+              >
+                <div className="slot-rec-img-wrapper" style={{ height: '100px' }}>
+                  <img
+                    src={p.image ? `${API_URL}/images/${p.image}` : FALLBACK_IMAGE}
+                    className="slot-rec-img"
+                    alt={p.name}
+                    loading="lazy"
+                    onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = FALLBACK_IMAGE; }}
+                  />
+                </div>
+                <div className="p-2 text-center">
+                  <h6 className="cafe-product-name mb-1" style={{ fontSize: '0.82rem', minHeight: 'auto' }}>{p.name}</h6>
+                  <span className="cafe-product-price" style={{ fontSize: '0.85rem' }}>{p.price.toLocaleString()}đ</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* 7. Main Menu Section */}
+      <section className="cafe-menu-section" aria-label="Thực đơn chính">
+        <h5 className="cafe-section-title">
+          {isPersonalized ? "Gợi ý thêm cho bạn" : "Thực đơn chính"}
+        </h5>
+
+        {loading ? (
+          <div className="cafe-product-grid">
+            {[1, 2, 3, 4].map(idx => (
+              <div key={`skel-${idx}`} className="cafe-product-card" style={{ height: '240px' }}>
+                <div className="skeleton-pulse" style={{ height: '135px' }}></div>
+                <div className="p-3">
+                  <div className="skeleton-pulse mb-2" style={{ height: '12px', width: '40%', borderRadius: '4px' }}></div>
+                  <div className="skeleton-pulse mb-3" style={{ height: '14px', width: '80%', borderRadius: '4px' }}></div>
+                  <div className="d-flex justify-content-between align-items-center mt-3">
+                    <div className="skeleton-pulse" style={{ height: '16px', width: '35%', borderRadius: '4px' }}></div>
+                    <div className="skeleton-pulse" style={{ width: '34px', height: '34px', borderRadius: '10px' }}></div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          (() => {
+            const filteredProducts = products
+              .filter(p => {
+                const nameNormalized = removeAccents(p.name.toLowerCase());
+                const searchNormalized = removeAccents(searchTerm.toLowerCase());
+                return nameNormalized.includes(searchNormalized);
+              })
+              .filter(p => {
+                if (!isPersonalized) return true;
+                const isFav = favorites.some(f => f._id === p._id);
+                return isFav || p.price > 45000;
+              });
+
+            if (filteredProducts.length === 0) {
+              return (
+                <EmptyState
+                  icon="bi-search"
+                  title="Không tìm thấy món"
+                  description="Không tìm thấy món phù hợp với từ khóa tìm kiếm của bạn. Hãy thử tìm theo danh mục khác nhé!"
+                />
+              );
+            }
+
+            return (
+              <div className="cafe-product-grid">
+                {filteredProducts.map(p => {
+                  const isFav = favorites.some(f => f._id === p._id);
+                  return (
+                    <ProductCard
+                      key={p._id}
+                      product={p}
+                      isFavorite={isFav}
+                      onToggleFavorite={() => toggleFavorite(null, p)}
+                      onAdd={() => addToCart(null, p)}
+                    />
+                  );
+                })}
+              </div>
+            );
+          })()
+        )}
+      </section>
+
+      {/* 8. Unified Bottom Navigation */}
+      <BottomNav />
+    </div>
+  );
 };
 
 export default Home;

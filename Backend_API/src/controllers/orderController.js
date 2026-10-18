@@ -13,6 +13,7 @@ const createOrder = async (req, res) => {
 
     const finalOrderID = orderID || `CFS${Math.floor(Math.random() * 900000 + 100000)}`;
     const Table = require('../models/Table');
+
     const isPOSOrder = req.body.source === 'pos' && isStaff(req);
     if (req.body.source === 'pos' && !isStaff(req)) {
       return res.status(403).json({ message: 'Chỉ nhân viên mới được tạo đơn từ hệ thống POS.' });
@@ -84,11 +85,29 @@ const createOrder = async (req, res) => {
       }
     }
 
+    const mongoose = require('mongoose');
+    const sanitizedItems = Array.isArray(items) ? items.map(item => {
+      const itemObj = { ...item };
+      if (itemObj.id_product !== undefined && itemObj.id_product !== null) {
+        if (typeof itemObj.id_product === 'string') {
+          const trimmed = itemObj.id_product.trim();
+          if (trimmed && mongoose.Types.ObjectId.isValid(trimmed)) {
+            itemObj.id_product = trimmed;
+          } else {
+            delete itemObj.id_product;
+          }
+        } else if (!mongoose.Types.ObjectId.isValid(itemObj.id_product)) {
+          delete itemObj.id_product;
+        }
+      }
+      return itemObj;
+    }) : items;
+
     // --- TRƯỜNG HỢP 1: THANH TOÁN TIỀN MẶT ---
     if (paymentMethod === "Tiền mặt") {
       const newOrder = await Order.create({
         orderID: finalOrderID,
-        items,
+        items: sanitizedItems,
         totalPrice,
         location: finalLocation,
         tableNumber: validatedTableNumber,
@@ -142,7 +161,7 @@ const createOrder = async (req, res) => {
 
       const pendingOrder = await Order.create({
         orderID: finalOrderID,
-        items,
+        items: sanitizedItems,
         totalPrice,
         location: finalLocation,
         tableNumber: validatedTableNumber,
@@ -236,17 +255,89 @@ const getOrdersByEmail = async (req, res) => {
 
     return res.status(200).json(orders);
   } catch (err) {
+    return res.status(500).json({ message: "Lỗi lấy lịch sử!", error: err.message });
   }
 };
 
-// 📌 4. Lấy chi tiết đơn theo ID
+/**
+ * DTO an toàn cho Guest / Customer tracking:
+ * Chỉ trả các trường cần thiết để hiển thị tiến độ và tóm tắt món.
+ * Tuyệt đối không trả: customerEmail, customerName, payosOrderCode,
+ * payment gateway metadata, staff metadata, internal audit/DB fields.
+ */
+function formatGuestOrderTrackingDto(order) {
+  if (!order) return null;
+  const doc = order.toObject ? order.toObject() : order;
+  return {
+    _id: doc._id,
+    orderID: doc.orderID,
+    status: doc.status,
+    paymentStatus: doc.paymentStatus,
+    paymentMethod: doc.paymentMethod,
+    items: (doc.items || []).map(item => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+      options: {
+        size: item.options?.size,
+        sugar: item.options?.sugar,
+        ice: item.options?.ice,
+        toppings: item.options?.toppings || []
+      },
+      note: item.note || ""
+    })),
+    totalPrice: doc.totalPrice,
+    location: doc.location,
+    tableNumber: doc.tableNumber,
+    createdAt: doc.createdAt
+  };
+}
+
+// 📌 4. Lấy chi tiết đơn theo ID (Staff nhận toàn bộ document; Guest/Customer nhận projection an toàn)
 const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const { id } = req.params;
+    let order = null;
+    if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
+      order = await Order.findById(id);
+    } else if (id) {
+      order = await Order.findOne({ orderID: id });
+    }
+
     if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
-    res.json(order);
+
+    // Nếu là nhân viên hợp lệ (Admin/POS/KDS), trả về toàn bộ dữ liệu nội bộ
+    if (isStaff(req)) {
+      return res.json(order);
+    }
+
+    // Nếu là khách / guest tracking, trả projection DTO an toàn
+    return res.json(formatGuestOrderTrackingDto(order));
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+// 📌 4.1. Endpoint chuyên biệt cho Guest / Customer tracking: GET /api/orders/track/:id
+const trackOrderById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ message: "Mã đơn hàng không hợp lệ" });
+    }
+
+    let order = null;
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      order = await Order.findById(id);
+    } else {
+      order = await Order.findOne({ orderID: id });
+    }
+
+    if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+
+    return res.status(200).json(formatGuestOrderTrackingDto(order));
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -373,6 +464,8 @@ module.exports = {
   getOrders,
   getOrdersByEmail,
   getOrderById,
+  trackOrderById,
+  formatGuestOrderTrackingDto,
   updateOrderStatus,
   deleteOrder,
   cancelOrder,

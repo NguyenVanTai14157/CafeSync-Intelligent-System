@@ -5,3 +5,16 @@ build/
 .DS_Store
 .vite/
 .local-data/
+
+# Runtime logs
+*.log
+log.txt
+
+# Test and coverage output
+coverage/
+
+# Local editor and temporary files
+.vscode/
+.idea/
+*.swp
+*.swo

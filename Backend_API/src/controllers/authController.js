@@ -155,3 +155,46 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({ message: "Lỗi máy chủ nội bộ", error: err.message });
   }
 };
+
+// Đăng nhập dành cho Customer Web (/api/auth/login-custom)
+exports.loginCustom = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "Vui lòng nhập đầy đủ email và mật khẩu!" });
+    }
+
+    const user = await User.findOne({ $or: [{ email }, { username: email }] });
+    if (!user) return res.status(400).json({ message: "Tài khoản không tồn tại!" });
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) return res.status(400).json({ message: "Mật khẩu chưa đúng rồi!" });
+
+    // RBAC: Chỉ cho phép tài khoản role 'customer' đăng nhập Customer Web
+    const { isStaffRole } = require("../utils/orderWorkflow");
+    if (user.role !== "customer" || isStaffRole(user.role)) {
+      return res.status(403).json({
+        message: "Tài khoản nhân viên vui lòng đăng nhập tại hệ thống Admin/POS."
+      });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, role: user.role, email: user.email },
+      process.env.JWT_SECRET || "CAFE_SYNC_SECRET_KEY",
+      { expiresIn: "1d" }
+    );
+
+    return res.status(200).json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    console.error("Lỗi login-custom:", error);
+    return res.status(500).json({ message: "Lỗi máy chủ khi đăng nhập." });
+  }
+};

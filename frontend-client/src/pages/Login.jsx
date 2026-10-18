@@ -5,6 +5,8 @@ import Swal from 'sweetalert2'; // Import thư viện thông báo xịn
 import API_URL from '../config';
 import '../assets/css/auth.css';
 
+import { clearCustomerAuth } from '../utils/authGuard';
+
 const Login = () => {
     // 1. Quản lý trạng thái Tab (Sign In / Sign Up)
     const [isLoginTab, setIsLoginTab] = useState(true);
@@ -38,12 +40,25 @@ const Login = () => {
     };
 
     const handleSocialSuccess = (data) => {
+        const userRole = data?.user?.role;
+        if (userRole && userRole !== 'customer') {
+            clearCustomerAuth();
+            Swal.fire({
+                icon: 'error',
+                title: 'Truy cập bị từ chối',
+                text: 'Tài khoản nhân viên không sử dụng Customer Web. Vui lòng đăng nhập tại hệ thống Admin/POS.',
+                confirmButtonColor: '#826644'
+            });
+            return;
+        }
+
         if (data.token) {
             localStorage.removeItem('lastOrderDBId');
             localStorage.removeItem('cart');
             localStorage.setItem('userToken', data.token);
             localStorage.setItem('userName', data.user.name);
             localStorage.setItem('userEmail', data.user.email);
+            localStorage.setItem('userRole', userRole || 'customer');
 
             const friendlyName = getFirstName(data.user.name);
             Swal.fire({
@@ -68,16 +83,40 @@ const Login = () => {
         const tokenParam = queryParams.get('token');
         const nameParam = queryParams.get('name');
         const emailParam = queryParams.get('email');
+        const roleParam = queryParams.get('role');
         const errorParam = queryParams.get('error');
+
+        if (errorParam === 'staff_account_not_allowed') {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            clearCustomerAuth();
+            Swal.fire({
+                icon: 'error',
+                title: 'Truy cập bị từ chối',
+                text: 'Tài khoản nhân viên không sử dụng Customer Web. Vui lòng đăng nhập tại hệ thống Admin/POS.',
+                confirmButtonColor: '#826644'
+            });
+            return;
+        }
 
         if (tokenParam && nameParam && emailParam) {
             // Xóa sạch query parameters trên URL để bảo mật
             window.history.replaceState({}, document.title, window.location.pathname);
             
+            if (roleParam && roleParam !== 'customer') {
+                clearCustomerAuth();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Truy cập bị từ chối',
+                    text: 'Tài khoản nhân viên không sử dụng Customer Web. Vui lòng đăng nhập tại hệ thống Admin/POS.',
+                    confirmButtonColor: '#826644'
+                });
+                return;
+            }
+
             // Đăng nhập thành công
             handleSocialSuccess({
                 token: tokenParam,
-                user: { name: nameParam, email: emailParam }
+                user: { name: nameParam, email: emailParam, role: roleParam || 'customer' }
             });
         } else if (errorParam) {
             const detailsParam = queryParams.get('details');
@@ -99,14 +138,28 @@ const Login = () => {
         e.preventDefault();
         try {
             const res = await axios.post(`${AUTH_API_URL}/login-custom`, loginData);
+            const userRole = res.data?.user?.role;
+
+            if (userRole !== 'customer') {
+                clearCustomerAuth();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Truy cập bị từ chối',
+                    text: 'Tài khoản nhân viên không sử dụng Customer Web. Vui lòng đăng nhập tại hệ thống Admin/POS.',
+                    confirmButtonColor: '#826644'
+                });
+                return;
+            }
+
             if (res.data.token) {
                 // XÓA DẤU VẾT KHÁCH VÃN LAI TRƯỚC KHI LƯU USER MỚI
                 localStorage.removeItem('lastOrderDBId');
-                localStorage.removeItem('cart'); // Nếu muốn giỏ hàng cũng phải sạch khi đổi user
+                localStorage.removeItem('cart');
 
                 localStorage.setItem('userToken', res.data.token);
                 localStorage.setItem('userName', res.data.user.name);
                 localStorage.setItem('userEmail', res.data.user.email);
+                localStorage.setItem('userRole', userRole);
 
                 const friendlyName = getFirstName(res.data.user.name);
 
@@ -126,6 +179,17 @@ const Login = () => {
                 }, 2000);
             }
         } catch (error) {
+            clearCustomerAuth();
+            if (error.response?.status === 403) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Truy cập bị từ chối',
+                    text: 'Tài khoản nhân viên không sử dụng Customer Web. Vui lòng đăng nhập tại hệ thống Admin/POS.',
+                    confirmButtonColor: '#826644'
+                });
+                return;
+            }
+
             Swal.fire({
                 icon: 'error',
                 title: 'Lỗi đăng nhập',
@@ -169,7 +233,7 @@ const Login = () => {
         e.preventDefault();
         try {
             Swal.showLoading();
-            const res = await axios.post(`${AUTH_API_URL}/forgot-password`, { email: forgotEmail });
+            await axios.post(`${AUTH_API_URL}/forgot-password`, { email: forgotEmail });
             Swal.close();
             
             Swal.fire({
@@ -199,9 +263,13 @@ const Login = () => {
 
             <div className="auth-container animate__animated animate__fadeIn">
                 <img
-                    src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&q=80"
+                    src="/auth-hero.jpg"
                     alt="CaféSync Coffee"
                     className="auth-header-img"
+                    onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/fallback-product.svg';
+                    }}
                 />
 
                 <div className="auth-form-content shadow-lg">

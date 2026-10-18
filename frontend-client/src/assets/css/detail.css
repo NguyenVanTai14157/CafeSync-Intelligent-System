@@ -1,474 +1,456 @@
-:root {
-    --cafe-bg: #fdfaf2;
-    --umber-dark: #5c4033;
-    --text-muted: #a6948a;
-    --btn-dark: #1e1e1e;
-}
+/* ==========================================================================
+   WARM MODERN CAFÉ - PRODUCT DETAIL & CUSTOMIZATION STYLES
+   ========================================================================== */
 
-body {
-    background-color: var(--cafe-bg);
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
-}
-
-/* Loading State */
-.loading-state {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.cafe-detail-page {
+    background-color: var(--cafe-cream, #F7F1E8);
     min-height: 100vh;
-    font-weight: bold;
-    color: var(--umber-dark);
-    font-size: 1.2rem;
-}
-
-/* Main Container */
-.detail-page-premium {
-    max-width: 500px;
-    margin: 0 auto;
-    background: #fff;
-    min-height: 100vh;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+    padding-bottom: 96px;
     position: relative;
+    color: var(--cafe-text, #34251D);
 }
 
-/* 1. Hero Image & Floating Header controls */
-.hero-image-wrapper {
+/* --- Hero Image & Floating Controls --- */
+.cafe-detail-hero {
     position: relative;
     width: 100%;
-    height: 280px;
-    background: #fbf9f4;
+    height: 320px;
+    background-color: var(--cafe-surface-soft, #F1E6D6);
     overflow: hidden;
 }
 
-.product-hero-image-new {
+.cafe-detail-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
-}
-
-/* Floating Navigation Buttons */
-.floating-back-btn,
-.floating-action-btn {
-    position: absolute;
-    width: 42px;
-    height: 42px;
-    background: rgba(255, 255, 255, 0.9);
-    border: none;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #1e1e1e;
-    font-size: 1.1rem;
-    cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    transition: 0.2s ease;
-    z-index: 100;
-}
-
-.floating-back-btn:active,
-.floating-action-btn:active {
-    transform: scale(0.9);
-}
-
-.floating-back-btn {
-    top: 20px;
-    left: 20px;
-}
-
-.floating-right-actions {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    display: flex;
-    align-items: center;
-    z-index: 100;
-}
-
-.cart-badge-dot-new {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    background-color: #ff4d4d;
-    color: white;
-    font-size: 0.7rem;
-    font-weight: 700;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1.5px solid white;
-}
-
-/* Popular Badge Overlay */
-.popular-badge-float {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    background: var(--btn-dark);
-    color: white;
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 6px 14px;
-    border-radius: 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    z-index: 10;
-}
-
-/* 2. Detail content sheet */
-.detail-content-sheet-new {
-    padding: 30px 24px 140px;
-    background: white;
-}
-
-.name-price-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 15px;
-    margin-bottom: 12px;
-}
-
-.premium-item-name-new {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.8rem;
-    font-weight: 800;
-    color: var(--umber-dark);
-    margin: 0;
-    line-height: 1.2;
-}
-
-.premium-item-price-new {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: var(--umber-dark);
-    white-space: nowrap;
-}
-
-.premium-description-new {
-    color: var(--text-muted);
-    font-size: 0.95rem;
-    line-height: 1.5;
-    margin: 0 0 16px 0;
-}
-
-/* Calorie Badge */
-.calorie-badge {
-    display: inline-flex;
-    align-items: center;
-    background: #f1ede8;
-    color: #555;
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 5px 12px;
-    border-radius: 6px;
-    margin-bottom: 25px;
-}
-
-.calorie-badge i {
-    font-size: 0.85rem;
-}
-
-/* Section Title */
-.premium-section-title {
-    font-size: 0.8rem;
-    font-weight: 800;
-    color: #222;
-    text-transform: uppercase;
-    margin-bottom: 12px;
-    letter-spacing: 0.5px;
     display: block;
 }
 
-/* Option Sections */
-.option-section {
-    margin-bottom: 24px;
-}
-
-/* Pill Selectors (Outlined/Filled) */
-.pill-selector-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-.pill-selector-item {
-    background: transparent;
-    border: 1px solid #e0e0e0;
-    border-radius: 20px;
-    padding: 8px 20px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #444;
-    cursor: pointer;
-    transition: 0.2s ease;
-    outline: none;
-}
-
-.pill-selector-item:hover {
-    border-color: #bbb;
-}
-
-.pill-selector-item.active {
-    background: var(--btn-dark);
-    color: white;
-    border-color: var(--btn-dark);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-/* Topping Checkbox List */
-.topping-checkbox-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin-top: 10px;
-}
-
-.topping-checkbox-row {
-    display: flex;
-    justify-content: space-between;
+.cafe-hero-btn {
+    position: absolute;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--cafe-border, #E7DDD0);
+    color: var(--cafe-brown-dark, #3E281B);
+    display: inline-flex;
     align-items: center;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: #fafaf8;
+    justify-content: center;
+    font-size: 1.1rem;
     cursor: pointer;
-    transition: 0.2s ease;
-    border: 1px solid transparent;
+    box-shadow: 0 4px 12px rgba(62, 40, 27, 0.1);
+    backdrop-filter: blur(8px);
+    transition: transform 0.15s ease, background-color 0.15s ease;
+    z-index: 10;
 }
 
-.topping-checkbox-row:hover {
-    background: #f6f6f2;
+.cafe-hero-btn:active {
+    transform: scale(0.94);
 }
 
-.topping-checkbox-icon {
+.cafe-hero-btn-back {
+    top: 16px;
+    left: 16px;
+}
+
+.cafe-hero-actions {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+}
+
+.cafe-hero-actions .cafe-hero-btn {
+    position: relative;
+}
+
+.cafe-hero-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: var(--cafe-caramel, #B9783E);
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 0 4px;
+    border: 2px solid #ffffff;
 }
 
-.topping-checkbox-icon i.bi-check-square-fill {
-    color: var(--btn-dark);
-}
-
-.topping-checkbox-icon i.bi-square {
-    color: #bbb;
-}
-
-.topping-name {
-    font-size: 0.95rem;
+.cafe-hero-tag {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    background: rgba(62, 40, 27, 0.85);
+    color: #ffffff;
+    font-size: 0.72rem;
     font-weight: 600;
-    color: #333;
+    padding: 4px 12px;
+    border-radius: 20px;
+    backdrop-filter: blur(6px);
+    letter-spacing: 0.3px;
 }
 
-.topping-price {
-    font-size: 0.9rem;
+/* --- Container & Content Sheet --- */
+.cafe-detail-container {
+    max-width: 600px;
+    margin: -24px auto 0;
+    padding: 0 16px;
+    position: relative;
+    z-index: 5;
+}
+
+.cafe-detail-sheet {
+    background: var(--cafe-surface, #ffffff);
+    border: 1px solid var(--cafe-border, #E7DDD0);
+    border-radius: 24px;
+    padding: 24px 20px;
+    box-shadow: 0 8px 24px rgba(62, 40, 27, 0.05);
+}
+
+/* --- Header Block --- */
+.cafe-detail-header-block {
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--cafe-border, #E7DDD0);
+    margin-bottom: 20px;
+}
+
+.cafe-detail-cat-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--cafe-caramel, #B9783E);
+    background: rgba(185, 120, 62, 0.1);
+    padding: 3px 10px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.cafe-detail-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.cafe-detail-name {
+    font-size: 1.35rem;
     font-weight: 700;
-    color: #555;
+    color: var(--cafe-brown-dark, #3E281B);
+    margin: 0;
+    line-height: 1.3;
 }
 
-/* Note Input */
-.premium-note-input {
+.cafe-detail-price {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--cafe-caramel, #B9783E);
+    white-space: nowrap;
+}
+
+.cafe-detail-desc {
+    color: var(--cafe-text-muted, #8A7A6B);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin: 8px 0 0 0;
+}
+
+.cafe-calorie-pill {
+    display: inline-flex;
+    align-items: center;
+    background: var(--cafe-surface-soft, #F1E6D6);
+    color: var(--cafe-brown, #6F5035);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 14px;
+}
+
+.cafe-habit-pill {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(113, 130, 102, 0.12);
+    color: var(--cafe-success, #718266);
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 14px;
+}
+
+/* --- Options Section --- */
+.cafe-option-group {
+    margin-bottom: 22px;
+}
+
+.cafe-option-label {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--cafe-brown-dark, #3E281B);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.cafe-habit-tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--cafe-caramel, #B9783E);
+    background: rgba(185, 120, 62, 0.1);
+    padding: 2px 8px;
+    border-radius: 10px;
+}
+
+.cafe-pill-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.cafe-pill-btn {
+    min-height: 44px;
+    padding: 8px 16px;
+    background: var(--cafe-surface, #ffffff);
+    border: 1px solid var(--cafe-border, #E7DDD0);
+    border-radius: 12px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--cafe-text, #34251D);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.cafe-pill-btn:hover {
+    border-color: var(--cafe-caramel-light, #D9A66A);
+}
+
+.cafe-pill-btn.active {
+    background: var(--cafe-brown-dark, #3E281B);
+    color: #ffffff;
+    border-color: var(--cafe-brown-dark, #3E281B);
+    font-weight: 600;
+    box-shadow: 0 4px 10px rgba(62, 40, 27, 0.15);
+}
+
+.cafe-pill-btn.is-habit {
+    border-style: dashed;
+    border-color: var(--cafe-caramel, #B9783E);
+}
+
+/* --- Topping List --- */
+.cafe-topping-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cafe-topping-row {
+    min-height: 48px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: var(--cafe-surface-soft, #F1E6D6);
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+
+.cafe-topping-row:hover {
+    background: #ebe0cf;
+}
+
+.cafe-topping-row.selected {
+    background: #ffffff;
+    border-color: var(--cafe-caramel, #B9783E);
+    box-shadow: 0 2px 8px rgba(185, 120, 62, 0.1);
+}
+
+.cafe-topping-row.is-habit {
+    border-left: 3px solid var(--cafe-caramel, #B9783E);
+}
+
+.cafe-topping-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--cafe-text, #34251D);
+}
+
+.cafe-topping-price {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--cafe-caramel, #B9783E);
+}
+
+.text-caramel {
+    color: var(--cafe-caramel, #B9783E) !important;
+}
+
+/* --- Special Note --- */
+.cafe-note-textarea {
     width: 100%;
-    box-sizing: border-box;
-    background: #fafaf8;
-    border: 1px solid #e5e5e0;
+    background: var(--cafe-surface-soft, #F1E6D6);
+    border: 1px solid var(--cafe-border, #E7DDD0);
     border-radius: 12px;
     padding: 12px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: var(--umber-dark);
-    min-height: 70px;
+    font-size: 0.88rem;
+    color: var(--cafe-text, #34251D);
     resize: none;
     outline: none;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease;
 }
 
-.premium-note-input::placeholder {
-    color: #bbb;
+.cafe-note-textarea:focus {
+    border-color: var(--cafe-caramel, #B9783E);
+    background: #ffffff;
 }
 
-.premium-note-input:focus {
-    border-color: #ccc;
+.cafe-note-textarea::placeholder {
+    color: var(--cafe-text-muted, #8A7A6B);
 }
 
-/* 3. Footer Container (Single Row Style) */
-.premium-footer-container-new {
+/* --- Sticky Bottom Order Bar --- */
+.cafe-detail-footer {
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: white;
-    padding: 16px 24px 26px;
-    border-radius: 24px 24px 0 0;
-    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
-    z-index: 1000;
-    max-width: 500px;
+    background: var(--cafe-surface, #ffffff);
+    border-top: 1px solid var(--cafe-border, #E7DDD0);
+    padding: 12px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    box-shadow: 0 -8px 24px rgba(62, 40, 27, 0.08);
+    z-index: 100;
+}
+
+.cafe-detail-footer-inner {
+    max-width: 600px;
     margin: 0 auto;
-}
-
-.footer-layout-new {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px;
 }
 
-/* Stepper inside footer */
-.premium-quantity-stepper-new {
-    display: flex;
+.cafe-stepper {
+    display: inline-flex;
     align-items: center;
-    gap: 14px;
-    background: #f7f6f2;
-    padding: 8px 16px;
-    border-radius: 25px;
-    border: 1px solid #eaeaea;
+    background: var(--cafe-surface-soft, #F1E6D6);
+    border-radius: 12px;
+    border: 1px solid var(--cafe-border, #E7DDD0);
+    height: 48px;
+    padding: 2px 6px;
 }
 
-.premium-quantity-stepper-new button {
+.cafe-stepper-btn {
+    width: 40px;
+    height: 40px;
     border: none;
     background: transparent;
-    font-size: 1.4rem;
-    color: #1e1e1e;
+    color: var(--cafe-brown-dark, #3E281B);
+    font-size: 1.25rem;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+}
+
+.cafe-stepper-btn:hover {
+    background: rgba(62, 40, 27, 0.08);
+}
+
+.cafe-stepper-val {
+    min-width: 28px;
+    text-align: center;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--cafe-brown-dark, #3E281B);
+}
+
+.cafe-btn-add-cart {
+    flex: 1;
+    height: 48px;
+    background: var(--cafe-brown-dark, #3E281B);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 700;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 0;
-    width: 24px;
-    height: 24px;
-    outline: none;
+    transition: background-color 0.15s ease, transform 0.1s ease;
+    box-shadow: 0 4px 12px rgba(62, 40, 27, 0.2);
 }
 
-.quantity-num-new {
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #1e1e1e;
-    min-width: 20px;
-    text-align: center;
+.cafe-btn-add-cart:hover {
+    background: var(--cafe-brown, #6F5035);
 }
 
-/* Add to Cart button inside footer */
-.btn-add-order-now-new {
-    flex: 1;
-    background: var(--btn-dark);
-    color: white;
-    border: none;
-    border-radius: 25px;
-    padding: 14px 20px;
-    font-weight: 700;
-    font-size: 1rem;
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-    transition: 0.2s ease;
-    cursor: pointer;
-    text-align: center;
-}
-
-.btn-add-order-now-new:active {
+.cafe-btn-add-cart:active {
     transform: scale(0.98);
 }
 
-.habit-title-badge {
-    display: inline-flex;
-    align-items: center;
-    background: rgba(217, 160, 91, 0.12);
-    color: #b8860b;
-    font-size: 0.72rem;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 6px;
-    letter-spacing: 0.2px;
-}
-
-/* Media query for tablet and desktop viewports */
+/* --- Responsive Tablet & Desktop (>= 768px) --- */
 @media (min-width: 768px) {
-    .detail-page-premium {
-        max-width: 1050px;
-        margin: 40px auto;
-        display: flex;
-        gap: 40px;
+    .cafe-detail-page {
+        padding-top: 40px;
+        padding-bottom: 60px;
+        max-width: 1040px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 420px 1fr;
+        gap: 32px;
+        align-items: start;
         background: transparent;
-        box-shadow: none;
-        min-height: auto;
-        padding: 0 20px;
-        align-items: flex-start;
     }
 
-    .hero-image-wrapper {
-        flex: 1;
+    .cafe-detail-hero {
         position: sticky;
-        top: 30px;
+        top: 24px;
         height: 520px;
         border-radius: 24px;
-        box-shadow: 0 15px 35px rgba(130, 102, 68, 0.08);
-        overflow: hidden;
+        box-shadow: 0 12px 32px rgba(62, 40, 27, 0.08);
+        border: 1px solid var(--cafe-border, #E7DDD0);
     }
 
-    .product-hero-image-new {
-        height: 100%;
-        width: 100%;
-        object-fit: cover;
-        transition: transform 0.5s ease;
-    }
-
-    .hero-image-wrapper:hover .product-hero-image-new {
-        transform: scale(1.05);
-    }
-
-    .detail-info-wrapper-new {
-        flex: 1.2;
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        width: 100%;
-    }
-
-    .detail-content-sheet-new {
-        background: white;
-        border-radius: 24px;
-        padding: 40px;
-        box-shadow: 0 15px 35px rgba(130, 102, 68, 0.05);
-    }
-
-    /* Remove bottom padding since footer is inline on desktop */
-    .detail-content-sheet-new .option-section.mb-5.pb-5 {
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-    }
-
-    .premium-footer-container-new {
-        position: static;
+    .cafe-detail-container {
+        margin: 0;
+        padding: 0;
         max-width: none;
-        padding: 24px 40px;
-        background: white;
-        box-shadow: 0 15px 35px rgba(130, 102, 68, 0.05);
-        border-radius: 24px;
+    }
+
+    .cafe-detail-sheet {
+        padding: 32px 28px;
+    }
+
+    .cafe-detail-footer {
+        position: static;
+        padding: 20px 0 0 0;
+        border-top: none;
+        background: transparent;
+        box-shadow: none;
+    }
+
+    .cafe-detail-footer-inner {
+        max-width: none;
         margin: 0;
     }
-
-    .footer-layout-new {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-    }
-
-    .btn-add-order-now-new {
-        padding: 16px 28px;
-        font-size: 1.1rem;
-    }
-
-    .btn-add-order-now-new:hover {
-        background: var(--umber-dark);
-        box-shadow: 0 8px 25px rgba(92, 64, 51, 0.25);
-    }
-}
-
-/* Đường viền nét đứt màu vàng cát/gold cho các nút thói quen quen thuộc */
-.pill-selector-item.habit-item {
-    border: 1.5px dashed #b8860b !important;
-}
-
-.topping-checkbox-row.habit-item {
-    border: 1.5px dashed #b8860b !important;
 }

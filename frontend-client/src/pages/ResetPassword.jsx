@@ -113,9 +113,13 @@ const ResetPassword = () => {
 
             <div className="auth-container animate__animated animate__fadeIn">
                 <img
-                    src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&q=80"
+                    src="/auth-hero.jpg"
                     alt="CaféSync Coffee Reset Password"
                     className="auth-header-img"
+                    onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/fallback-product.svg';
+                    }}
                 />
 
                 <div className="auth-form-content shadow-lg">

@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const { isStaff, nextStatus } = require('../utils/orderWorkflow');
+const { isValidTableNumber, verifyTableQrToken } = require('../utils/tableQr');
 const getPayOS = () => {
   const PayOS = require('@payos/node');
   return new PayOS(process.env.PAYOS_CLIENT_ID, process.env.PAYOS_API_KEY, process.env.PAYOS_CHECKSUM_KEY);
@@ -12,26 +13,104 @@ const createOrder = async (req, res) => {
 
     const finalOrderID = orderID || `CFS${Math.floor(Math.random() * 900000 + 100000)}`;
     const Table = require('../models/Table');
-    const paidPOS = paymentMethod === 'Tiền mặt' && req.body.source === 'pos' && req.body.paymentConfirmed === true;
+
+    const isPOSOrder = req.body.source === 'pos' && isStaff(req);
+    if (req.body.source === 'pos' && !isStaff(req)) {
+      return res.status(403).json({ message: 'Chỉ nhân viên mới được tạo đơn từ hệ thống POS.' });
+    }
+
+    let validatedTableNumber = null;
+    let finalLocation = "Mang đi";
+
+    if (isPOSOrder) {
+      if (tableNumber !== null && tableNumber !== undefined && tableNumber !== '') {
+        if (isValidTableNumber(tableNumber)) {
+          validatedTableNumber = Number(tableNumber);
+          finalLocation = `Bàn ${validatedTableNumber}`;
+        } else {
+          validatedTableNumber = null;
+          finalLocation = location || "Tại quầy";
+        }
+      } else {
+        validatedTableNumber = null;
+        finalLocation = location || "Tại quầy";
+      }
+    } else {
+      const rawTable = tableNumber;
+      if (rawTable !== null && rawTable !== undefined && rawTable !== '') {
+        if (!isValidTableNumber(rawTable)) {
+          return res.status(400).json({
+            message: `Số bàn không hợp lệ (${rawTable}). Bàn hợp lệ phải từ 1 đến 51.`
+          });
+        }
+
+        const normalizedTable = Number(rawTable);
+        const token = req.body.tableToken || req.headers['x-table-token'];
+
+        if (!token) {
+          return res.status(400).json({
+            message: 'Mã QR bàn bị thiếu hoặc không hợp lệ. Vui lòng quét lại mã QR tại bàn.'
+          });
+        }
+
+        const qrResult = verifyTableQrToken(token);
+        if (!qrResult.valid) {
+          const statusCode = qrResult.reason === 'CONFIG_ERROR' ? 500 : 400;
+          return res.status(statusCode).json({ message: qrResult.message });
+        }
+
+        if (qrResult.tableNumber !== normalizedTable) {
+          return res.status(400).json({
+            message: `Số bàn trong yêu cầu (${normalizedTable}) không khớp với mã QR bàn (${qrResult.tableNumber}). Vui lòng quét lại mã QR tại bàn.`
+          });
+        }
+
+        validatedTableNumber = normalizedTable;
+        finalLocation = `Bàn ${validatedTableNumber}`;
+      } else {
+        validatedTableNumber = null;
+        finalLocation = (location && !/bàn\s*\d+/i.test(location)) ? location : "Mang đi";
+      }
+    }
+
+    const paidPOS = paymentMethod === 'Tiền mặt' && isPOSOrder && req.body.paymentConfirmed === true;
     if (paidPOS && !isStaff(req)) return res.status(403).json({ message: 'Chỉ nhân viên được xác nhận thu tiền tại quầy' });
 
     // Cập nhật trạng thái bàn nếu có chọn bàn
-    if (tableNumber && paidPOS) {
-      const updatedTable = await Table.findOneAndUpdate({ tableNumber }, { status: 'Đang phục vụ' }, { new: true });
+    if (validatedTableNumber && paidPOS) {
+      const updatedTable = await Table.findOneAndUpdate({ tableNumber: validatedTableNumber }, { status: 'Đang phục vụ' }, { new: true });
       const io = req.app.get('io');
       if (io && updatedTable) {
         io.emit('table_updated', updatedTable.toObject());
       }
     }
 
+    const mongoose = require('mongoose');
+    const sanitizedItems = Array.isArray(items) ? items.map(item => {
+      const itemObj = { ...item };
+      if (itemObj.id_product !== undefined && itemObj.id_product !== null) {
+        if (typeof itemObj.id_product === 'string') {
+          const trimmed = itemObj.id_product.trim();
+          if (trimmed && mongoose.Types.ObjectId.isValid(trimmed)) {
+            itemObj.id_product = trimmed;
+          } else {
+            delete itemObj.id_product;
+          }
+        } else if (!mongoose.Types.ObjectId.isValid(itemObj.id_product)) {
+          delete itemObj.id_product;
+        }
+      }
+      return itemObj;
+    }) : items;
+
     // --- TRƯỜNG HỢP 1: THANH TOÁN TIỀN MẶT ---
     if (paymentMethod === "Tiền mặt") {
       const newOrder = await Order.create({
         orderID: finalOrderID,
-        items,
+        items: sanitizedItems,
         totalPrice,
-        location,
-        tableNumber: tableNumber || null,
+        location: finalLocation,
+        tableNumber: validatedTableNumber,
         paymentMethod: "Tiền mặt",
         customerEmail: customerEmail || "Guest",
         status: paidPOS ? 'Chờ pha chế' : 'Chờ thanh toán',
@@ -82,10 +161,10 @@ const createOrder = async (req, res) => {
 
       const pendingOrder = await Order.create({
         orderID: finalOrderID,
-        items,
+        items: sanitizedItems,
         totalPrice,
-        location,
-        tableNumber: tableNumber || null,
+        location: finalLocation,
+        tableNumber: validatedTableNumber,
         paymentMethod: "Chuyển khoản/Ví điện tử",
         customerEmail: customerEmail || "Guest",
         status: "Chờ thanh toán",
@@ -123,25 +202,142 @@ const getOrders = async (req, res) => {
   }
 };
 
-// 📌 3. Lấy lịch sử theo Email
+// 📌 3. Lấy lịch sử theo Email (Dành cho Customer Web)
 const getOrdersByEmail = async (req, res) => {
   try {
-    const identifier = req.params.email;
-    const orders = await Order.find({ customerEmail: identifier }).sort({ createdAt: -1 });
-    res.status(200).json(orders);
+    const rawEmail = req.params.email;
+    if (!rawEmail || typeof rawEmail !== 'string' || rawEmail.trim() === '') {
+      return res.status(400).json({ message: "Thiếu thông tin email!" });
+    }
+    const targetEmail = rawEmail.trim().toLowerCase();
+
+    // 1. Kiểm tra JWT: Không có Authorization header -> HTTP 401
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: "Vui lòng đăng nhập để xem lịch sử đơn hàng." });
+    }
+
+    const token = authHeader.split(' ')[1];
+    let decoded;
+    const jwt = require('jsonwebtoken');
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || 'CAFE_SYNC_SECRET_KEY');
+    } catch (tokenErr) {
+      return res.status(401).json({ message: "Token xác thực không hợp lệ." });
+    }
+
+    // 2. Kiểm tra role trong token: Staff/admin không được sử dụng endpoint lịch sử Customer Web
+    const { isStaffRole } = require('../utils/orderWorkflow');
+    if (!decoded.role || decoded.role !== 'customer' || isStaffRole(decoded.role)) {
+      return res.status(403).json({ message: "Tài khoản nhân viên không sử dụng chức năng lịch sử trên Customer Web." });
+    }
+
+    // 3. Customer chỉ được xem lịch sử của chính email trong token (so sánh case-insensitive, trimmed)
+    const tokenEmail = (decoded.email || '').trim().toLowerCase();
+    if (!tokenEmail || tokenEmail !== targetEmail) {
+      return res.status(403).json({ message: "Bạn chỉ có thể xem lịch sử đơn hàng của chính mình." });
+    }
+
+    // 4. Kiểm tra tài khoản đích trong DB: không phục vụ nếu email thuộc tài khoản staff/admin
+    const User = require('../models/User');
+    const targetUser = await User.findOne({ email: targetEmail }).select('role').lean();
+    if (targetUser && (targetUser.role !== 'customer' || isStaffRole(targetUser.role))) {
+      return res.status(403).json({ message: "Không thể xem lịch sử của tài khoản nhân viên trên Customer Web." });
+    }
+
+    // 5. Sau khi qua toàn bộ bước xác thực quyền hạn, mới truy vấn Order
+    const orders = await Order.find({
+      $or: [
+        { customerEmail: targetEmail },
+        { customerEmail: rawEmail.trim() }
+      ]
+    }).sort({ createdAt: -1 });
+
+    return res.status(200).json(orders);
   } catch (err) {
-    res.status(500).json({ message: "Lỗi lấy lịch sử!", error: err.message });
+    return res.status(500).json({ message: "Lỗi lấy lịch sử!", error: err.message });
   }
 };
 
-// 📌 4. Lấy chi tiết đơn theo ID
+/**
+ * DTO an toàn cho Guest / Customer tracking:
+ * Chỉ trả các trường cần thiết để hiển thị tiến độ và tóm tắt món.
+ * Tuyệt đối không trả: customerEmail, customerName, payosOrderCode,
+ * payment gateway metadata, staff metadata, internal audit/DB fields.
+ */
+function formatGuestOrderTrackingDto(order) {
+  if (!order) return null;
+  const doc = order.toObject ? order.toObject() : order;
+  return {
+    _id: doc._id,
+    orderID: doc.orderID,
+    status: doc.status,
+    paymentStatus: doc.paymentStatus,
+    paymentMethod: doc.paymentMethod,
+    items: (doc.items || []).map(item => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+      options: {
+        size: item.options?.size,
+        sugar: item.options?.sugar,
+        ice: item.options?.ice,
+        toppings: item.options?.toppings || []
+      },
+      note: item.note || ""
+    })),
+    totalPrice: doc.totalPrice,
+    location: doc.location,
+    tableNumber: doc.tableNumber,
+    createdAt: doc.createdAt
+  };
+}
+
+// 📌 4. Lấy chi tiết đơn theo ID (Staff nhận toàn bộ document; Guest/Customer nhận projection an toàn)
 const getOrderById = async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id);
+    const { id } = req.params;
+    let order = null;
+    if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
+      order = await Order.findById(id);
+    } else if (id) {
+      order = await Order.findOne({ orderID: id });
+    }
+
     if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
-    res.json(order);
+
+    // Nếu là nhân viên hợp lệ (Admin/POS/KDS), trả về toàn bộ dữ liệu nội bộ
+    if (isStaff(req)) {
+      return res.json(order);
+    }
+
+    // Nếu là khách / guest tracking, trả projection DTO an toàn
+    return res.json(formatGuestOrderTrackingDto(order));
   } catch (err) {
     res.status(500).json({ message: err.message });
+  }
+};
+
+// 📌 4.1. Endpoint chuyên biệt cho Guest / Customer tracking: GET /api/orders/track/:id
+const trackOrderById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id || typeof id !== 'string') {
+      return res.status(400).json({ message: "Mã đơn hàng không hợp lệ" });
+    }
+
+    let order = null;
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      order = await Order.findById(id);
+    } else {
+      order = await Order.findOne({ orderID: id });
+    }
+
+    if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+
+    return res.status(200).json(formatGuestOrderTrackingDto(order));
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
   }
 };
 
@@ -268,6 +464,8 @@ module.exports = {
   getOrders,
   getOrdersByEmail,
   getOrderById,
+  trackOrderById,
+  formatGuestOrderTrackingDto,
   updateOrderStatus,
   deleteOrder,
   cancelOrder,

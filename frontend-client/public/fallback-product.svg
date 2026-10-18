@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" width="400" height="300">
+  <rect width="100%" height="100%" fill="#F1E6D6"/>
+  <circle cx="200" cy="130" r="50" fill="#E7DDD0"/>
+  <path d="M180 120 h40 v25 c0 11 -9 20 -20 20 s-20 -9 -20 -20 z" fill="#6F5035"/>
+  <path d="M220 126 h8 c5 0 9 4 9 9 s-4 9 -9 9 h-8 z" fill="none" stroke="#6F5035" stroke-width="4"/>
+  <path d="M190 105 c0 -6 5 -10 5 -16" stroke="#B9783E" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M200 103 c0 -6 5 -10 5 -16" stroke="#B9783E" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <path d="M210 105 c0 -6 5 -10 5 -16" stroke="#B9783E" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <text x="200" y="210" text-anchor="middle" font-family="'Inter', -apple-system, sans-serif" font-size="16" font-weight="600" fill="#6F5035" letter-spacing="1">CaféSync</text>
+  <text x="200" y="230" text-anchor="middle" font-family="'Inter', -apple-system, sans-serif" font-size="12" fill="#8A7A6B">Hình ảnh đang cập nhật</text>
+</svg>

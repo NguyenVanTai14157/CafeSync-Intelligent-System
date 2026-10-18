@@ -19,11 +19,11 @@ const Chatbot = () => {
         const token = localStorage.getItem('userToken');
         const savedName = localStorage.getItem('userName');
 
-        let greeting = "Chào bạn! Mình là Syncie ☕. Hôm nay bạn muốn thưởng thức món gì nào?";
+        let greeting = "Chào bạn! Mình là trợ lý Syncie của CaféSync. Hôm nay bạn muốn thưởng thức món gì?";
 
         // Chỉ chào tên nếu có cả Token và Tên trong máy
         if (token && savedName) {
-            greeting = `Chào ${savedName}! Mình là Syncie ☕. Hôm nay bạn muốn thưởng thức món gì nào?`;
+            greeting = `Chào ${savedName}! Mình là trợ lý Syncie của CaféSync. Hôm nay bạn muốn thưởng thức món gì?`;
         }
 
         setMessages([{ role: 'assistant', content: greeting }]);
@@ -57,7 +57,7 @@ const Chatbot = () => {
                 content: res.data.reply,
                 products: res.data.products || []
             }]);
-        } catch (error) {
+        } catch {
             setMessages([...newMessages, { role: 'assistant', content: 'Syncie đang bận pha cà phê xíu, bạn đợi tí nha!' }]);
         } finally {
             setIsTyping(false);
@@ -109,11 +109,14 @@ const Chatbot = () => {
                                                         alt={product.name} 
                                                         className="rounded-3"
                                                         style={{ width: '45px', height: '45px', objectFit: 'cover' }}
-                                                        onError={(e) => e.target.src = 'https://placehold.co/100x100?text=Coffee'}
+                                                        onError={(e) => {
+                                                            e.currentTarget.onerror = null;
+                                                            e.currentTarget.src = '/fallback-product.svg';
+                                                        }}
                                                     />
                                                     <div className="ms-2 flex-grow-1 overflow-hidden" style={{ minWidth: 0 }}>
                                                         <h6 className="mb-0 fw-bold text-dark text-truncate" style={{ fontSize: '0.8rem' }}>{product.name}</h6>
-                                                        <span className="fw-bold" style={{ fontSize: '0.75rem', color: '#826644' }}>{product.price.toLocaleString()}đ</span>
+                                                        <span className="fw-bold" style={{ fontSize: '0.75rem', color: 'var(--cafe-caramel)' }}>{product.price.toLocaleString()}đ</span>
                                                     </div>
                                                     <button 
                                                         className="btn btn-sm rounded-pill px-3 py-1 ms-2 fw-bold text-nowrap"

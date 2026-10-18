@@ -3,12 +3,16 @@ const router = express.Router();
 const authController = require("../controllers/authController");
 const passport = require('../config/passport');
 const jwt = require('jsonwebtoken');
+const { isStaffRole } = require("../utils/orderWorkflow");
 
 // Cache lưu trữ kết quả trao đổi mã code (OAuth code) ngắn hạn để ngăn chặn lỗi trùng lặp request từ trình duyệt
 const codeCache = new Map();
 
 // Route login gốc của Admin
 router.post("/login", authController.login);
+
+// Route login dành riêng cho Customer Web
+router.post("/login-custom", authController.loginCustom);
 
 // Các tuyến đường khôi phục mật khẩu
 router.post("/forgot-password", authController.forgotPassword);
@@ -40,21 +44,23 @@ router.get('/google/callback',
     async (req, res) => {
         try {
             const user = req.user;
+            const requestHost = req.get('host') || '';
+            const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
+            const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
+
+            // RBAC: Chặn tài khoản nhân viên / quản trị đăng nhập Customer Web qua Google OAuth
+            if (user.role !== 'customer' || isStaffRole(user.role)) {
+                return res.redirect(`${FRONTEND_URL}/login?error=staff_account_not_allowed`);
+            }
+
             const token = jwt.sign(
-                { id: user._id, role: user.role },
+                { id: user._id, role: user.role, email: user.email },
                 process.env.JWT_SECRET || 'CAFE_SYNC_SECRET_KEY',
                 { expiresIn: '1d' }
             );
 
-            // Xác định URL frontend để redirect về
-            const requestHost = req.get('host') || '';
-            const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
-
-            // Ở local, frontend client chạy trên port 5173
-            const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
-
             // Redirect về frontend kèm token và thông tin người dùng trong query
-            res.redirect(`${FRONTEND_URL}/login?token=${token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}`);
+            res.redirect(`${FRONTEND_URL}/login?token=${token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&role=${encodeURIComponent(user.role)}`);
         } catch (error) {
             console.error("Lỗi callback redirect:", error);
             res.status(500).send("Lỗi máy chủ khi đăng nhập Google.");
@@ -79,7 +85,10 @@ router.get('/facebook/callback',
         if (code && codeCache.has(code)) {
             console.log(`[FB_CALLBACK] ⚡ Phát hiện yêu cầu trùng lặp cho code: ${code.substring(0, 15)}... Trả về kết quả từ Cache.`);
             const cachedData = codeCache.get(code);
-            return res.redirect(`${FRONTEND_URL}/login?token=${cachedData.token}&name=${encodeURIComponent(cachedData.user.name)}&email=${encodeURIComponent(cachedData.user.email)}`);
+            if (cachedData.user.role !== 'customer' || isStaffRole(cachedData.user.role)) {
+                return res.redirect(`${FRONTEND_URL}/login?error=staff_account_not_allowed`);
+            }
+            return res.redirect(`${FRONTEND_URL}/login?token=${cachedData.token}&name=${encodeURIComponent(cachedData.user.name)}&email=${encodeURIComponent(cachedData.user.email)}&role=${encodeURIComponent(cachedData.user.role)}`);
         }
 
         passport.authenticate('facebook', {
@@ -87,8 +96,6 @@ router.get('/facebook/callback',
         }, (err, user, info) => {
             if (err) {
                 console.error("[FB_CALLBACK] ❌ Lỗi xác thực Passport Facebook:", err);
-                // Thay vì hiển thị trang JSON lỗi 500 gây đứng màn hình,
-                // chuyển hướng người dùng về trang login kèm thông tin chi tiết lỗi.
                 return res.redirect(`${FRONTEND_URL}/login?error=facebook_failed&details=${encodeURIComponent(err.message || err)}`);
             }
             if (!user) {
@@ -102,16 +109,21 @@ router.get('/facebook/callback',
     async (req, res) => {
         try {
             const user = req.user;
-            const code = req.query.code;
-            const token = jwt.sign(
-                { id: user._id, role: user.role },
-                process.env.JWT_SECRET || 'CAFE_SYNC_SECRET_KEY',
-                { expiresIn: '1d' }
-            );
-
             const requestHost = req.get('host') || '';
             const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
             const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
+
+            // RBAC: Chặn tài khoản nhân viên / quản trị đăng nhập Customer Web qua Facebook OAuth
+            if (user.role !== 'customer' || isStaffRole(user.role)) {
+                return res.redirect(`${FRONTEND_URL}/login?error=staff_account_not_allowed`);
+            }
+
+            const code = req.query.code;
+            const token = jwt.sign(
+                { id: user._id, role: user.role, email: user.email },
+                process.env.JWT_SECRET || 'CAFE_SYNC_SECRET_KEY',
+                { expiresIn: '1d' }
+            );
 
             // Lưu kết quả thành công vào cache trong 15 giây để phòng hờ yêu cầu trùng lặp đến sau
             if (code) {
@@ -122,7 +134,7 @@ router.get('/facebook/callback',
             }
 
             console.log(`[FB_CALLBACK] ✅ Đăng nhập thành công, chuyển hướng về frontend: ${user.email}`);
-            res.redirect(`${FRONTEND_URL}/login?token=${token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}`);
+            res.redirect(`${FRONTEND_URL}/login?token=${token}&name=${encodeURIComponent(user.name)}&email=${encodeURIComponent(user.email)}&role=${encodeURIComponent(user.role)}`);
         } catch (error) {
             console.error("[FB_CALLBACK] ❌ Lỗi khi sinh token hoặc redirect:", error);
             res.status(500).send("Lỗi máy chủ khi đăng nhập Facebook.");

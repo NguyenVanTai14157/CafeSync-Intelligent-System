@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const tableController = require('../controllers/tableController');
+const { requireStaff } = require('../middleware/auth.middleware');
+
+// Toàn bộ API quản lý bàn chỉ dành cho tài khoản nhân viên / quản trị (Staff / Admin)
+router.use(requireStaff);
 
 // Lấy danh sách tất cả bàn
 router.get('/', tableController.getAllTables);

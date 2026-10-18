@@ -41,15 +41,19 @@ const STATUS_CONFIG = {
 const TableManagementPage = () => {
   const [tables, setTables] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  };
+
   const handleAddTable = async () => {
     try {
       const values = await form.validateFields();
-      await axios.post(`${API_URL}/api/tables`, values);
+      await axios.post(`${API_URL}/api/tables`, values, { headers: getAuthHeaders() });
       message.success(`Thêm bàn số ${values.tableNumber} thành công!`);
       setIsModalOpen(false);
       form.resetFields();
@@ -66,10 +70,10 @@ const TableManagementPage = () => {
   const fetchTables = async () => {
     try {
       setLoading(true);
-      const res = await axios.get(`${API_URL}/api/tables`);
+      const res = await axios.get(`${API_URL}/api/tables`, { headers: getAuthHeaders() });
       setTables(res.data);
     } catch (err) {
-      setError(err.response?.data?.message || err.message);
+      message.error(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
@@ -77,7 +81,7 @@ const TableManagementPage = () => {
 
   const updateStatus = async (tableNumber, newStatus) => {
     try {
-      await axios.put(`${API_URL}/api/tables/${tableNumber}/status`, { status: newStatus });
+      await axios.put(`${API_URL}/api/tables/${tableNumber}/status`, { status: newStatus }, { headers: getAuthHeaders() });
       setTables(prev =>
         prev.map(t => t.tableNumber === tableNumber ? { ...t, status: newStatus } : t)
       );
@@ -474,7 +478,7 @@ const TableManagementPage = () => {
               {/* QR Code */}
               <div className="qr-wrapper" style={{ margin: '24px 20px' }}>
                 <QRCodeSVG
-                  value={`${clientBaseUrl}/?table=${table.tableNumber}`}
+                  value={`${clientBaseUrl}/?table=${table.tableNumber}${table.tableToken ? `&tableToken=${table.tableToken}` : ''}`}
                   size={140}
                   level="H"
                   includeMargin={false}

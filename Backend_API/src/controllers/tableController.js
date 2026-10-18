@@ -1,10 +1,25 @@
 const Table = require('../models/Table');
+const { createTableQrToken, isValidTableNumber } = require('../utils/tableQr');
 
 // Lấy danh sách tất cả các bàn
 exports.getAllTables = async (req, res) => {
   try {
-    const tables = await Table.find().sort({ tableNumber: 1 });
-    res.status(200).json(tables);
+    const tables = await Table.find().sort({ tableNumber: 1 }).lean();
+    const tablesWithToken = tables.map(t => {
+      let tableToken = null;
+      try {
+        if (isValidTableNumber(t.tableNumber)) {
+          tableToken = createTableQrToken(t.tableNumber);
+        }
+      } catch (tokenErr) {
+        // Không ngắt getAllTables nếu cấu hình token thiếu
+      }
+      return {
+        ...t,
+        tableToken
+      };
+    });
+    res.status(200).json(tablesWithToken);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -23,7 +38,13 @@ exports.createTable = async (req, res) => {
     
     const newTable = new Table({ tableNumber, status: 'Trống' });
     await newTable.save();
-    res.status(201).json(newTable);
+    const result = newTable.toObject();
+    try {
+      if (isValidTableNumber(result.tableNumber)) {
+        result.tableToken = createTableQrToken(result.tableNumber);
+      }
+    } catch (e) {}
+    res.status(201).json(result);
   } catch (err) {
     res.status(400).json({ message: err.message });
   }

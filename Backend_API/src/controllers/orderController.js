@@ -1,5 +1,6 @@
 const Order = require("../models/Order");
 const { isStaff, nextStatus } = require('../utils/orderWorkflow');
+const { isValidTableNumber, verifyTableQrToken } = require('../utils/tableQr');
 const getPayOS = () => {
   const PayOS = require('@payos/node');
   return new PayOS(process.env.PAYOS_CLIENT_ID, process.env.PAYOS_API_KEY, process.env.PAYOS_CHECKSUM_KEY);
@@ -12,12 +13,71 @@ const createOrder = async (req, res) => {
 
     const finalOrderID = orderID || `CFS${Math.floor(Math.random() * 900000 + 100000)}`;
     const Table = require('../models/Table');
-    const paidPOS = paymentMethod === 'Tiền mặt' && req.body.source === 'pos' && req.body.paymentConfirmed === true;
+    const isPOSOrder = req.body.source === 'pos' && isStaff(req);
+    if (req.body.source === 'pos' && !isStaff(req)) {
+      return res.status(403).json({ message: 'Chỉ nhân viên mới được tạo đơn từ hệ thống POS.' });
+    }
+
+    let validatedTableNumber = null;
+    let finalLocation = "Mang đi";
+
+    if (isPOSOrder) {
+      if (tableNumber !== null && tableNumber !== undefined && tableNumber !== '') {
+        if (isValidTableNumber(tableNumber)) {
+          validatedTableNumber = Number(tableNumber);
+          finalLocation = `Bàn ${validatedTableNumber}`;
+        } else {
+          validatedTableNumber = null;
+          finalLocation = location || "Tại quầy";
+        }
+      } else {
+        validatedTableNumber = null;
+        finalLocation = location || "Tại quầy";
+      }
+    } else {
+      const rawTable = tableNumber;
+      if (rawTable !== null && rawTable !== undefined && rawTable !== '') {
+        if (!isValidTableNumber(rawTable)) {
+          return res.status(400).json({
+            message: `Số bàn không hợp lệ (${rawTable}). Bàn hợp lệ phải từ 1 đến 51.`
+          });
+        }
+
+        const normalizedTable = Number(rawTable);
+        const token = req.body.tableToken || req.headers['x-table-token'];
+
+        if (!token) {
+          return res.status(400).json({
+            message: 'Mã QR bàn bị thiếu hoặc không hợp lệ. Vui lòng quét lại mã QR tại bàn.'
+          });
+        }
+
+        const qrResult = verifyTableQrToken(token);
+        if (!qrResult.valid) {
+          const statusCode = qrResult.reason === 'CONFIG_ERROR' ? 500 : 400;
+          return res.status(statusCode).json({ message: qrResult.message });
+        }
+
+        if (qrResult.tableNumber !== normalizedTable) {
+          return res.status(400).json({
+            message: `Số bàn trong yêu cầu (${normalizedTable}) không khớp với mã QR bàn (${qrResult.tableNumber}). Vui lòng quét lại mã QR tại bàn.`
+          });
+        }
+
+        validatedTableNumber = normalizedTable;
+        finalLocation = `Bàn ${validatedTableNumber}`;
+      } else {
+        validatedTableNumber = null;
+        finalLocation = (location && !/bàn\s*\d+/i.test(location)) ? location : "Mang đi";
+      }
+    }
+
+    const paidPOS = paymentMethod === 'Tiền mặt' && isPOSOrder && req.body.paymentConfirmed === true;
     if (paidPOS && !isStaff(req)) return res.status(403).json({ message: 'Chỉ nhân viên được xác nhận thu tiền tại quầy' });
 
     // Cập nhật trạng thái bàn nếu có chọn bàn
-    if (tableNumber && paidPOS) {
-      const updatedTable = await Table.findOneAndUpdate({ tableNumber }, { status: 'Đang phục vụ' }, { new: true });
+    if (validatedTableNumber && paidPOS) {
+      const updatedTable = await Table.findOneAndUpdate({ tableNumber: validatedTableNumber }, { status: 'Đang phục vụ' }, { new: true });
       const io = req.app.get('io');
       if (io && updatedTable) {
         io.emit('table_updated', updatedTable.toObject());
@@ -30,8 +90,8 @@ const createOrder = async (req, res) => {
         orderID: finalOrderID,
         items,
         totalPrice,
-        location,
-        tableNumber: tableNumber || null,
+        location: finalLocation,
+        tableNumber: validatedTableNumber,
         paymentMethod: "Tiền mặt",
         customerEmail: customerEmail || "Guest",
         status: paidPOS ? 'Chờ pha chế' : 'Chờ thanh toán',
@@ -84,8 +144,8 @@ const createOrder = async (req, res) => {
         orderID: finalOrderID,
         items,
         totalPrice,
-        location,
-        tableNumber: tableNumber || null,
+        location: finalLocation,
+        tableNumber: validatedTableNumber,
         paymentMethod: "Chuyển khoản/Ví điện tử",
         customerEmail: customerEmail || "Guest",
         status: "Chờ thanh toán",

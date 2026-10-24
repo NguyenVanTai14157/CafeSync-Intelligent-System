@@ -515,7 +515,7 @@ const WelcomePage = () => {
         </Row>
       )}
 
-      {!isAdmin && <OperationalCharts />}
+      <OperationalCharts />
 
       {/* FOOTER INFO */}
       <div style={{ marginTop: 48, padding: '24px', textAlign: 'center' }}>

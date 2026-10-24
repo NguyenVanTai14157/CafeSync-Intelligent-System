@@ -1,12 +1,28 @@
 const eligible = o => o.paymentStatus === 'paid' || (!o.paymentStatus && ['Hoàn thành', 'Đã thanh toán', 'Đã xong'].includes(o.status));
 const normalize = s => String(s || '').normalize('NFC').trim().toLowerCase();
-function operationalStats(orders, products, tables, now = new Date()) {
-  // Seven calendar days including today, UTC+7.
+function operationalRange(query = {}, now = new Date()) {
+  const today = new Date(now.getTime() + 7 * 3600000).toISOString().slice(0, 10);
+  if (query.from !== undefined || query.to !== undefined) {
+    const parse = value => {
+      if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) throw new Error('Ngày phải có định dạng YYYY-MM-DD');
+      const date = new Date(`${value}T00:00:00Z`);
+      if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0,10) !== value) throw new Error('Ngày không hợp lệ');
+      return new Date(`${value}T00:00:00+07:00`);
+    };
+    const from = parse(query.from), end = parse(query.to);
+    if (from > end || query.to > today) throw new Error('Chọn khoảng ngày hợp lệ, không vượt quá hôm nay');
+    return { from, to: new Date(Math.min(end.getTime() + 86400000 - 1, now.getTime())) };
+  }
+  const days = query.days === undefined ? 7 : Number(query.days);
+  if (![7,30].includes(days)) throw new Error('Chỉ hỗ trợ khoảng nhanh 7 hoặc 30 ngày');
   const start = new Date(now.getTime() + 7 * 3600000);
-  start.setUTCHours(0, 0, 0, 0); start.setUTCDate(start.getUTCDate() - 6);
-  const from = new Date(start.getTime() - 7 * 3600000);
+  start.setUTCHours(0, 0, 0, 0); start.setUTCDate(start.getUTCDate() - days + 1);
+  return { from: new Date(start.getTime() - 7 * 3600000), to: now };
+}
+function operationalStats(orders, products, tables, now = new Date(), range = operationalRange({}, now)) {
+  const { from, to } = range;
   const valid = orders.filter(o => eligible(o) && !['Đã hủy', 'Cancelled'].includes(o.status) && new Date(o.createdAt) <= now);
-  const recent = valid.filter(o => new Date(o.createdAt) >= from);
+  const recent = valid.filter(o => new Date(o.createdAt) >= from && new Date(o.createdAt) <= to);
   const groups = new Map();
   const group = n => { const first = Math.floor((Number(n) - 1) / 10) * 10 + 1; return `Bàn ${first}–${first + 9}`; };
   for (const t of tables) if (Number(t.tableNumber) > 0) groups.set(group(t.tableNumber), 0);
@@ -17,7 +33,7 @@ function operationalStats(orders, products, tables, now = new Date()) {
   const seen = new Set(); let newcomers = 0, returning = 0, guestOrders = 0;
   for (const o of history) {
     const email = normalize(o.customerEmail);
-    const inPeriod = new Date(o.createdAt) >= from;
+    const inPeriod = new Date(o.createdAt) >= from && new Date(o.createdAt) <= to;
     if (!email || email === 'guest') { if (inPeriod) guestOrders++; continue; }
     if (inPeriod) { if (seen.has(email)) returning++; else newcomers++; }
     seen.add(email);
@@ -36,8 +52,8 @@ function operationalStats(orders, products, tables, now = new Date()) {
   const byName = (a,b) => a.name.localeCompare(b.name, 'vi');
   const top = [...ranked].sort((a,b) => b.quantity - a.quantity || byName(a,b)).slice(0,5);
   const bottom = [...ranked].sort((a,b) => a.quantity - b.quantity || byName(a,b)).slice(0,5);
-  return { from, to: now, orderCount: recent.length,
+  return { from, to, orderCount: recent.length,
     tables: [...groups].sort((a,b) => Number(a[0].match(/\d+/)[0]) - Number(b[0].match(/\d+/)[0])).map(([label,count]) => ({label,count})),
     customers: { newcomers, returning, guestOrders }, menu: { top, bottom, unmatchedItems } };
 }
-module.exports = { operationalStats };
+module.exports = { operationalStats, operationalRange };

@@ -1,5 +1,5 @@
 const Order = require("../models/Order");
-const { isStaff, nextStatus } = require('../utils/orderWorkflow');
+const { isStaff, staffAuthError, nextStatus } = require('../utils/orderWorkflow');
 const { isValidTableNumber, verifyTableQrToken } = require('../utils/tableQr');
 const getPayOS = () => {
   const PayOS = require('@payos/node');
@@ -344,7 +344,8 @@ const trackOrderById = async (req, res) => {
 // 📌 5. Cập nhật trạng thái (Tiếp nhận/Hoàn thành)
 const updateOrderStatus = async (req, res) => {
   try {
-    if (!isStaff(req)) return res.status(403).json({ message: 'Chỉ nhân viên được điều phối đơn' });
+    const authError = staffAuthError(req);
+    if (authError) return res.status(authError.status).json({ message: authError.message });
     const { status } = req.body;
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
@@ -440,7 +441,8 @@ const paymentSuccess = async (req, res) => {
 
 // Cash orders created on the customer website can be released after staff collect money.
 const confirmCashPayment = async (req, res) => {
-  if (!isStaff(req)) return res.status(403).json({ message: 'Chỉ nhân viên được xác nhận thu tiền' });
+  const authError = staffAuthError(req);
+  if (authError) return res.status(authError.status).json({ message: authError.message });
   try {
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: 'Không tìm thấy đơn' });

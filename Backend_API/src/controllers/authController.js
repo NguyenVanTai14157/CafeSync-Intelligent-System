@@ -90,7 +90,7 @@ exports.forgotPassword = async (req, res) => {
     // Xác định URL frontend động để sinh resetUrl
     const requestHost = req.get("host") || "";
     const isLocalhost = requestHost.includes("localhost") || requestHost.includes("127.0.0.1") || requestHost.includes("5000");
-    const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
+    const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:3001" : "https://cafe-sync-intelligent-system.vercel.app");
     const resetUrl = `${FRONTEND_URL}/reset-password/${resetToken}`;
 
     const mailOptions = {

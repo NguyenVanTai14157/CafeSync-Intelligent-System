@@ -4,6 +4,11 @@ const authController = require("../controllers/authController");
 const passport = require('../config/passport');
 const jwt = require('jsonwebtoken');
 const { isStaffRole } = require("../utils/orderWorkflow");
+const { resolveOAuthFrontend } = require('../utils/oauthFrontend');
+const prepareOAuthFrontend = async (req, res, next) => {
+    try { req.oauthFrontendUrl = await resolveOAuthFrontend(req); next(); }
+    catch (error) { next(error); }
+};
 
 // Cache lưu trữ kết quả trao đổi mã code (OAuth code) ngắn hạn để ngăn chặn lỗi trùng lặp request từ trình duyệt
 const codeCache = new Map();
@@ -31,10 +36,9 @@ router.get('/google', passport.authenticate('google', { scope: ['profile', 'emai
 
 // Route callback nhận phản hồi từ Google
 router.get('/google/callback',
+    prepareOAuthFrontend,
     (req, res, next) => {
-        const requestHost = req.get('host') || '';
-        const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
-        const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
+        const FRONTEND_URL = req.oauthFrontendUrl;
 
         passport.authenticate('google', {
             failureRedirect: `${FRONTEND_URL}/login?error=google_failed`,
@@ -44,9 +48,7 @@ router.get('/google/callback',
     async (req, res) => {
         try {
             const user = req.user;
-            const requestHost = req.get('host') || '';
-            const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
-            const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
+            const FRONTEND_URL = req.oauthFrontendUrl;
 
             // RBAC: Chặn tài khoản nhân viên / quản trị đăng nhập Customer Web qua Google OAuth
             if (user.role !== 'customer' || isStaffRole(user.role)) {
@@ -73,13 +75,12 @@ router.get('/facebook', passport.authenticate('facebook', { scope: ['public_prof
 
 // Route callback nhận phản hồi từ Facebook
 router.get('/facebook/callback',
+    prepareOAuthFrontend,
     (req, res, next) => {
         const code = req.query.code;
         console.log(`[FB_CALLBACK] ➡️ Nhận yêu cầu callback từ Facebook: ${req.originalUrl} | IP: ${req.ip} | Thời gian: ${new Date().toISOString()}`);
         
-        const requestHost = req.get('host') || '';
-        const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
-        const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
+        const FRONTEND_URL = req.oauthFrontendUrl;
 
         // Nếu code đã được xử lý và lưu trong cache (do trình duyệt gửi nhiều yêu cầu đồng thời)
         if (code && codeCache.has(code)) {
@@ -109,9 +110,7 @@ router.get('/facebook/callback',
     async (req, res) => {
         try {
             const user = req.user;
-            const requestHost = req.get('host') || '';
-            const isLocalhost = requestHost.includes('localhost') || requestHost.includes('127.0.0.1') || requestHost.includes('5000');
-            const FRONTEND_URL = process.env.FRONTEND_URL || (isLocalhost ? "http://localhost:5173" : "https://cafe-sync-intelligent-system.vercel.app");
+            const FRONTEND_URL = req.oauthFrontendUrl;
 
             // RBAC: Chặn tài khoản nhân viên / quản trị đăng nhập Customer Web qua Facebook OAuth
             if (user.role !== 'customer' || isStaffRole(user.role)) {

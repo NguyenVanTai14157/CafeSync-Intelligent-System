@@ -23,6 +23,26 @@ test('only paid orders can advance through the two preparation transitions', () 
   assert.equal(nextStatus({ status:'Đang pha chế',paymentStatus:'paid' }),'Hoàn thành');
   assert.equal(nextStatus({ status:'Hoàn thành',paymentStatus:'paid' }),null);
 });
+
+test('order actions distinguish expired sessions, invalid tokens and insufficient roles without accessing orders', async () => {
+  Order.findById = async () => assert.fail('unauthorized action must not access an order');
+  const cases = [
+    [null,401,'Vui lòng đăng nhập lại'],
+    [jwt.sign({role:'nhanvien'},process.env.JWT_SECRET,{expiresIn:-1}),401,'đã hết hạn'],
+    [jwt.sign({role:'nhanvien'},'wrong-key'),401,'không hợp lệ'],
+    [jwt.sign({role:'customer'},process.env.JWT_SECRET),403,'không có quyền']
+  ];
+  for (const action of [controller.updateOrderStatus,controller.confirmCashPayment]) {
+    for (const [token,status,message] of cases) {
+      const req = request();
+      if (token) req.headers.authorization = `Bearer ${token}`;
+      const response = res();
+      await action(req,response);
+      assert.equal(response.code,status);
+      assert.ok(response.body.message.includes(message));
+    }
+  }
+});
 test('customer cash order stays pending without a preparation event', async () => {
   Order.create=async data => data;
   const req=request({ paymentMethod:'Tiền mặt',items:[],totalPrice:40000,location:'Mang về' }); const response=res();
@@ -59,7 +79,7 @@ test('return URL cannot mark unpaid PayOS link as paid', async () => {
   const response=res(); await controller.paymentSuccess(request({orderCode:123}),response); assert.equal(response.code,409);
 });
 test('one-tap status update checks staff, payment and concurrent writes', async () => {
-  let response=res(); await controller.updateOrderStatus(request({status:'Hoàn thành'}),response); assert.equal(response.code,403);
+  let response=res(); await controller.updateOrderStatus(request({status:'Hoàn thành'}),response); assert.equal(response.code,401);
   Order.findById=async()=>({_id:'test-order',status:'Chờ pha chế',paymentStatus:'paid'});
   response=res(); await controller.updateOrderStatus(request({status:'Hoàn thành'},true),response); assert.equal(response.code,409);
   Order.findOneAndUpdate=async()=>null;

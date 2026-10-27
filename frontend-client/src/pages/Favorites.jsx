@@ -5,6 +5,7 @@ import PageHeader from '../components/PageHeader';
 import EmptyState from '../components/EmptyState';
 import ProductCard from '../components/ProductCard';
 import BottomNav from '../components/BottomNav';
+import { addQuickItem } from '../utils/cartPricing';
 
 const Favorites = () => {
     const [favorites, setFavorites] = useState([]);
@@ -53,14 +54,7 @@ const Favorites = () => {
         }
         if (!product || !product._id) return;
 
-        let cart = JSON.parse(localStorage.getItem('cart')) || [];
-        const existingItem = cart.find(item => item._id === product._id);
-
-        if (existingItem) {
-            existingItem.quantity += 1;
-        } else {
-            cart.push({ ...product, quantity: 1, options: { size: "M", sugar: "100%", ice: "100%" } });
-        }
+        const cart = addQuickItem(JSON.parse(localStorage.getItem('cart')) || [], product);
 
         localStorage.setItem('cart', JSON.stringify(cart));
         window.dispatchEvent(new Event('cartUpdated'));

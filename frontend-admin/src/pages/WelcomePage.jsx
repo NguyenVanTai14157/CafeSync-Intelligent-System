@@ -74,11 +74,11 @@ const WelcomePage = () => {
   const navigate = useNavigate();
   const rqClient = useQueryClient();
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'manager' || user?.role === 'quanly';
+  const isAdmin = user?.role === 'admin';
 
   // ⚡ React Query: Cache dữ liệu dashboard, tự động refresh ngầm
   const { data, isLoading: loading } = useQuery({
-    queryKey: ["dashboard", isAdmin ? "manager" : "staff"],
+    queryKey: ["dashboard", isAdmin ? "admin" : "operations"],
     queryFn: isAdmin ? fetchAdminData : fetchStaffData,
   });
 

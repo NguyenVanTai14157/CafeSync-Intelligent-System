@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../config';
+import { sizeExtraPrice } from '../utils/cartPricing';
 import '../assets/css/detail.css';
 import { showToast } from '../utils/toast';
 import PriceDisplay from '../components/PriceDisplay';
@@ -91,9 +92,7 @@ const Detail = () => {
 
     const getExtraPrice = () => {
         let extra = 0;
-        if (options.size === 'S') extra = 0;
-        else if (options.size === 'L') extra = 10000;
-        else extra = 5000; // Size M
+        extra = sizeExtraPrice(options.size);
 
         // Cộng giá các toppings đã chọn
         options.toppings.forEach(t => {

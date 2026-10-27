@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useLocation } from 'react-router-dom';
 import API_URL from '../config';
+import { addQuickItem } from '../utils/cartPricing';
 import '../assets/css/style.css';
 import SlotRecommendationSection from '../components/SlotRecommendationSection';
 import BottomNav from '../components/BottomNav';
@@ -169,14 +170,7 @@ const Home = () => {
     }
     if (!product || !product._id) return;
 
-    let cart = JSON.parse(localStorage.getItem('cart')) || [];
-    const existingItem = cart.find(item => item._id === product._id);
-
-    if (existingItem) {
-      existingItem.quantity += 1;
-    } else {
-      cart.push({ ...product, quantity: 1, options: { size: "M", sugar: "100%", ice: "100%" } });
-    }
+    const cart = addQuickItem(JSON.parse(localStorage.getItem('cart')) || [], product);
 
     localStorage.setItem('cart', JSON.stringify(cart));
     window.dispatchEvent(new Event('cartUpdated'));

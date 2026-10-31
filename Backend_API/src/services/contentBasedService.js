@@ -1,22 +1,3 @@
-/**
- * Layer 2 — Context-Aware Content-Based Filtering using Cosine Similarity
- *
- * Mô tả thuật toán:
- * -  Layer 2 là content-based filtering cá nhân hóa cho khách hàng thành viên.
- * -  User vector được suy ra từ lịch sử các đơn hàng đã hoàn thành (status: "Hoàn thành").
- * -  Product features (sweetness, caffeine, coldness) là expert-defined normalized values
- *    nằm trong khoảng [0, 1], KHÔNG phải giá trị đo thực tế hay ML embedding.
- * -  Cosine Similarity đo mức tương đồng giữa preference vector và item vector.
- * -  Time context điều chỉnh caffeine/coldness theo khung giờ (alpha/beta).
- * -  Threshold 0.65 là similarity threshold do chuyên gia thiết kế,
- *    KHÔNG phải confidence probability.
- * -  Member mới (không có lịch sử hợp lệ) fallback về Layer 1.
- * -  Dataset hiện tại là synthetic scenario-based dataset.
- * -  Chưa có bằng chứng để khẳng định tăng doanh thu, độ chính xác cao
- *    hoặc cải thiện conversion rate.
- * -  Layer 3 Collaborative Filtering chưa được triển khai.
- */
-
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 require('../models/Category');
@@ -34,43 +15,43 @@ const MAX_CAP = 5;
 // Khớp 100% với 31 món trong scripts/menu-data.js (12 Cà phê, 6 Trà, 9 Sinh tố, 4 Nước ép).
 const PRODUCT_VECTORS = {
   // ── Cà phê (12 món) ──
-  "Cà phê đặc biệt":        { sweetness: 0.5, caffeine: 0.9, coldness: 0.7 },
-  "Cà phê đen":            { sweetness: 0.1, caffeine: 0.9, coldness: 0.7 },
-  "Cà phê sữa":            { sweetness: 0.6, caffeine: 0.7, coldness: 0.7 },
-  "Cà phê Espresso":        { sweetness: 0.1, caffeine: 1.0, coldness: 0.2 },
-  "Cà phê Cappuccino":      { sweetness: 0.5, caffeine: 0.7, coldness: 0.3 },
-  "Cà phê Latte":           { sweetness: 0.6, caffeine: 0.5, coldness: 0.4 },
-  "Cà phê trứng":          { sweetness: 0.6, caffeine: 0.6, coldness: 0.3 },
-  "Cà phê dừa":            { sweetness: 0.7, caffeine: 0.5, coldness: 0.7 },
-  "Bạc xỉu":               { sweetness: 0.7, caffeine: 0.5, coldness: 0.7 },
-  "Cà phê muối":           { sweetness: 0.4, caffeine: 0.7, coldness: 0.6 },
-  "Cà phê đá xay":         { sweetness: 0.7, caffeine: 0.6, coldness: 0.9 },
-  "Cà phê Mocha":          { sweetness: 0.7, caffeine: 0.6, coldness: 0.4 },
+  "Cà phê đặc biệt": { sweetness: 0.5, caffeine: 0.9, coldness: 0.7 },
+  "Cà phê đen": { sweetness: 0.1, caffeine: 0.9, coldness: 0.7 },
+  "Cà phê sữa": { sweetness: 0.6, caffeine: 0.7, coldness: 0.7 },
+  "Cà phê Espresso": { sweetness: 0.1, caffeine: 1.0, coldness: 0.2 },
+  "Cà phê Cappuccino": { sweetness: 0.5, caffeine: 0.7, coldness: 0.3 },
+  "Cà phê Latte": { sweetness: 0.6, caffeine: 0.5, coldness: 0.4 },
+  "Cà phê trứng": { sweetness: 0.6, caffeine: 0.6, coldness: 0.3 },
+  "Cà phê dừa": { sweetness: 0.7, caffeine: 0.5, coldness: 0.7 },
+  "Bạc xỉu": { sweetness: 0.7, caffeine: 0.5, coldness: 0.7 },
+  "Cà phê muối": { sweetness: 0.4, caffeine: 0.7, coldness: 0.6 },
+  "Cà phê đá xay": { sweetness: 0.7, caffeine: 0.6, coldness: 0.9 },
+  "Cà phê Mocha": { sweetness: 0.7, caffeine: 0.6, coldness: 0.4 },
 
   // ── Trà (6 món) ──
-  "Trà đào":                { sweetness: 0.7, caffeine: 0.1, coldness: 0.8 },
-  "Trà chanh":              { sweetness: 0.6, caffeine: 0.1, coldness: 0.8 },
-  "Trà vải":                { sweetness: 0.7, caffeine: 0.1, coldness: 0.8 },
-  "Trà dâu":                { sweetness: 0.7, caffeine: 0.1, coldness: 0.8 },
+  "Trà đào": { sweetness: 0.7, caffeine: 0.1, coldness: 0.8 },
+  "Trà chanh": { sweetness: 0.6, caffeine: 0.1, coldness: 0.8 },
+  "Trà vải": { sweetness: 0.7, caffeine: 0.1, coldness: 0.8 },
+  "Trà dâu": { sweetness: 0.7, caffeine: 0.1, coldness: 0.8 },
   "Trà trái cây nhiệt đới": { sweetness: 0.7, caffeine: 0.05, coldness: 0.8 },
-  "Trà sữa socola":        { sweetness: 0.8, caffeine: 0.2, coldness: 0.7 },
+  "Trà sữa socola": { sweetness: 0.8, caffeine: 0.2, coldness: 0.7 },
 
   // ── Sinh tố (9 món) ──
-  "Sinh tố chuối":          { sweetness: 0.7, caffeine: 0.0, coldness: 0.8 },
-  "Sinh tố dưa hấu":       { sweetness: 0.7, caffeine: 0.0, coldness: 0.9 },
-  "Sinh tố mít":            { sweetness: 0.7, caffeine: 0.0, coldness: 0.8 },
-  "Sinh tố xoài":           { sweetness: 0.8, caffeine: 0.0, coldness: 0.9 },
-  "Sinh tố kiwi":           { sweetness: 0.5, caffeine: 0.0, coldness: 0.9 },
-  "Sinh tố mãng cầu":      { sweetness: 0.6, caffeine: 0.0, coldness: 0.9 },
-  "Sinh tố việt quất":      { sweetness: 0.5, caffeine: 0.0, coldness: 0.9 },
-  "Sinh tố dâu":            { sweetness: 0.7, caffeine: 0.0, coldness: 0.9 },
-  "Sinh tố bơ":             { sweetness: 0.6, caffeine: 0.0, coldness: 0.9 },
+  "Sinh tố chuối": { sweetness: 0.7, caffeine: 0.0, coldness: 0.8 },
+  "Sinh tố dưa hấu": { sweetness: 0.7, caffeine: 0.0, coldness: 0.9 },
+  "Sinh tố mít": { sweetness: 0.7, caffeine: 0.0, coldness: 0.8 },
+  "Sinh tố xoài": { sweetness: 0.8, caffeine: 0.0, coldness: 0.9 },
+  "Sinh tố kiwi": { sweetness: 0.5, caffeine: 0.0, coldness: 0.9 },
+  "Sinh tố mãng cầu": { sweetness: 0.6, caffeine: 0.0, coldness: 0.9 },
+  "Sinh tố việt quất": { sweetness: 0.5, caffeine: 0.0, coldness: 0.9 },
+  "Sinh tố dâu": { sweetness: 0.7, caffeine: 0.0, coldness: 0.9 },
+  "Sinh tố bơ": { sweetness: 0.6, caffeine: 0.0, coldness: 0.9 },
 
   // ── Nước ép (4 món) ──
-  "Nước ép chanh dây":      { sweetness: 0.4, caffeine: 0.0, coldness: 0.8 },
-  "Nước ép đào":            { sweetness: 0.6, caffeine: 0.0, coldness: 0.8 },
-  "Nước ép táo":            { sweetness: 0.6, caffeine: 0.0, coldness: 0.8 },
-  "Nước ép cam":            { sweetness: 0.5, caffeine: 0.0, coldness: 0.8 }
+  "Nước ép chanh dây": { sweetness: 0.4, caffeine: 0.0, coldness: 0.8 },
+  "Nước ép đào": { sweetness: 0.6, caffeine: 0.0, coldness: 0.8 },
+  "Nước ép táo": { sweetness: 0.6, caffeine: 0.0, coldness: 0.8 },
+  "Nước ép cam": { sweetness: 0.5, caffeine: 0.0, coldness: 0.8 }
 };
 
 /**
@@ -166,10 +147,10 @@ function validateProductVectorMapping(canonicalProductNames) {
 // ─── Sugar parsing ───────────────────────────────────────────────────────────
 // Sugar trong order item lưu dưới dạng phần trăm: "0%", "30%", "50%", "70%", "100%"
 const SUGAR_MAP = {
-  "0%":   0.0,
-  "30%":  0.3,
-  "50%":  0.5,
-  "70%":  0.7,
+  "0%": 0.0,
+  "30%": 0.3,
+  "50%": 0.5,
+  "70%": 0.7,
   "100%": 1.0
 };
 
@@ -195,10 +176,10 @@ function parseSugar(sugarStr) {
 // Ice trong order item lưu dưới dạng phần trăm: "0%", "30%", "50%", "70%", "100%"
 // (schema Product.iceOptions = ["0%", "30%", "50%", "70%", "100%"])
 const ICE_MAP = {
-  "0%":   0.0,
-  "30%":  0.3,
-  "50%":  0.5,
-  "70%":  0.7,
+  "0%": 0.0,
+  "30%": 0.3,
+  "50%": 0.5,
+  "70%": 0.7,
   "100%": 1.0
 };
 
@@ -395,15 +376,21 @@ function applyTimeModulation(userVector, hour) {
 }
 
 /**
- * Layer 2 — Content-Based Personalized Recommendation
+ * Layer 2 / PP4 & PP3 — Content-Based Recommendation
  *
  * @param {Object} params
  * @param {string} params.email – email thành viên
- * @param {number} params.effectiveHour – giờ hiện tại (0–23)
- * @param {number} params.effectiveTopK – số lượng tối đa (đã validate, sẽ bị cap ở 5)
- * @returns {Object|null} – kết quả Layer 2 hoặc null (fallback Layer 1)
+ * @param {number} [params.effectiveHour] – giờ hiện tại (0–23)
+ * @param {number} [params.effectiveTopK=5] – số lượng tối đa (đã validate, sẽ bị cap ở 5)
+ * @param {boolean} [params.skipTimeModulation=false] – nếu true: bỏ qua time modulation (PP3 - Pure Content-Based)
+ * @returns {Object|null} – kết quả hoặc null (fallback Layer 1)
  */
-async function getContentBasedRecommendations({ email, effectiveHour, effectiveTopK }) {
+async function getContentBasedRecommendations({
+  email,
+  effectiveHour,
+  effectiveTopK = 5,
+  skipTimeModulation = false
+}) {
   // 0. Kiểm tra role người dùng: Layer 2 chỉ phục vụ user tồn tại với role === 'customer'
   const User = require('../models/User');
   const { isStaffRole } = require('../utils/orderWorkflow');
@@ -411,6 +398,10 @@ async function getContentBasedRecommendations({ email, effectiveHour, effectiveT
   if (!userDoc || userDoc.role !== 'customer' || isStaffRole(userDoc.role)) {
     return null; // Fallback Layer 1 cho staff/admin hoặc user không tồn tại
   }
+
+  const resolvedHour = (effectiveHour !== undefined && effectiveHour !== null)
+    ? effectiveHour
+    : getCurrentHourVietnam();
 
   // 1. Lấy tất cả completed orders của member
   const completedOrders = await Order.find({
@@ -455,13 +446,23 @@ async function getContentBasedRecommendations({ email, effectiveHour, effectiveT
   // 4. Build user preference vector
   const userPref = buildUserPreferenceVector(completedOrders, categoryLookup);
   if (!userPref) {
-    return null; // Không tạo được vector → fallback
+    return null;
   }
 
-  // 5. Apply time modulation
-  const userVectorT = applyTimeModulation(userPref, effectiveHour);
+  // 5. User vector: with or without time modulation
+  let userVectorT;
+  if (skipTimeModulation) {
+    // PP3: Pure Content-Based — explicit bypass of applyTimeModulation
+    userVectorT = [
+      userPref.sweetness,
+      userPref.caffeine,
+      userPref.coldness
+    ];
+  } else {
+    // PP4: Context-Aware Content-Based — apply time modulation
+    userVectorT = applyTimeModulation(userPref, resolvedHour);
+  }
 
-  // Kiểm tra norm(V_user,t) === 0 → fallback
   const userNorm = Math.sqrt(
     userVectorT[0] * userVectorT[0] +
     userVectorT[1] * userVectorT[1] +
@@ -510,7 +511,9 @@ async function getContentBasedRecommendations({ email, effectiveHour, effectiveT
         ? prod.image
         : null,
       score: Math.round(score * 1000) / 1000, // Round 3 decimals
-      reason: "Phù hợp với khẩu vị và lịch sử gọi món của bạn"
+      reason: skipTimeModulation
+        ? "Phù hợp với khẩu vị đặc trưng của bạn (Pure Content-Based)"
+        : "Phù hợp với khẩu vị và lịch sử gọi món của bạn"
     });
   }
 
@@ -536,22 +539,185 @@ async function getContentBasedRecommendations({ email, effectiveHour, effectiveT
   const preferredIce = findIceMode(userPref.validItems);
 
   // 10. Resolve slot info cho response
-  const slot = resolveSlot(effectiveHour);
+  const slot = resolveSlot(resolvedHour);
+  const isPure = Boolean(skipTimeModulation);
 
   return {
-    type: "PERSONALIZED_CONTENT_BASED",
-    recommendationSource: "CONTENT_BASED",
+    strategy: isPure ? "PP3" : "PP4",
+    strategyName: isPure
+      ? "Pure Content-Based (No Time Modulation)"
+      : "Context-Aware Content-Based",
+    type: isPure ? "PURE_CONTENT_BASED" : "PERSONALIZED_CONTENT_BASED",
+    recommendationSource: isPure ? "PURE_CONTENT_BASED" : "CONTENT_BASED",
+    timeModulationApplied: !isPure,
     slotName: slot.slotName,
     slotKey: slot.slotKey,
     bannerTitle: slot.bannerTitle,
-    currentHour: effectiveHour,
+    currentHour: resolvedHour,
     timezone: TIMEZONE,
     customerEmail: email,
+    userPreferenceVector: {
+      raw: {
+        sweetness: Math.round(userPref.sweetness * 1000) / 1000,
+        caffeine: Math.round(userPref.caffeine * 1000) / 1000,
+        coldness: Math.round(userPref.coldness * 1000) / 1000
+      },
+      effective: {
+        sweetness: Math.round(userVectorT[0] * 1000) / 1000,
+        caffeine: Math.round(userVectorT[1] * 1000) / 1000,
+        coldness: Math.round(userVectorT[2] * 1000) / 1000
+      }
+    },
     preferredSugar,
     preferredIce,
     recommendations: topResults
   };
 }
+
+/**
+ * PP3: Pure Content-Based Recommendation (No Time Modulation)
+ * Bypasses applyTimeModulation, evaluates raw cosine similarity against user vector
+ *
+ * @param {Object} params
+ * @param {string} params.email
+ * @param {number|string} [params.hour]
+ * @param {number|string} [params.topK=5]
+ */
+async function getPureContentBasedRecommendations({ email, hour, topK = 5 } = {}) {
+  if (!email || typeof email !== 'string' || email.trim() === '' || email.trim().toLowerCase() === 'guest') {
+    const err = new Error('Email parameter is required for Pure Content-Based recommendation (PP3).');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  let effectiveHour;
+  if (hour !== undefined && hour !== null && hour !== '') {
+    const parsedHour = Number(hour);
+    if (!Number.isInteger(parsedHour) || parsedHour < 0 || parsedHour > 23 || String(hour).trim() !== String(parsedHour)) {
+      const err = new Error('Invalid hour parameter. Must be an integer between 0 and 23.');
+      err.statusCode = 400;
+      throw err;
+    }
+    effectiveHour = parsedHour;
+  } else {
+    effectiveHour = getCurrentHourVietnam();
+  }
+
+  let effectiveTopK = 5;
+  if (topK !== undefined && topK !== null && topK !== '') {
+    const parsedTopK = Number(topK);
+    if (!Number.isInteger(parsedTopK) || parsedTopK < 1 || parsedTopK > 10 || String(topK).trim() !== String(parsedTopK)) {
+      const err = new Error('Invalid topK parameter. Must be an integer between 1 and 10.');
+      err.statusCode = 400;
+      throw err;
+    }
+    effectiveTopK = parsedTopK;
+  }
+
+  const result = await getContentBasedRecommendations({
+    email: email.trim(),
+    effectiveHour,
+    effectiveTopK,
+    skipTimeModulation: true
+  });
+
+  if (result) {
+    return result;
+  }
+
+  const slot = resolveSlot(effectiveHour);
+  return {
+    strategy: "PP3",
+    strategyName: "Pure Content-Based (No Time Modulation)",
+    type: "PURE_CONTENT_BASED",
+    recommendationSource: "PURE_CONTENT_BASED",
+    timeModulationApplied: false,
+    slotName: slot.slotName,
+    slotKey: slot.slotKey,
+    bannerTitle: slot.bannerTitle,
+    currentHour: effectiveHour,
+    timezone: TIMEZONE,
+    customerEmail: email.trim(),
+    preferredSugar: "100%",
+    preferredIce: "100%",
+    message: "Không đủ dữ liệu lịch sử đặt hàng của khách hàng để tính vector khẩu vị (Cold-start).",
+    recommendations: []
+  };
+}
+
+/**
+ * PP4: Context-Aware Content-Based Recommendation (Tier 2)
+ * Applies time-context modulation (applyTimeModulation) and Smart Auto-fill mapping
+ *
+ * @param {Object} params
+ * @param {string} params.email
+ * @param {number|string} [params.hour]
+ * @param {number|string} [params.topK=5]
+ */
+async function getContextAwareContentBasedRecommendations({ email, hour, topK = 5 } = {}) {
+  if (!email || typeof email !== 'string' || email.trim() === '' || email.trim().toLowerCase() === 'guest') {
+    const err = new Error('Email parameter is required for Context-Aware Content-Based recommendation (PP4).');
+    err.statusCode = 400;
+    throw err;
+  }
+
+  let effectiveHour;
+  if (hour !== undefined && hour !== null && hour !== '') {
+    const parsedHour = Number(hour);
+    if (!Number.isInteger(parsedHour) || parsedHour < 0 || parsedHour > 23 || String(hour).trim() !== String(parsedHour)) {
+      const err = new Error('Invalid hour parameter. Must be an integer between 0 and 23.');
+      err.statusCode = 400;
+      throw err;
+    }
+    effectiveHour = parsedHour;
+  } else {
+    effectiveHour = getCurrentHourVietnam();
+  }
+
+  let effectiveTopK = 5;
+  if (topK !== undefined && topK !== null && topK !== '') {
+    const parsedTopK = Number(topK);
+    if (!Number.isInteger(parsedTopK) || parsedTopK < 1 || parsedTopK > 10 || String(topK).trim() !== String(parsedTopK)) {
+      const err = new Error('Invalid topK parameter. Must be an integer between 1 and 10.');
+      err.statusCode = 400;
+      throw err;
+    }
+    effectiveTopK = parsedTopK;
+  }
+
+  const result = await getContentBasedRecommendations({
+    email: email.trim(),
+    effectiveHour,
+    effectiveTopK,
+    skipTimeModulation: false
+  });
+
+  if (result) {
+    return result;
+  }
+
+  const slot = resolveSlot(effectiveHour);
+  return {
+    strategy: "PP4",
+    strategyName: "Context-Aware Content-Based",
+    type: "PERSONALIZED_CONTENT_BASED",
+    recommendationSource: "CONTENT_BASED",
+    timeModulationApplied: true,
+    slotName: slot.slotName,
+    slotKey: slot.slotKey,
+    bannerTitle: slot.bannerTitle,
+    currentHour: effectiveHour,
+    timezone: TIMEZONE,
+    customerEmail: email.trim(),
+    preferredSugar: "100%",
+    preferredIce: "100%",
+    message: "Không đủ dữ liệu lịch sử đặt hàng của khách hàng để tính gợi ý phù hợp ngữ cảnh.",
+    recommendations: []
+  };
+}
+
+const getPP3Recommendations = getPureContentBasedRecommendations;
+const getPP4Recommendations = getContextAwareContentBasedRecommendations;
 
 module.exports = {
   PRODUCT_VECTORS,
@@ -571,5 +737,9 @@ module.exports = {
   getTimeModulationParams,
   findSugarMode,
   findIceMode,
-  getContentBasedRecommendations
+  getContentBasedRecommendations,
+  getPureContentBasedRecommendations,
+  getContextAwareContentBasedRecommendations,
+  getPP3Recommendations,
+  getPP4Recommendations
 };

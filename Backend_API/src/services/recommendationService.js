@@ -219,6 +219,8 @@ async function getTimeSlotPopularRecommendations({ email, hour, topK = 3 } = {})
   const customerEmail = (email && typeof email === 'string' && email.trim() !== '') ? email.trim() : 'Guest';
 
   const response = {
+    strategy: "PP2",
+    strategyName: "Time-Slot Popularity",
     type: "CONTEXT_POPULAR",
     recommendationSource: "TIME_SLOT_POPULARITY",
     slotName: slot.slotName,
@@ -239,11 +241,142 @@ async function getTimeSlotPopularRecommendations({ email, hour, topK = 3 } = {})
   return response;
 }
 
+/**
+ * PP1: Global Popularity (Baseline)
+ * Query all completed orders across all time, unwind items, group by product name,
+ * sum total quantity sold, sort descending, and return Top 5. No time-slot filtering.
+ *
+ * @param {Object} params
+ * @param {number|string} [params.topK=5]
+ * @returns {Promise<Object>}
+ */
+async function getGlobalPopularityRecommendations({ topK = 5 } = {}) {
+  let effectiveTopK = 5;
+  if (topK !== undefined && topK !== null && topK !== '') {
+    const parsedTopK = Number(topK);
+    if (!Number.isInteger(parsedTopK) || parsedTopK < 1 || parsedTopK > 20 || String(topK).trim() !== String(parsedTopK)) {
+      const err = new Error('Invalid topK parameter. Must be an integer between 1 and 20.');
+      err.statusCode = 400;
+      throw err;
+    }
+    effectiveTopK = parsedTopK;
+  }
+
+  const pipeline = [
+    {
+      $match: {
+        status: "Hoàn thành"
+      }
+    },
+    { $unwind: "$items" },
+    {
+      $match: {
+        "items.name": { $exists: true, $ne: "" },
+        "items.quantity": { $gt: 0 }
+      }
+    },
+    {
+      $group: {
+        _id: "$items.name",
+        totalSold: { $sum: "$items.quantity" },
+        productId: { $first: "$items.id_product" }
+      }
+    },
+    {
+      $sort: {
+        totalSold: -1,
+        _id: 1
+      }
+    },
+    {
+      $limit: effectiveTopK
+    },
+    {
+      $lookup: {
+        from: "products",
+        localField: "_id",
+        foreignField: "name",
+        as: "product"
+      }
+    },
+    {
+      $unwind: {
+        path: "$product",
+        preserveNullAndEmptyArrays: true
+      }
+    },
+    {
+      $lookup: {
+        from: "categories",
+        localField: "product.category",
+        foreignField: "_id",
+        as: "categoryDoc"
+      }
+    },
+    {
+      $unwind: {
+        path: "$categoryDoc",
+        preserveNullAndEmptyArrays: true
+      }
+    }
+  ];
+
+  const aggregateResults = await Order.aggregate(pipeline);
+
+  const recommendations = aggregateResults.map((item, index) => {
+    const prodId = item.productId
+      ? item.productId.toString()
+      : (item.product?._id ? item.product._id.toString() : String(item._id));
+    const prodName = item.product?.name || item.name || item._id;
+    const categoryName = item.categoryDoc?.name || item.category || (item.product?.category?.name) || "";
+    const price = item.product?.price !== undefined ? item.product.price : (item.price || 0);
+    const image = (item.product?.image && typeof item.product.image === 'string' && item.product.image.trim() !== '')
+      ? item.product.image
+      : (item.image || null);
+    const totalSold = typeof item.totalSold === 'number'
+      ? item.totalSold
+      : (typeof item.totalQuantity === 'number' ? item.totalQuantity : 0);
+
+    return {
+      rank: index + 1,
+      productId: prodId,
+      name: prodName,
+      category: categoryName,
+      price,
+      image,
+      totalSold,
+      badge: "Top Seller",
+      reason: "Món bán chạy nhất trên toàn hệ thống (Global Popularity Baseline)"
+    };
+  });
+
+  const response = {
+    strategy: "PP1",
+    strategyName: "Global Popularity (Baseline)",
+    type: "GLOBAL_POPULARITY",
+    recommendationSource: "GLOBAL_POPULARITY",
+    totalCandidates: recommendations.length,
+    recommendations
+  };
+
+  if (recommendations.length === 0) {
+    response.message = "Chưa có dữ liệu đơn hàng hoàn thành trên hệ thống.";
+  }
+
+  return response;
+}
+
+const getPP1Recommendations = getGlobalPopularityRecommendations;
+const getPP2Recommendations = getTimeSlotPopularRecommendations;
+
 module.exports = {
   TIMEZONE,
   CATEGORY_TIME_WEIGHTS,
   SLOT_CONFIG,
   getCurrentHourVietnam,
   resolveSlot,
-  getTimeSlotPopularRecommendations
+  getTimeSlotPopularRecommendations,
+  getGlobalPopularityRecommendations,
+  getPP1Recommendations,
+  getPP2Recommendations
 };
